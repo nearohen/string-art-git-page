@@ -391,9 +391,9 @@ let ctxMainCanvas
 let can = {};
 const originalImg = document.createElement("img");
 async function AnimateGifLoad() {
-  animatedGidData.superGif = new SuperGif({ gif: document.getElementById('animatedGif') });
-  animatedGidData.superGif.load();
-  animatedGidData.superGif.pause();
+  //animatedGidData.superGif = new SuperGif({ gif: document.getElementById('animatedGif') });
+  //animatedGidData.superGif.load();
+ // animatedGidData.superGif.pause();
 
 }
 
