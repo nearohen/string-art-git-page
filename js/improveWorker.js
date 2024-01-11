@@ -1,5 +1,5 @@
 console.log("hello from worker");
-importScripts('/src/js/stringArtWasm.js');
+importScripts('./js/stringArtWasm.js');
 
 var SAImprove = Module.cwrap(
     "SA_Improve",
