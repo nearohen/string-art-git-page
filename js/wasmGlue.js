@@ -1,4 +1,4 @@
-let improveWorker = new Worker("./improveWorker.js");
+let improveWorker = new Worker("./src/improveWorker.js");
 
 improveWorker.onmessage = function ({data :{type,args}}){
     if(type=="snapshotBuffer")
