@@ -1179,9 +1179,9 @@ function restartSession() {
 
 function SignIn()
 {
-  window.signIn((sessionKey) =>{
-    sessionState.userId = sessionKey ;
-    console.log("sessionkey:"+sessionKey) ;
+  window.signIn((userId) =>{
+    sessionState.userId = userId ;
+    console.log("userId:"+userId) ;
   }); 
 }
 function playPauseToggle(cb) {
