@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+      <!-- BEGIN Pre-requisites -->
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js">
+</script>
+<script src="https://apis.google.com/js/client:platform.js?onload=start" async defer>
+
+</script>
+<script type="module" src = "./src/index.js"></script>
+<!-- END Pre-requisites -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Basic HTML Page</title>
+   
+    <script>
+        function start() {
+          gapi.load('auth2', function() {
+            auth2 = gapi.auth2.init({
+              client_id: '445218205040-rk9ll2pql87gv5bj2eiihpv59hibas14.apps.googleusercontent.com',
+              // Scopes to request in addition to 'profile' and 'email'
+              //scope: 'additional_scope'
+            });
+            auth2.grantOfflineAccess().then(signInCallback);
+          });
+        }
+      </script>
+      <script>
+        $('#signinButton').click(function() {
+          // signInCallback defined in step 6.
+          auth2.grantOfflineAccess().then(signInCallback);
+        });
+        function signInCallback(authResult) {
+        if (authResult['code']) {
+          console.log("sending AJAX request");
+          // Send authorization code obtained from Google to backend platform
+          $.ajax({
+            type: 'POST',
+            url: 'YOUR_AUTHORIZATION_CODE_ENDPOINT_URL',
+            // Always include an X-Requested-With header to protect against CSRF attacks.
+            headers: {
+              'X-Requested-With': 'XMLHttpRequest'
+            },
+            contentType: 'application/octet-stream; charset=utf-8',
+            success: function(result) {
+              console.log(result);
+            },
+            processData: false,
+            data: authResult['code']
+          });
+        } else {
+          console.log('error: failed to obtain authorization code')
+        }
+      }
+      </script>
+      <button id="signinButton">Sign in with Google</button>
+</head>
+<body>
+
+    <header>
+        <h1>Welcome to My Website</h1>
+    </header>
+
+    <nav>
+        <ul>
+            <script>
+            </script>
+            <li><a href="#home" onclick="window.signIn()">Sign In</a></li>
+            <li><a href="#about">About</a></li>
+            <li><a href="#contact">Contact</a></li>
+        </ul>
+    </nav>
+
+    <main>
+        <section id="home">
+            <h2>Home Section</h2>
+            <p>This is the home section of my website.</p>
+        </section>
+
+        <section id="about">
+            <h2>About Section</h2>
+            <p>This is the about section where you can learn more about me.</p>
+        </section>
+
+        <section id="contact">
+            <h2>Contact Section</h2>
+            <p>Feel free to reach out to me through the contact form.</p>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2024 My Website. All rights reserved.</p>
+    </footer>
+</body>
+</html>

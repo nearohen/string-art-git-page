@@ -1,0 +1,1329 @@
+
+var Buffer = require('Buffer');
+
+const IMG_MANIPULATION_SELECT_PIXELS = 0
+const IMG_MANIPULATION_ZOOM_MOVE = 1
+const IMG_MANIPULATION_PIXELS_WEIGHT = 3
+
+const ON_CANVAS_STRINGS = 0;
+const ON_CANVAS_IMG = 1;
+const ON_CANVAS_DISTANCE = 2;
+const ON_CANVAS_STRING_COLOR = 3;
+const ON_CANVAS_INSTRUCTION = 4;
+const ON_CANVAS_PIXEL_WEIGHT = 5;
+
+let lastStringColor = null
+let lastDistance = null;
+
+runTimeState = {
+  mouseDown: false,
+  mouseButton: -1,
+  mouseX: -1,
+  mouseY: -1,
+  lastMouseX: -1,
+  lastMouseY: -1,
+  lastMouseR: -1,
+  mouseOnCanvas: false,
+  intervals: {
+    intervalUpdateBackend: 0,
+    intervalStreamPictures: 0,
+    intervalInstruction: 0,
+    timeoutNewServerImg: 0,
+    timeoutNewThumbnails: 0,
+    intervalSprints: 0,
+
+  },
+  linesArr: [],
+  pixelWeightSent: [],
+  pixelWeightColor: 0x7f,
+  previousSnapshot: "",
+  rate: 1000,
+  animationOn: false,
+  updateCanvasRate: 50,
+  maxSnapshots: 20,
+  snapshots: [],
+}
+let sessionState = {};
+function InitState() {
+  sessionState = {
+    pointsW: 55,
+    pointsH: 75,
+    pointsC: 256,
+    sourceWidth: 128,
+    sourceHeight: 128,
+    radius: 64,
+    circle: false,
+    brightness: 50,
+    contrast: 50,
+    normalize: 1.5,
+    collision: 0,
+    stringPixelRation: 32,
+    lineThicknessMulltiply: 1,
+    distanceViewFactor: 1,
+    sendRawSourceImg: "",
+    pixelWeight: [],
+    pointsArr: [],
+    snapshot: "",
+    onCanvas: ON_CANVAS_IMG,
+    imgManipulationMode: IMG_MANIPULATION_SELECT_PIXELS,
+    stateId: "",
+    bgColors: [0x7f, 0x7f, 0x7f, 0x7f],
+    bgStrength: 0.5,
+    onBGColor: 0,
+
+
+    recOffX: 0,
+    recOffY: 0,
+    recWidth: 1,
+    recHeight: 1,
+
+    sessionFileName: "",
+    serverAddr: `${window.location.protocol}//${window.location.hostname}`,
+  }
+  initRelevantPixels();
+}
+InitState();
+const MAIN_CANVAS_WIDTH = 256;
+const IMG_TO_CANVAS_SCLAE = MAIN_CANVAS_WIDTH / sessionState.sourceWidth;
+function ApplyWeight() {
+  SendRawWeight();
+}
+function OnPixelWeight() {
+  sessionState.imgManipulationMode = IMG_MANIPULATION_PIXELS_WEIGHT;
+  GoToCanvas(ON_CANVAS_PIXEL_WEIGHT);
+}
+function OnZoomMove() {
+  sessionState.imgManipulationMode = IMG_MANIPULATION_ZOOM_MOVE;
+}
+function OnSelect() {
+  sessionState.imgManipulationMode = IMG_MANIPULATION_SELECT_PIXELS;
+}
+
+function newSession() {
+  InitState();
+  saveState();
+  LoadStateFromLocalStorage();
+
+}
+
+
+
+function fixDotIndex(index) {
+  index = parseInt(index);
+  index = index % sessionState.dots.length;
+  if (index < 0) {
+    index = sessionState.dots.length - index;
+  }
+  return index;
+}
+function getNeighborDot(dotIndex, distance) {
+  if (distance == 0) {
+    return [dotIndex];
+  }
+
+  return [fixDotIndex(dotIndex - distance), fixDotIndex(dotIndex + distance)];
+
+}
+
+
+
+
+
+
+function saveSession() {
+
+
+  let filename = getSessionOutFileName()
+  saveText(JSON.stringify(sessionState), filename)
+  saveLinesImage(filename);
+}
+function getMainCanvas() {
+  return document.getElementById("main-canvas")
+}
+function initMainCanvas() {
+
+  width = sessionState.sourceWidth * IMG_TO_CANVAS_SCLAE;
+  height = sessionState.sourceHeight * IMG_TO_CANVAS_SCLAE;
+
+  mainCanvas = getMainCanvas()
+  mainCanvas.onmousemove = canvasMouseMove
+  mainCanvas.onmouseenter = () => { runTimeState.mouseOnCanvas = true };
+  mainCanvas.onmouseleave = () => { runTimeState.mouseOnCanvas = false };
+  mainCanvas.onwheel = canvasMouseWheel;
+  mainCanvas.onmousedown = canvasMousedown;
+  mainCanvas.onmouseup = canvasMouseup;
+  mainCanvas.height = height + 1;//plus 1 cus most right circle dot out of bounds
+  mainCanvas.width = width + 1;
+  ctxMainCanvas = mainCanvas.getContext("2d")
+
+}
+
+function canvasMouseWheel(event) {
+
+  if (runTimeState.mouseOnCanvas) {
+    event.preventDefault();
+    if (sessionState.imgManipulationMode == IMG_MANIPULATION_SELECT_PIXELS || sessionState.imgManipulationMode == IMG_MANIPULATION_PIXELS_WEIGHT) {
+
+      if (event.deltaY < 0) {
+
+
+        sessionState.radius = sessionState.radius + 4;
+        if (sessionState.radius > 100) {
+          sessionState.radius = 100;
+        }
+
+
+        DrawMouse(true)
+      }
+      else if (event.deltaY > 0) {
+
+        sessionState.radius = sessionState.radius - 4;
+        if (sessionState.radius < 1) {
+          sessionState.radius = 1;
+        }
+
+        DrawMouse(true)
+      }
+
+    }
+    else if (sessionState.imgManipulationMode == IMG_MANIPULATION_ZOOM_MOVE) {
+
+      let relativePosX = event.offsetX / mainCanvas.width;
+      let relativePosY = event.offsetY / mainCanvas.height;
+
+
+
+      let growth = 1.02;
+      if (event.deltaY < 0) {
+        growth = 0.98;
+      }
+
+
+      if (growth < 1 || sessionState.recWidth * growth < can.original.canvas.width && sessionState.recHeight * growth < can.original.canvas.height) {//can grow
+        let growX = sessionState.recWidth * growth - sessionState.recWidth;
+        let growXLeft = relativePosX * growX;
+        let growY = sessionState.recHeight * growth - sessionState.recHeight;
+        let growYUp = relativePosY * growY;
+        sessionState.recWidth += growX;
+        sessionState.recHeight += growY;
+        sessionState.recOffX -= growXLeft;
+        sessionState.recOffY -= growYUp;
+        fixRec();
+
+
+      }
+      UpdateNewServerImg();
+
+    }
+  }
+
+}
+
+function UpdateNewServerImg() {
+
+  if (runTimeState.intervals.timeoutNewServerImg != 0) {
+    clearTimeout(runTimeState.intervals.timeoutNewServerImg);
+    runTimeState.intervals.timeoutNewServerImg = 0;
+  }
+  runTimeState.intervals.timeoutNewServerImg = setTimeout(() => {
+    handleNewServerImg();
+    clearTimeout(runTimeState.intervals.timeoutNewServerImg);
+    runTimeState.intervals.timeoutNewServerImg = 0;
+  }, 100);
+}
+
+function updateNewThumbnails() {
+
+  if (runTimeState.intervals.timeoutNewThumbnails != 0) {
+    clearTimeout(runTimeState.intervals.timeoutNewThumbnails);
+    runTimeState.intervals.timeoutNewThumbnails = 0;
+  }
+  runTimeState.intervals.timeoutNewThumbnails = setTimeout(() => {
+    updateThumbnails();
+
+  }, 100);
+}
+
+
+function handlePointsChange(initRec) {
+
+  initDots();
+  initLines();
+
+  can.sourceStatus.canvas.width = sessionState.sourceWidth
+  can.sourceStatus.canvas.height = sessionState.sourceHeight
+
+  can.thumbnailMain.canvas.width = sessionState.sourceWidth;
+  can.thumbnailMain.canvas.height = sessionState.sourceHeight;
+
+  can.thumbnailWeight.canvas.width = sessionState.sourceWidth;
+  can.thumbnailWeight.canvas.height = sessionState.sourceHeight;
+
+  can.thumbnailFocus.canvas.width = sessionState.sourceWidth;
+  can.thumbnailFocus.canvas.height = sessionState.sourceHeight;
+
+  can.thumbnailStrings.canvas.width = sessionState.sourceWidth;
+  can.thumbnailStrings.canvas.height = sessionState.sourceHeight;
+
+  if (initRec) {
+    sessionState.recWidth = 1;
+  }
+  initMainCanvas();
+  originalImg.src = sessionState.originalImgSrc;//to trigger onLoad
+  loadSavedToCanvas("weight", sessionState.weightImg);
+  loadSavedToCanvas("focus", sessionState.focusImg);
+
+
+}
+
+function loadSavedToCanvas(canvasName, data) {
+  if (data != undefined) {
+    var tmp = new Image;
+    tmp.onload = function () {
+      can[canvasName].ctx.drawImage(tmp, 0, 0); // Or at whatever offset you like 
+      updateThumbnails();
+    };
+    tmp.src = data;
+  }
+
+}
+
+function RestartState() {
+  InitInstructions(sessionState);
+  sessionState.stateId = "";
+  LoadStateValuesToUI()
+  handlePointsChange()
+
+}
+function handleNewState(params) {
+  sessionState = params
+  RestartState();
+  GoToCanvas(ON_CANVAS_STRINGS);
+}
+
+
+
+function LoadSession(evt) {
+
+  const fileList = this.files;
+  var file = this.files[0];//e.originalEvent.srcElement.files[i];
+
+  var reader = new FileReader();
+
+
+  reader.onloadend = function () {
+
+    params = JSON.parse(reader.result);
+    if (params != null) {
+
+      handleNewState(params);
+    }
+  }
+  reader.readAsText(file)
+
+
+}
+function bgValToBaseColor(val) {
+
+  num = parseInt(val).toString(16).padStart(2, 0);
+
+  return num
+}
+function bgValToColor(val) {
+
+  num = parseInt(val).toString(16).padStart(2, 0);
+  num = "#" + num + num + num
+  return num
+}
+
+function LoadStateValuesToUI() {
+
+  document.getElementById("stringPixelRatio").value = sessionState.stringPixelRation;
+  document.getElementById("stringPixelRatioText").value = sessionState.stringPixelRation;
+
+  document.getElementById("lineThicknessMulltiply").value = sessionState.lineThicknessMulltiply;
+  document.getElementById("lineThicknessMulltiplyText").value = sessionState.lineThicknessMulltiply;
+
+
+  document.getElementById("normalizeRange").value = sessionState.normalize;
+  document.getElementById("normalizeRangeText").value = sessionState.normalize;
+  document.getElementById("collisionRange").value = sessionState.collision;
+  document.getElementById("collisionRangeText").value = sessionState.collision;
+
+
+  document.getElementById("pointsW").value = sessionState.pointsW;
+  document.getElementById("pointsH").value = sessionState.pointsH;
+  document.getElementById("pointsC").value = sessionState.pointsC;
+
+  document.getElementById("bgColor0").style.backgroundColor = bgValToColor(sessionState.bgColors[0]);
+  document.getElementById("bgColor1").style.backgroundColor = bgValToColor(sessionState.bgColors[1]);
+  document.getElementById("bgColor2").style.backgroundColor = bgValToColor(sessionState.bgColors[2]);
+  document.getElementById("bgColor3").style.backgroundColor = bgValToColor(sessionState.bgColors[3]);
+  document.getElementById("saveSession").value = sessionState.sessionFileName
+
+
+
+
+  document.getElementById("contrastRangeText").value = sessionState.contrast
+  document.getElementById("contrastRange").value = sessionState.contrast
+
+  document.getElementById("brightnessRangeText").value = sessionState.brightness
+  document.getElementById("brightnessRange").value = sessionState.brightness
+
+  document.getElementById("bgStrength").value = sessionState.bgStrength
+
+  if (sessionState.circle) {
+    document.getElementById("circle").checked = true
+  }
+  else {
+    document.getElementById("circle").checked = false
+  }
+  document.getElementById('totalInstruction').value = sessionState.instructions.instructionsArray.length;
+
+}
+
+const port = 8005
+
+linesSempling = 1000;
+let mainCanvas;
+let ctxMainCanvas
+
+let can = {};
+const originalImg = document.createElement("img");
+async function AnimateGifLoad() {
+  //animatedGidData.superGif = new SuperGif({ gif: document.getElementById('animatedGif') });
+  //animatedGidData.superGif.load();
+ // animatedGidData.superGif.pause();
+
+}
+
+addCanvasElement("sourceStatus", true);
+
+function SendRawWeight() {
+  var imgPixels = can.thumbnailWeight.ctx.getImageData(0, 0, can.thumbnailWeight.canvas.width, can.thumbnailWeight.canvas.height);
+  let w = sessionState.sourceWidth;
+  let h = sessionState.sourceHeight;
+  let buf = Buffer.alloc(w * h);
+  for (let x = 0; x < w; x++) {
+    for (let y = 0; y < h; y++) {
+      let pos = x * h + y;
+      let pixel = imgPixels.data[pos * 4] + imgPixels.data[pos * 4 + 1] + imgPixels.data[pos * 4 + 2];;
+      pixel = pixel / 3;
+      if (pixel < 0) {
+        pixel = 0;
+      }
+      if (pixel > 255) {
+        pixel = 255;
+      }
+      buf.writeUInt8(pixel, pos);
+    }
+  }
+  sessionState.sendWeightImg = buf.toString('base64');
+  if (serverConnected()) {
+    updateSessionParams();
+  }
+}
+
+function updateRaw(name, binary) {
+
+  var imgPixels = can[name].ctx.getImageData(0, 0, can[name].canvas.width, can[name].canvas.height);
+  let w = sessionState.sourceWidth;
+  let h = sessionState.sourceHeight;
+  buf = Buffer.alloc(w * h);
+  for (let x = 0; x < w; x++) {
+    for (let y = 0; y < h; y++) {
+      let pos = x * h + y;
+      let pixel = imgPixels.data[pos * 4] + imgPixels.data[pos * 4 + 1] + imgPixels.data[pos * 4 + 2];;
+      pixel = pixel / 3;
+      if (pixel < 0) {
+        pixel = 0;
+      }
+      if (pixel > 255) {
+        pixel = 255;
+      }
+      if (binary) {
+        pixel = pixel > 0x7f ? 255 : 0;
+      }
+
+      buf.writeUInt8(pixel, pos);
+
+    }
+
+  }
+  sessionState[name + "Raw"] = buf;
+
+}
+
+
+
+
+function Init() {
+
+
+  sessionState.normalize = document.getElementById("normalizeRangeText").value;
+
+  sessionState.stringPixelRation = document.getElementById("stringPixelRatioText").value
+
+
+
+ 
+
+  const params = {
+    stringPixelRatio: parseInt(sessionState.stringPixelRation),
+    normalize: parseFloat(sessionState.normalize),
+    collision: parseFloat(sessionState.collision),
+    width: sessionState.sourceWidth,
+    height: sessionState.sourceHeight,
+    bgColors: JSON.stringify(sessionState.bgColors),
+    dots:[],
+    snapshot: "" ,//sessionState.serverSnapshot,
+    brightness: parseFloat(sessionState.brightness),
+    contrast: parseFloat(sessionState.contrast),
+    bgStrength: parseFloat (sessionState.bgStrength),
+    distanceViewFactor: parseFloat(sessionState.distanceViewFactor),
+  };
+
+
+
+  const dots = sessionState.dots ;
+  console.log(`saParams:dots${dots.length} `) ;
+  for (pointIndex in dots)
+  {
+      let dot = {
+          x:params.width*dots[pointIndex][0],
+          y:params.height*dots[pointIndex][1],
+          
+      }
+      //console.log(` dot:${JSON.stringify(dot)} `) ;
+      params.dots.push(dot)
+  }
+  const initJson = JSON.stringify(params) ;
+  PostWorkerMessage( {cmd: "init",args : initJson});
+  
+  
+  
+}
+
+
+
+
+
+
+
+
+function FillPixelInfo(x, y) {
+  if (lastDistance != null) {
+    let pos = sessionState.sourceHeight * x + y
+    let a = lastDistance.charCodeAt(pos);
+    document.getElementById("disPixelInfo").value = a
+  }
+  if (lastStringColor != null) {
+    let pos = sessionState.sourceHeight * x + y
+    let a = lastStringColor.charCodeAt(pos);
+    document.getElementById("strPixelInfo").value = a
+  }
+  let color = can.thumbnailMain.ctx.getImageData(x, y, 1, 1).data;
+  let grScale = parseInt((color[0] + color[1] + color[2]) / 3);
+  document.getElementById("imgPixelInfo").value = grScale
+
+  document.getElementById("XPixelInfo").value = x
+
+  document.getElementById("YPixelInfo").value = y
+}
+function getRndColor() {
+  var r = 255 * Math.random() | 0,
+    g = 255 * Math.random() | 0,
+    b = 255 * Math.random() | 0;
+  return 'rgb(' + r + ',' + g + ',' + b + ')';
+}
+
+function xToOriginal(x) {
+
+  const ret = sessionState.recOffX + x * pixelWidthToOriginal();
+  return ret;
+}
+
+function yToOriginal(y) {
+  const ret = sessionState.recOffY + y * pixelWidthToOriginal();
+  return ret;
+}
+function pixelWidthToOriginal() {
+  const ret = sessionState.recWidth / sessionState.sourceWidth;
+  return ret;
+}
+
+function canvasMouseMove(event) {
+  runTimeState.mouseX = event.offsetX
+  runTimeState.mouseY = event.offsetY
+  X = Math.floor(event.offsetX / IMG_TO_CANVAS_SCLAE);
+  Y = Math.floor(event.offsetY / IMG_TO_CANVAS_SCLAE);
+  FillPixelInfo(X, Y)
+  R = Math.floor(sessionState.radius / IMG_TO_CANVAS_SCLAE);
+  if (sessionState.onCanvas == ON_CANVAS_IMG || sessionState.onCanvas == ON_CANVAS_STRINGS || sessionState.onCanvas == ON_CANVAS_PIXEL_WEIGHT) {
+
+    if (runTimeState.mouseDown) {
+      //mouse is down
+
+      for (x = X - R; x < X + R; x++) {
+        for (y = Y - R; y < Y + R; y++) {
+          xD = (x - X) ** 2;
+          yD = (y - Y) ** 2;
+          if (xD + yD < R * R) {
+            if (sessionState.imgManipulationMode == IMG_MANIPULATION_SELECT_PIXELS) {
+              can.focus.ctx.fillStyle = runTimeState.mouseButton == 0 ? 'rgb(255,255,255)' : 'rgb(0,0,0)';
+              can.focus.ctx.fillRect(xToOriginal(x), yToOriginal(y), pixelWidthToOriginal(), pixelWidthToOriginal())
+            }
+            else if (sessionState.imgManipulationMode == IMG_MANIPULATION_PIXELS_WEIGHT) {
+              let color = 0x7f;
+              if (runTimeState.mouseButton == 0) {
+                color = 255 - runTimeState.pixelWeightColor
+              }
+              can.weight.ctx.fillStyle = 'rgb(' + color + ',' + color + ',' + color + ')'
+              can.weight.ctx.fillRect(xToOriginal(x), yToOriginal(y), pixelWidthToOriginal(), pixelWidthToOriginal())
+            }
+
+
+          }
+
+        }
+
+      }
+      updateNewThumbnails();
+    }
+
+  }
+
+
+  DrawMouse(true)
+}
+
+function imgManipulationMode(type) {
+  sessionState.imgManipulationMode = type;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////
+
+function startMainCanvas() {
+  setTimeout(() => {
+    DrawCanvas();
+    startMainCanvas();
+  }, runTimeState.updateCanvasRate);
+
+}
+
+
+
+
+
+
+
+
+////////////////////////////////////////////////////////////////////////
+
+function initRelevantPixels() {
+
+  sessionState.focus = getEmptyPixelBuff(1);
+  sessionState.pixelWeight = getEmptyPixelBuff(0x7f);
+}
+
+
+
+
+
+function UpdateStatus() {
+
+  let params = GetStateIdParam();
+  params.params.width = sessionState.sourceWidth;
+  params.params.height = sessionState.sourceHeight;
+
+  if (sessionState.onCanvas == ON_CANVAS_DISTANCE) {
+    axios.get(`${sessionState.serverAddr}:${port}/distance`, params)
+      .then(({ data }) => {
+        var totalDistance = data["totalDistance"]
+        document.getElementById("totalDistance").value = totalDistance;
+        if (data["res"] == "ok") {
+          var b64 = data["distance"];
+          var decoded = atob(b64);
+          lastDistance = decoded;
+          let len = decoded.length;
+          for (var i = 0; i < sessionState.sourceWidth; i++) {
+            for (var j = 0; j < sessionState.sourceHeight; j++) {
+              pos = sessionState.sourceHeight * i + j
+              a = decoded.charCodeAt(pos);
+              colorStr = 'rgb(' + a + ', ' + a + ', ' + a + ')';
+              can.sourceStatus.ctx.fillStyle = colorStr
+              can.sourceStatus.ctx.fillRect(i, j, 1, 1)
+            }
+          }
+
+        }
+
+
+      });
+  }
+  if (sessionState.onCanvas == ON_CANVAS_STRING_COLOR) {
+    axios.get(`${sessionState.serverAddr}:${port}/stringcolor`, params)
+      .then(({ data }) => {
+        var b64 = data["stringColor"];
+        var decoded = atob(b64);
+        lastStringColor = decoded
+        let len = decoded.length;
+        for (var i = 0; i < sessionState.sourceWidth; i++) {
+          for (var j = 0; j < sessionState.sourceHeight; j++) {
+            pos = sessionState.sourceHeight * i + j
+            a = decoded.charCodeAt(pos);
+            colorStr = 'rgb(' + a + ', ' + a + ', ' + a + ')';
+            can.sourceStatus.ctx.fillStyle = colorStr
+            can.sourceStatus.ctx.fillRect(i, j, 1, 1)
+          }
+        }
+
+      });
+  }
+
+
+}
+
+
+
+
+function GoToCanvas(type) {
+
+  sessionState.onCanvas = type;
+  if (sessionState.onCanvas == ON_CANVAS_IMG) {
+    document.getElementById('image').checked = true;
+  }
+  if (sessionState.onCanvas == ON_CANVAS_STRINGS) {
+    document.getElementById('strings').checked = true;
+  }
+  if (sessionState.onCanvas == ON_CANVAS_DISTANCE) {
+    document.getElementById('distance').checked = true;
+  }
+  if (sessionState.onCanvas == ON_CANVAS_STRING_COLOR) {
+    document.getElementById('stringColor').checked = true;
+  }
+}
+
+function updateThumbnail(name, defaultColor, source, scale, binray) {
+
+  let fullName = "thumbnail" + name;
+  fillCanvas(fullName, defaultColor);
+  can[fullName].ctx.drawImage(source, sessionState.recOffX * scale, sessionState.recOffY * scale,
+    sessionState.recWidth * scale, sessionState.recHeight * scale, 0, 0, can[fullName].canvas.width, can[fullName].canvas.height);
+  updateRaw(fullName, binray);
+
+}
+
+function updateThumbnails() {
+  updateThumbnail("Main", "#FFFFFF", originalImg, IMG_TO_CANVAS_SCLAE, false);
+  updateThumbnail("Weight", "#7F7F7F", can.weight.canvas, 1, false);
+  updateThumbnail("Focus", "#FFFFFF", can.focus.canvas, 1, true);
+  UpdatThumbnailMainRaw();
+  if (serverConnected()) {
+    updateSessionParams();
+  }
+  sessionState.weightImg = can.weight.canvas.toDataURL();
+  sessionState.focusImg = can.focus.canvas.toDataURL();
+  saveState();
+}
+
+function handleNewServerImg() {
+
+  drawSrcImageOnCanvas(0, 0, 1 / IMG_TO_CANVAS_SCLAE, originalImg, can.original.canvas, can.original.ctx)
+  updateThumbnails();
+  saveState();
+  can.original.ctx.beginPath();
+  can.original.ctx.rect(sessionState.recOffX, sessionState.recOffY, sessionState.recWidth, sessionState.recHeight);
+  can.original.ctx.stroke();
+
+}
+
+function fillCanvas(name, color) {
+  can[name].ctx.fillStyle = color;
+  can[name].ctx.fillRect(0, 0, can[name].canvas.width, can[name].canvas.height);
+}
+function initRec() {
+  if (sessionState.sourceWidth / can.original.canvas.width > sessionState.sourceHeight / can.original.canvas.height) {
+    sessionState.recWidth = can.original.canvas.width;
+    sessionState.recHeight = sessionState.recWidth * sessionState.sourceHeight / sessionState.sourceWidth
+  }
+  else {
+    sessionState.recHeight = can.original.canvas.height;
+    sessionState.recWidth = sessionState.recHeight * sessionState.sourceWidth / sessionState.sourceHeight
+  }
+}
+function main() {
+
+  InitWebcam();
+  canvasPixelScale = 4;
+  document.getElementById('loadImgFile').addEventListener('input', handleImageFileSelect, false);
+  document.getElementById('loadSessionFile').addEventListener('input', LoadSession, false);
+  document.getElementById("instructions").style.display = "none"
+  document.getElementById("ip").value = sessionState.serverAddr;
+  RestartState();
+  updateServerSnapshot(sessionState.serverSnapshot);
+  GoToCanvas(ON_CANVAS_IMG);
+  startMainCanvas();
+
+}
+
+
+function handleGifFileSelect(evt) {
+
+  const fileList = this.files;
+  var file = this.files[0];//e.originalEvent.srcElement.files[i];
+
+  var reader = new FileReader();
+  reader.onloadend = function () {
+    document.getElementById("animatedGif").onload = function () {
+      AnimateGifLoad();
+    }
+    document.getElementById("animatedGif").src = reader.result;
+  }
+  reader.readAsDataURL(file);
+
+}
+
+function handleImageFileSelect(evt) {
+  const fileList = this.files;
+  var file = this.files[0];//e.originalEvent.srcElement.files[i];
+
+  var reader = new FileReader();
+  reader.onloadend = function () {
+    originalImg.src = reader.result;
+    document.getElementById("saveSession").value = getImageFileName();
+    sessionState.sessionFileName = document.getElementById("saveSession").value;
+    GoToCanvas(ON_CANVAS_IMG);
+  }
+  reader.readAsDataURL(file);
+
+
+
+
+
+}
+
+function SetAddr(add) {
+  if (add === undefined) {
+    sessionState.serverAddr = document.getElementById("ip").value;
+
+  }
+  else {
+    document.getElementById("ip").value = add;
+    sessionState.serverAddr
+
+  }
+
+  localStorage.serverAddr = sessionState.serverAddr;
+}
+
+function destroySession() {
+  if (document.getElementById('stateId').value.length > 0) {
+    axios.post(`${sessionState.serverAddr}:${port}/deInit`, {
+      stateId: document.getElementById('stateId').value,
+    }).then(function () {
+      sessionState.stateID = "";
+      document.getElementById('stateId').value = "";
+
+    })
+  }
+}
+function updateSessionParams(cb) {
+  saveState();
+  sessionState.thumbnailMainRaw = "";
+  sessionState.thumbnailWeightRaw = "";
+  sessionState.thumbnailFocusRaw = "";
+  if (cb != undefined) {
+    cb();
+  }
+}
+
+
+
+function saveState() {
+  //localStorage.clear();
+  localStorage.sessionState = JSON.stringify(sessionState);
+}
+function isLocalStorageStateValid(params) {
+  return params != undefined && params.pointsH != undefined;
+}
+function LoadStateFromLocalStorage() {
+
+  if (localStorage.sessionState != undefined) {
+    let params = JSON.parse(localStorage.sessionState);
+    if (isLocalStorageStateValid(params)) {
+
+      handleNewState(params)
+    }
+  }
+
+
+}
+function initDots() {
+
+  let dChange = sessionState.pointsW != document.getElementById("pointsW").value || sessionState.pointsH != document.getElementById("pointsH").value || sessionState.circle != document.getElementById("circle").checked;
+  sessionState.pointsW = document.getElementById("pointsW").value;
+  sessionState.pointsH = document.getElementById("pointsH").value;
+  sessionState.pointsC = document.getElementById("pointsC").value;
+  sessionState.circle = document.getElementById("circle").checked;
+
+
+  if (sessionState.circle) {
+    cx = 1 / 2
+    cy = 1 / 2
+    r = cy
+    let pointsAr = []
+    let move = Math.PI / sessionState.pointsC;
+    for (i = 0; i < sessionState.pointsC; i++) {
+      let deg = move * i * 2
+      let x = cx + r * Math.cos(deg)
+      let y = cy + r * Math.sin(deg)
+      pointsAr[i] = [x.toFixed(4), y.toFixed(4), i]
+    }
+    sessionState.dots = pointsAr
+
+    sessionState.sourceWidth = 128
+    sessionState.sourceHeight = 128
+
+  }
+  else {
+    let pointsAr = []
+    moveX = 1 / sessionState.pointsW
+    moveY = 1 / sessionState.pointsH
+    for (i = 0; i <= sessionState.pointsW; i++) {
+      let x = i * moveX
+      pointsAr.push([x.toFixed(4), 0, pointsAr.length])
+
+    }
+
+    for (i = 1; i < sessionState.pointsH; i++) {
+      let y = i * moveY
+      pointsAr.push([1, y.toFixed(4), pointsAr.length])
+
+    }
+    for (i = sessionState.pointsW; i >= 0; i--) {
+      let x = i * moveX
+      pointsAr.push([x.toFixed(4), 1, pointsAr.length])
+
+    }
+    for (i = sessionState.pointsH - 1; i >= 1; i--) {
+      let y = i * moveY
+      pointsAr.push([0, y.toFixed(4), pointsAr.length])
+
+    }
+    sessionState.dots = pointsAr
+    height = Math.ceil(sessionState.pointsH * sessionState.sourceWidth / sessionState.pointsW)
+    sessionState.sourceHeight = height
+
+  }
+  if (dChange) {
+    initRelevantPixels()
+  }
+
+}
+function getLineIndex(aI, bI) {
+  let ret = aI < bI ? runTimeState.dotsToLine[aI + "_" + bI] : runTimeState.dotsToLine[bI + "_" + aI];
+  return ret;
+}
+
+let rotate = 0
+function initLines() {
+  let linesArr = []
+  let dotsToLine = [];
+  let dotsLineIndexes = [];
+  for (var i = 0; i < sessionState.dots.length; i++) {
+    for (var j = i + 1; j < sessionState.dots.length; j++) {
+      X = (i + rotate) % sessionState.dots.length
+      Y = (j + rotate) % sessionState.dots.length;
+      dotsToLine[i + "_" + j] = (linesArr.length);
+      let index = linesArr.length;
+      if (dotsLineIndexes[i] == undefined) {
+        dotsLineIndexes[i] = [];
+      }
+      if (dotsLineIndexes[j] == undefined) {
+        dotsLineIndexes[j] = [];
+      }
+      dotsLineIndexes[i].push(index);
+      dotsLineIndexes[j].push(j);
+
+      let iD = i < sessionState.dots.length ? i : sessionState.dots.length - i;
+      let jD = j < sessionState.dots.length ? j : sessionState.dots.length - j;
+      if (iD > jD) {
+        let tmp = jD;
+        jD = iD;
+        iD = tmp;
+      }
+
+      let distanceFromExis = iD + jD / 1000;
+      linesArr.push({ dotA: sessionState.dots[X], dotB: sessionState.dots[Y], index: index, distanceFromExis: distanceFromExis });
+
+    }
+  }
+  runTimeState.linesArr = linesArr;
+  runTimeState.dotsToLine = dotsToLine;
+  runTimeState.dotsLineIndexes = dotsLineIndexes;
+}
+
+
+
+
+function serverConnected() {
+  return runTimeState.intervals.intervalUpdateBackend != 0;
+}
+
+
+function pauseSender() {
+  if (runTimeState.intervals.intervalUpdateBackend != 0) {
+    clearInterval(runTimeState.intervals.intervalUpdateBackend)
+    runTimeState.intervals.intervalUpdateBackend = 0
+  }
+
+}
+
+
+
+function getXY(e) {
+  var mouseX, mouseY;
+
+  if (e.offsetX) {
+    mouseX = e.offsetX;
+    mouseY = e.offsetY;
+  }
+  else if (e.layerX) {
+    mouseX = e.layerX;
+    mouseY = e.layerY;
+  }
+  return [mouseX, mouseY]
+  /* do something with mouseX/mouseY */
+}
+window.onkeydown = (ev) => {
+  if (sessionState.onCanvas == ON_CANVAS_INSTRUCTION) {
+    if (ev.code == "ArrowRight") {
+
+      instructions(1);
+    }
+    if (ev.code == "ArrowLeft") {
+
+      instructions(-1);
+    }
+
+  }
+
+
+}
+function MoveSrcImage(x, y) {
+
+
+}
+function canvasMousedown(event) {
+
+  runTimeState.mouseDownX = event.offsetX
+  runTimeState.mouseDownY = event.offsetY
+}
+
+function fixRec() {
+  if (sessionState.recOffX < 0) {
+    sessionState.recOffX = 0;
+  }
+  if (sessionState.recOffX + sessionState.recWidth > can.original.canvas.width) {
+    sessionState.recOffX = can.original.canvas.width - sessionState.recWidth;
+  }
+
+  if (sessionState.recOffY < 0) {
+    sessionState.recOffY = 0;
+  }
+  if (sessionState.recOffY + sessionState.recHeight > can.original.canvas.height) {
+    sessionState.recOffY = can.original.canvas.height - sessionState.recHeight;
+  }
+
+}
+function canvasMouseup(event) {
+
+  runTimeState.mouseUpX = event.offsetX
+  runTimeState.mouseUpY = event.offsetY
+  if (sessionState.imgManipulationMode == IMG_MANIPULATION_PIXELS_WEIGHT) {
+    UpdateNewServerImg();
+  }
+  else if (sessionState.imgManipulationMode == IMG_MANIPULATION_ZOOM_MOVE) {
+    const diffX = runTimeState.mouseUpX - runTimeState.mouseDownX;
+    const diffY = runTimeState.mouseUpY - runTimeState.mouseDownY;
+    let relativeMoveX = diffX / mainCanvas.width;
+    let relativeMoveY = diffY / mainCanvas.height;
+    let realDiffx = sessionState.recWidth * relativeMoveX;
+    let realDiffy = sessionState.recHeight * relativeMoveY;
+
+    sessionState.recOffX -= realDiffx;
+    sessionState.recOffY -= realDiffy;
+    fixRec();
+
+
+    UpdateNewServerImg();
+
+
+  }
+
+
+
+
+}
+window.onmousedown = (event) => {
+
+  runTimeState.mouseDown = true
+  runTimeState.mouseButton = event.button
+}
+
+window.onmouseup = (event) => {
+  event.preventDefault();
+  runTimeState.mouseDown = false
+  runTimeState.mouseButton = -1
+
+
+
+
+}
+
+
+
+function addCanvasElement(name, create) {
+
+  let cElement = {};
+  cElement.canvas = create ? document.createElement('canvas') : document.getElementById(name);
+  cElement.ctx = cElement.canvas.getContext('2d');
+  cElement.ctx.fillStyle = "#ffffffFF";
+  can[name] = cElement;
+}
+
+
+
+function loader() {
+  addCanvasElement("animation", true);
+  addCanvasElement("thumbnailMain", false);
+  addCanvasElement("thumbnailStrings", false);
+  addCanvasElement("thumbnailWeight", false);
+  addCanvasElement("thumbnailFocus", false);
+
+
+  addCanvasElement("original", false);
+  addCanvasElement("focus", false);
+  addCanvasElement("weight", false);
+
+  initRelevantPixels();
+  originalImg.onload = function () {
+    sessionState.originalImgSrc = originalImg.src;
+    can.weight.canvas.width = originalImg.width / IMG_TO_CANVAS_SCLAE;
+    can.weight.canvas.height = originalImg.height / IMG_TO_CANVAS_SCLAE;
+    fillCanvas("weight", "#7F7F7F");
+
+    can.focus.canvas.width = originalImg.width / IMG_TO_CANVAS_SCLAE;
+    can.focus.canvas.height = originalImg.height / IMG_TO_CANVAS_SCLAE;
+    fillCanvas("focus", "#FFFFFF");
+    can.original.canvas.width = originalImg.width / IMG_TO_CANVAS_SCLAE;
+    can.original.canvas.height = originalImg.height / IMG_TO_CANVAS_SCLAE;
+
+    if (sessionState.recWidth == 1 || sessionState.recWidth == -1) {
+      initRec();
+    }
+    fixRec();
+    handleNewServerImg();
+  }
+  LoadStateFromLocalStorage()
+  main()
+
+
+}
+
+function inputControler(name, unit, callback) {
+  let input = document.getElementById(name + "-in")
+  let label = document.getElementById(name + "-span")
+  input.value = state[name]
+  input.onmousemove = () => {
+    old = sessionState[name]
+    sessionState[name] = input.value
+    label.innerHTML = `${input.value} ${unit}`
+    if (old != sessionState[name] && callback)
+      callback()
+  }
+}
+
+
+
+function Play() {
+
+  GoToCanvas(ON_CANVAS_STRINGS);
+ 
+ 
+  StartCapturing();
+}
+function Stop(cb) {
+  pauseSender();
+  PostWorkerMessage({cmd : "stopImprove" ,args : { }});
+  
+}
+
+
+
+
+
+function restartSession() {
+  if (sessionState.stateId.length > 0) {
+    Stop(() => {
+      document.getElementById("playPauseToggleCheckBox").checked = false;
+      RestartState();
+      Init();
+
+    });
+  }
+
+
+}
+
+function SignIn()
+{
+  window.signIn((sessionKey) =>{
+    sessionState.userId = sessionKey ;
+    console.log("sessionkey:"+sessionKey) ;
+  }); 
+}
+function playPauseToggle(cb) {
+  sessionState.stateId
+  if (cb.checked) {
+    if (sessionState.stateId.length == 0) {
+      Init();
+      Play();
+    }
+    else {
+      Play();
+    }
+
+
+  }
+  else {
+    Stop()
+  }
+
+}
+
+
+function canvasToggle(img) {
+  sessionState.onCanvas = img
+  if (img == ON_CANVAS_IMG) {
+    sessionState.imgManipulationMode = IMG_MANIPULATION_SELECT_PIXELS
+  }
+  if (img == ON_CANVAS_PIXEL_WEIGHT) {
+    sessionState.imgManipulationMode = IMG_MANIPULATION_PIXELS_WEIGHT;
+  }
+
+}
+
+function statusType(type) {
+  sessionState.statusType = type
+}
+
+
+
+
+function updateBGStength(val) {
+
+  sessionState.bgStrength = parseFloat(val)
+  updateSessionParams();
+}
+function updatePixelWeight(val, bDone) {
+
+  runTimeState.pixelWeightColor = parseInt(val);;
+  s = runTimeState.pixelWeightColor.toString(16);
+  str = "#" + s + s + s
+  document.getElementById("pixelWeightColor").style.backgroundColor = str
+
+  updateSessionParams()
+  
+
+}
+function updateContrast(val, bDone) {
+
+  document.getElementById("contrastRangeText").value = val;
+  sessionState.contrast = val;
+  PostWorkerMessage({cmd : "updateParam" ,args : {type: "double",name : "contrast", val : sessionState.contrast }});
+  
+
+}
+
+function updateBrightness(val, bDone) {
+
+  document.getElementById("brightnessRangeText").value = val;
+  sessionState.brightness = val;
+  PostWorkerMessage({cmd : "updateParam" ,args : {type: "double",name : "brightness", val : sessionState.brightness }});
+  
+
+}
+
+function updateNormalize(val, bDone) {
+
+  document.getElementById("normalizeRangeText").value = val;
+  
+  sessionState.normalize = val;
+  PostWorkerMessage({cmd : "updateParam" ,args : {type: "double",name : "collision", val : sessionState.collision }});
+  
+
+}
+
+
+function updateCollision(val, bDone) {
+
+  document.getElementById("collisionRangeText").value = val;
+  
+  sessionState.collision = val;
+  PostWorkerMessage({cmd : "updateParam" ,args : {type: "double",name : "collision", val : sessionState.collision }});
+  
+
+}
+function updateDistanceViewFactor(val, bDone) {
+  document.getElementById("distanceViewFactorText").value = val;
+  
+  sessionState.distanceViewFactor = val;
+  PostWorkerMessage({cmd : "updateParam" ,args : {type: "double",name : "distanceViewFactor", val : sessionState.distanceViewFactor }});
+  
+}
+
+function updateLineThickness(val, bDone) {
+
+  document.getElementById("lineThicknessMulltiplyText").value = val;
+  
+  sessionState.lineThicknessMulltiply = val;
+  PostWorkerMessage({cmd : "updateParam" ,args : {type: "double",name : "lineThicknessMulltiply", val : sessionState.lineThicknessMulltiply }});
+  
+
+}
+function updateStringPixelRatio(val, bDone) {
+
+  document.getElementById("stringPixelRatioText").value = val;
+  
+  sessionState.stringPixelRation = val;
+  PostWorkerMessage({cmd : "updateParam" ,args : {type: "number",name : "stringPixelRatio", val : sessionState.stringPixelRation }});
+  
+
+}
+
+
+
+function onBGColor(index) {
+  sessionState.onBGColor = index
+  document.getElementById("bgColorRange").value = sessionState.bgColors[index]
+}
+
+function updateBGColor(val) {
+
+  s = parseInt(val).toString(16);
+  str = "#" + s + s + s
+  sessionState.bgColors[sessionState.onBGColor] = parseInt(val);
+  document.getElementById("bgColor" + sessionState.onBGColor).style.backgroundColor = str
+  updateSessionParams();
+
+}
+
+window.onload = loader;
+
+
+
+//inputs 
+
+
