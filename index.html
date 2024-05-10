@@ -42,20 +42,29 @@
 
 
   <!--  SESSION -->
-  <div id="session" style="padding-top: 20px;padding-left: 20px;padding-bottom: 20px;">
-    <div>
-      <button type="button" onclick="saveSession()">Save </button>
-      <button type="button" onclick="document.getElementById('loadSessionFile').click()">Load </button>
-      <button type="button" onclick="newSession()">New </button>
-
-      <input id="loadSessionFile" style="visibility:hidden;" type="file"  name="imgFileLoader"
-        accept="" />
-      <input id="saveSession">
-
-    </div>
- <div>
-  <div>
+  <div id = signIn>
     <button type="button" onclick="SignIn()">Sign In</button>
+  </div>
+ 
+  <div id = signOut display = "none">
+    <button type="button" onclick="SignOut()"></button>
+    <div id="session" style="padding-top: 20px;padding-left: 20px;padding-bottom: 20px;">
+    
+    
+      <div>
+        <button type="button" onclick="saveSession()">Save </button>
+        <button type="button" onclick="document.getElementById('loadSessionFile').click()">Load </button>
+        <button type="button" onclick="newSession()">New </button>
+  
+        <input id="loadSessionFile" style="visibility:hidden;" type="file"  name="imgFileLoader"
+          accept="" />
+        <input id="saveSession">
+  
+      </div>
+   <div>
+  </div>
+  <div>
+   
     <button type="button" onclick="Init()">Init</button>
     <button type="button" onclick="Play()">Play</button>
     <button type="button" onclick="Pause()">Pause</button>
@@ -71,6 +80,84 @@
     </div>
     <br>
 
+    
+    <div>
+      <input type="file" id="loadImgFile" name="imgFileLoader" value="asda" accept="image/png, image/jpeg" />
+      <button type="button" onclick="StartWebcam()">Start Webcam</button>
+      <button type="button" onclick="StreamPictures()">Stream Picrures</button>
+      <button type="button" onclick="SaveImage()">Save image</button>
+      <button type="button" onclick="OnZoomMove()">ZoomMove</button>
+      <button type="button" onclick="OnSelect()">Select</button>
+      <br>
+
+      <div >
+        <canvas id="main-canvas" ></canvas>
+        <div id="main-canvas-menu">
+          <label for="contarst">C</label>
+          <input type="range" id="contrastRange" value="50" min='0' max='100' step='1'
+            oninput="updateContrast(this.value,false);" onchange="updateContrast(this.value,true);">
+          <input type="text" id="contrastRangeText" value="50" size="1">
+  
+          <label for="brightness">B</label>
+          <input type="range" id="brightnessRange" value="50" min='0' max='100' step='1'
+            oninput="updateBrightness(this.value,false);" onchange="updateBrightness(this.value,true);">
+          <input type="text" id="brightnessRangeText" value="50" size="1">
+  
+        </div>
+      </div>
+    
+      <div>
+
+       
+        <div>
+          String pixel ratio
+
+          <input type="range" id="stringPixelRatio" value="" min='2' max='128' step='1'
+            oninput="updateStringPixelRatio(this.value,false);" onchange="updateStringPixelRatio(this.value,true);">
+          1/
+          <input type="text" id="stringPixelRatioText" value="" size="1">
+          <div>
+            <input type="text" id="lines" value="0" size="2">string used</input>
+            <input type="text" id="improvements" value="0" size="2">improvements</input>
+          </div>
+        </div>
+        <div>
+          <button type="button" onclick="OnPixelWeight()">Weight</button>
+          <button type="button" onclick="ApplyWeight()">Apply</button>
+          <label for="pixelweight">Pixel weight</label>
+          <input type="range" id="pixelWeightRange" value="0x7x" min='0' max='255' step='1'
+            oninput="updatePixelWeight(this.value,false);" onchange="updatePixelWeight(this.value,true);">
+          <input id="pixelWeightColor" style="background-color:#7f7f7f;color:white;width:40px;height:40px;" value=""
+            size="2">
+        </div>
+      </div>
+      <div id="webcamDiv" style=" align-items:center;">
+        <div>
+          <video id="webcam" autoplay playsinline width="128"></video>
+        </div>
+        <div>
+
+          <button type="button" onclick="StopWebcam()">Stop capture</button>
+        </div>
+
+      </div>
+      <br>
+
+
+    </div>
+    <canvas id="main-canvas"></canvas>
+    <div>
+      X
+      <input type="text" id="XPixelInfo" value="" size="1">
+      Y
+      <input type="text" id="YPixelInfo" value="" size="1">
+      Img
+      <input type="text" id="imgPixelInfo" value="" size="1">
+      Str
+      <input type="text" id="strPixelInfo" value="" size="1">
+      Dis
+      <input type="text" id="disPixelInfo" value="" size="1">
+    </div>
     <br>
 
     <button  type="button" onclick="SetAddr(`http:\/\/localhost`)">LocalHost</button>
@@ -168,28 +255,6 @@
       <input type="radio" id="stringColor" name="canvasSwitch" value="3" onclick='canvasToggle(3);'>
       <label for="stringColor">stringColor</label>
     </div>
-    <div>
-
-      <canvas id="thumbnailMain"></canvas>
-      <canvas id="thumbnailStrings"></canvas>
-      <canvas id="thumbnailFocus"></canvas>
-      <canvas id="thumbnailWeight"></canvas>
-
-
-
-
-    </div>
-    <canvas id="original"></canvas>
-    <div>
-
-    </div>
-    <canvas id="focus"></canvas>
-    <div>
-      <canvas id="weight"></canvas>
-
-
-    </div>
-
     </dev>
 
 
@@ -290,71 +355,22 @@
 
     <div id="container">
       <div>
-        <input type="file" id="loadImgFile" name="imgFileLoader" value="asda" accept="image/png, image/jpeg" />
-        <button type="button" onclick="SaveImage()">Save image</button>
-        <button type="button" onclick="OnZoomMove()">ZoomMove</button>
-        <button type="button" onclick="OnSelect()">Select</button>
-        <div>
 
-          <label for="contarst">C</label>
-          <input type="range" id="contrastRange" value="50" min='0' max='100' step='1'
-            oninput="updateContrast(this.value,false);" onchange="updateContrast(this.value,true);">
-          <input type="text" id="contrastRangeText" value="50" size="1">
-
-          <label for="brightness">B</label>
-          <input type="range" id="brightnessRange" value="50" min='0' max='100' step='1'
-            oninput="updateBrightness(this.value,false);" onchange="updateBrightness(this.value,true);">
-          <input type="text" id="brightnessRangeText" value="50" size="1">
-          <div>
-            String pixel ratio
-
-            <input type="range" id="stringPixelRatio" value="" min='2' max='128' step='1'
-              oninput="updateStringPixelRatio(this.value,false);" onchange="updateStringPixelRatio(this.value,true);">
-            1/
-            <input type="text" id="stringPixelRatioText" value="" size="1">
-            <div>
-              <input type="text" id="lines" value="0" size="2">string used</input>
-              <input type="text" id="improvements" value="0" size="2">improvements</input>
-            </div>
-          </div>
-          <div>
-            <button type="button" onclick="OnPixelWeight()">Weight</button>
-            <button type="button" onclick="ApplyWeight()">Apply</button>
-            <label for="pixelweight">Pixel weight</label>
-            <input type="range" id="pixelWeightRange" value="0x7x" min='0' max='255' step='1'
-              oninput="updatePixelWeight(this.value,false);" onchange="updatePixelWeight(this.value,true);">
-            <input id="pixelWeightColor" style="background-color:#7f7f7f;color:white;width:40px;height:40px;" value=""
-              size="2">
-          </div>
-        </div>
-        <div id="webcamDiv" style=" align-items:center;">
-          <div>
-            <video id="webcam" autoplay playsinline width="128"></video>
-          </div>
-          <div>
-
-            <button type="button" onclick="StopWebcam()">Stop capture</button>
-          </div>
-
-        </div>
+        <canvas id="thumbnailMain"></canvas>
+        <canvas id="original"></canvas>
         <br>
-
-
+        <canvas id="thumbnailStrings"></canvas>
+        <canvas id="focus"></canvas>
+        <br>
+        <canvas id="thumbnailFocus"></canvas>
+        <br>
+        <canvas id="thumbnailWeight"></canvas>
+        <canvas id="weight"></canvas>
+  
+  
       </div>
 
-      <canvas id="main-canvas"></canvas>
-      <div>
-        X
-        <input type="text" id="XPixelInfo" value="" size="1">
-        Y
-        <input type="text" id="YPixelInfo" value="" size="1">
-        Img
-        <input type="text" id="imgPixelInfo" value="" size="1">
-        Str
-        <input type="text" id="strPixelInfo" value="" size="1">
-        Dis
-        <input type="text" id="disPixelInfo" value="" size="1">
-      </div>
+
     </div>
     <div>
 

@@ -2,9 +2,9 @@ function InitWebcam(){
     cam.canvasElement =  document.createElement('canvas');//document.getElementById("webcamCanvas")  ;//
     cam.webcamElement = document.getElementById('webcam');
     cam.snapSoundElement = null ;//document.getElementById('snapSound');
-    //cam.webcam = new Webcam(cam.webcamElement, 'user',cam.canvasElement,cam.snapSoundElement);
+    cam.webcam = new Webcam(cam.webcamElement, 'user',cam.canvasElement,cam.snapSoundElement);
     document.getElementById("webcamDiv").style.display = "none"  ;
-    //webcam.stream =false ;
+    webcam.stream =false ;
   }
   
 function StreamPictures()

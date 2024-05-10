@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getAuth , GoogleAuthProvider ,signInWithPopup,createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getAuth , GoogleAuthProvider ,signInWithPopup,onAuthStateChanged,createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { getDatabase, ref, update,onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
 
@@ -22,8 +22,34 @@ const firebaseConfig = {
   const app = initializeApp(firebaseConfig);
   console.log("auth")
   const auth = getAuth(app) ;
+  let user = undefined ;
+  let getUserCB = undefined ;
+  window.getUser = (cb)=>{
+    getUserCB = cb ;
+    if(user){
+      getUserCB(user) ;
+    }
+  }
+
+
+
   console.log("End")
   const provider = new GoogleAuthProvider();
+  onAuthStateChanged(auth, (userE) => {
+    if (userE) {
+      // User is signed in, see docs for a list of available properties
+      // https://firebase.google.com/docs/reference/js/auth.user
+      user = userE  ;
+      if(getUserCB){
+        getUserCB(userE); 
+      }
+    } else {
+      // User is signed out
+      // ...
+    }
+  });
+
+
   function signIn(cb) {
     console.log("signIn addScope");
     //provider.addScope('https://www.googleapis.com/auth/contacts.readonly');
@@ -33,7 +59,9 @@ const firebaseConfig = {
       const credential = GoogleAuthProvider.credentialFromResult(result);
       const token = credential.accessToken;
       // The signed-in user info.
-      const user = result.user;
+      if(getUserCB){
+        getUserCB(user); 
+      }
       const userId = user.uid;
       // IdP data available using getAdditionalUserInfo(result)
       cb(userId)

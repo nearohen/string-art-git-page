@@ -294,6 +294,7 @@ function RestartState() {
   LoadStateValuesToUI()
   handlePointsChange()
 
+
 }
 function handleNewState(params) {
   sessionState = params
@@ -759,11 +760,27 @@ function main() {
   document.getElementById('loadImgFile').addEventListener('input', handleImageFileSelect, false);
   document.getElementById('loadSessionFile').addEventListener('input', LoadSession, false);
   document.getElementById("instructions").style.display = "none"
+  document.getElementById("signOut").style.display = "none";
   document.getElementById("ip").value = sessionState.serverAddr;
   RestartState();
   updateServerSnapshot(sessionState.serverSnapshot);
   GoToCanvas(ON_CANVAS_IMG);
   startMainCanvas();
+
+  window.getUser((user)=>{
+    sessionState.user =user ;
+    if(user){
+    
+      document.getElementById("signOut").style.display = "block";
+      document.getElementById("signIn").style.display = "none";
+    }
+    else{
+      document.getElementById("signOut").style.display = "none";
+      document.getElementById("signIn").style.display = "block";
+    }
+    
+
+  })
 
 }
 
