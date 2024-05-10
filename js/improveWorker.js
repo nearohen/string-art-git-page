@@ -70,7 +70,7 @@ onmessage = function (msg){
     {
         workerStae.srcRawBuffer.set(args.thumbnailMainRaw); 
         workerStae.improveInterval = setInterval(()=>{
-            const okOrFail = SAImprove(1000,args.sessionkey);
+            const okOrFail = SAImprove(1000,args.sessionKey);
             console.log("startImprove:"+okOrFail);
             if(workerStae.transalatebaleSnapshot)
             {
