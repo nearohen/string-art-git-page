@@ -12,7 +12,8 @@ improveWorker.onmessage = function ({data :{type,args}}){
         window.updateDB(sessionState.userId,sessionState.sessionLock,(key) => {
             sessionState.sessionKey = key ;
         });
-        document.getElementById('stateId').value = sessionState.sessionLock;
+        document.getElementById('lock').value = sessionState.sessionLock;
+        document.getElementById('key').value = sessionState.sessionKey;
     }
 };
 
