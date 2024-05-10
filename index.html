@@ -1,0 +1,360 @@
+<!doctype html>
+
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <title>String Art</title>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
+  <script src="https://apis.google.com/js/client:platform.js?onload=start" async defer></script>
+  <script type="text/javascript" src="https://unpkg.com/webcam-easy/dist/webcam-easy.min.js"></script>
+  <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+  <meta name="description" content="The HTML5 Herald">
+  <meta name="author" content="SitePoint">
+
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/pause.css">
+
+</head>
+
+<body oncontextmenu="return false;">
+  <script src="https://unpkg.com/react@17/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js" crossorigin></script>
+
+  <!-- Load our React component. -->
+  <script type="module" src="./js/firebase.js"></script>
+  <script src="./js/stringArtWasm.js"></script>
+  <script src="./js/bundle.js"></script>
+  <script src="./js/libgif.js"></script>
+  <script src="./js/stateless.js"></script>
+  <script src="./js/webcam.js"></script>
+  <script src="./js/draw.js"></script>
+  <script src="./js/wasmGlue.js"></script>
+  <script src="./js/gcode.js"></script>
+  <script src="./js/instruction.js"></script>
+  <script src="./js/animation.js"></script>
+  <script src="./js/gcode.js"></script>
+  <script src="./js/main.js"></script>
+
+  <script >
+    console.log("B");
+  </script>
+
+
+  <!--  SESSION -->
+  <div id="session" style="padding-top: 20px;padding-left: 20px;padding-bottom: 20px;">
+    <div>
+      <button type="button" onclick="saveSession()">Save </button>
+      <button type="button" onclick="document.getElementById('loadSessionFile').click()">Load </button>
+      <button type="button" onclick="newSession()">New </button>
+
+      <input id="loadSessionFile" style="visibility:hidden;" type="file"  name="imgFileLoader"
+        accept="" />
+      <input id="saveSession">
+
+    </div>
+ <div>
+  <div>
+    <button type="button" onclick="SignIn()">Sign In</button>
+    <button type="button" onclick="Init()">Init</button>
+    <button type="button" onclick="Play()">Play</button>
+    <button type="button" onclick="Pause()">Pause</button>
+    
+    <span class="slider"></span>
+    Play/Pause
+    
+    <button type="button" onclick="restartSession()">Restart session</button>
+    <button type="button" onclick="destroySession()">Destroy Session</button>
+  </div>
+      <button type="button" onclick="StopScreenSaver()">Stop</button>
+      <input type="text" id="testID" value="" size="1">
+    </div>
+    <br>
+
+    <br>
+
+    <button  type="button" onclick="SetAddr(`http:\/\/localhost`)">LocalHost</button>
+    <button type="button" onclick="SetAddr()">Use IP</button>
+    <input type="text" id="ip" value="" size="15">
+    <button type="button" onclick="initInstructions()">Instructions</button>
+    <div id="instructions">
+      <br>
+      <br>
+      <div>
+        step
+        <input type="text" id="instruction" value="" size="3">
+        /
+        <input type="text" id="totalInstruction" value="" size="3">
+        steps
+        <button type="button" onclick="playInstructions()">>>></button>
+        <button type="button" onclick="stopInstructions()">[]</button>
+      </div>
+      <br>
+
+      <div>
+
+        <button type="button" onclick="nextInstruction()">+</button>
+        <button type="button" onclick="prevInstruction()">-</button>
+        <button type="button" onclick="nextInstructionBatch()">>></button>
+
+        <div>
+        </div>
+        <input type="text" id="step0" value="" size="3" style="font-size:2vw">
+        <br>
+        <input type="text" id="step1" value="" size="3" style="font-size:2vw">
+        <input type="text" id="step2" value="" size="3" style="font-size:2vw">
+        <input type="text" id="step3" value="" size="3" style="font-size:2vw">
+        <input type="text" id="step4" value="" size="3" style="font-size:2vw">
+        <br>
+        <br>
+        <br>
+
+        <input type="text" id="step5" value="" size="3" style="font-size:2vw">
+        <input type="text" id="step6" value="" size="3" style="font-size:2vw">
+        <input type="text" id="step7" value="" size="3" style="font-size:2vw">
+        <input type="text" id="step8" value="" size="3" style="font-size:2vw">
+      </div>
+
+
+      <button type="button" onclick="findInstruction()">find line</button>
+      <input type="text" id="findPointA" value="0" size="1">
+      <input type="text" id="findPointB" value="0" size="1">
+      pos
+      <input type="text" id="goToInstruction" value="-1" size="1">
+      <button type="button" onclick="goToInstruction()">go to</button>
+    </div>
+
+
+    <br>
+    <div>
+      <label for="circle">circle</label>
+      <input type="radio" id="circle" name="circleSquare" onclick='handlePointsChange(true);'>
+      <label for="rectangle">rectangle</label>
+      <input type="radio" id="rectangle" name="circleSquare" checked onclick='handlePointsChange(true);'>
+      W
+      <input type="text" id="pointsW" value="" size="1" onchange="handlePointsChange(true);">
+      H
+      <input type="text" id="pointsH" value="" size="1" onchange="handlePointsChange(true);">
+      C
+      <input type="text" id="pointsC" value="" size="1" onchange="handlePointsChange(true);">
+    </div>
+
+ 
+
+    <div>
+      Session ID
+      <input type="text" id="stateId" value="" size="32">
+    </div>
+
+    <div>
+
+      <input type="radio" id="strings" name="canvasSwitch" value="1" onclick='canvasToggle(0);'>
+      <label for="strings">strings</label>
+      <input type="radio" id="image" name="canvasSwitch" value="0" checked onclick='canvasToggle(1);'>
+      <label for="image">image</label>
+      <input type="radio" id="distance" name="canvasSwitch" value="2" onclick='canvasToggle(2);'>
+      <label for="distance">distance</label>
+      <input type="radio" id="stringColor" name="canvasSwitch" value="3" onclick='canvasToggle(3);'>
+      <label for="stringColor">stringColor</label>
+    </div>
+    <div>
+
+      <canvas id="thumbnailMain"></canvas>
+      <canvas id="thumbnailStrings"></canvas>
+      <canvas id="thumbnailFocus"></canvas>
+      <canvas id="thumbnailWeight"></canvas>
+
+
+
+
+    </div>
+    <canvas id="original"></canvas>
+    <div>
+
+    </div>
+    <canvas id="focus"></canvas>
+    <div>
+      <canvas id="weight"></canvas>
+
+
+    </div>
+
+    </dev>
+
+
+
+    <!--  STRINGS -->
+
+    <div style="padding-top: 20px;padding-left: 20px;padding-bottom: 20px;">
+
+
+
+      <div>
+        Distance View Factor
+        <input type="range" id="distanceViewFactor" value="1" min='0.1' max='5' step='0.1'
+          oninput="updateDistanceViewFactor(this.value,false);" onchange="updateDistanceViewFactor(this.value,true);">
+        <input type="text" id="distanceViewFactorText" value="1" size="1">
+
+      </div>
+      <div>
+        Line thickness
+
+        <input type="range" id="lineThicknessMulltiply" value="1" min='0.1' max='4' step='0.1'
+          oninput="updateLineThickness(this.value,false);" onchange="updateLineThickness(this.value,true);">
+        <input type="text" id="lineThicknessMulltiplyText" value="" size="1">
+
+      </div>
+      <div>
+        Normal value
+        <input type="range" id="normalizeRange" value="" min='-0.5' max='2' step='0.1'
+          oninput="updateNormalize(this.value,false);" onchange="updateNormalize(this.value,true);">
+        <input type="text" id="normalizeRangeText" value="" size="1">
+
+      </div>
+      <div>
+        Collisionl value
+        <input type="range" id="collisionRange" value="" min='0' max='3' step='0.01'
+          oninput="updateCollision(this.value,false);" onchange="updateCollision(this.value,true);">
+        <input type="text" id="collisionRangeText" value="" size="1">
+
+      </div>
+    </div>
+
+    <!--  IMAGE -->
+
+    <div id="image" style="padding-top: 20px;padding-left: 20px;padding-bottom: 20px;">
+
+      <div>
+
+
+
+      </div>
+
+
+
+      Background colors
+      <div>
+
+        <input id="bgColor0" style="background-color:#7f7f7f;color:white;width:40px;height:40px;" value="TL" size="2"
+          onclick="onBGColor(0)">
+        <input id="bgColor1" style="background-color:#7f7f7f;color:white;width:40px;height:40px;" value="TR" size="2"
+          onclick="onBGColor(1)">
+
+      </div>
+      <div>
+        <input id="bgColor2" style="background-color:#7f7f7f;color:white;width:40px;height:40px;" value="BL" size="2"
+          onclick="onBGColor(2)">
+        <input id="bgColor3" style="background-color:#7f7f7f;color:white;width:40px;height:40px;" value="BR" size="2"
+          onclick="onBGColor(3)">
+      </div>
+      <div>
+
+        <input type="range" id="bgColorRange" value="128" min='0' max='250' step='1'
+          oninput="updateBGColor(this.value);" onchange="updateBGColor(this.value);">
+
+      </div>
+
+      <div>
+        bg Strength
+        <input type="range" id="bgStrength" value="0.5" min='0' max='1' step='0.1'
+          oninput="updateBGStength(this.value);" onchange="updateBGStength(this.value);">
+
+      </div>
+
+
+    </div>
+
+    <!--  STATUS -->
+    <div id="status" style="padding-top: 20px;padding-left: 20px;padding-bottom: 20px;">
+      <div>
+
+        <input type="text" id="totalDistance"></input>
+
+      </div>
+
+
+
+    </div>
+
+
+    <div id="container">
+      <div>
+        <input type="file" id="loadImgFile" name="imgFileLoader" value="asda" accept="image/png, image/jpeg" />
+        <button type="button" onclick="SaveImage()">Save image</button>
+        <button type="button" onclick="OnZoomMove()">ZoomMove</button>
+        <button type="button" onclick="OnSelect()">Select</button>
+        <div>
+
+          <label for="contarst">C</label>
+          <input type="range" id="contrastRange" value="50" min='0' max='100' step='1'
+            oninput="updateContrast(this.value,false);" onchange="updateContrast(this.value,true);">
+          <input type="text" id="contrastRangeText" value="50" size="1">
+
+          <label for="brightness">B</label>
+          <input type="range" id="brightnessRange" value="50" min='0' max='100' step='1'
+            oninput="updateBrightness(this.value,false);" onchange="updateBrightness(this.value,true);">
+          <input type="text" id="brightnessRangeText" value="50" size="1">
+          <div>
+            String pixel ratio
+
+            <input type="range" id="stringPixelRatio" value="" min='2' max='128' step='1'
+              oninput="updateStringPixelRatio(this.value,false);" onchange="updateStringPixelRatio(this.value,true);">
+            1/
+            <input type="text" id="stringPixelRatioText" value="" size="1">
+            <div>
+              <input type="text" id="lines" value="0" size="2">string used</input>
+              <input type="text" id="improvements" value="0" size="2">improvements</input>
+            </div>
+          </div>
+          <div>
+            <button type="button" onclick="OnPixelWeight()">Weight</button>
+            <button type="button" onclick="ApplyWeight()">Apply</button>
+            <label for="pixelweight">Pixel weight</label>
+            <input type="range" id="pixelWeightRange" value="0x7x" min='0' max='255' step='1'
+              oninput="updatePixelWeight(this.value,false);" onchange="updatePixelWeight(this.value,true);">
+            <input id="pixelWeightColor" style="background-color:#7f7f7f;color:white;width:40px;height:40px;" value=""
+              size="2">
+          </div>
+        </div>
+        <div id="webcamDiv" style=" align-items:center;">
+          <div>
+            <video id="webcam" autoplay playsinline width="128"></video>
+          </div>
+          <div>
+
+            <button type="button" onclick="StopWebcam()">Stop capture</button>
+          </div>
+
+        </div>
+        <br>
+
+
+      </div>
+
+      <canvas id="main-canvas"></canvas>
+      <div>
+        X
+        <input type="text" id="XPixelInfo" value="" size="1">
+        Y
+        <input type="text" id="YPixelInfo" value="" size="1">
+        Img
+        <input type="text" id="imgPixelInfo" value="" size="1">
+        Str
+        <input type="text" id="strPixelInfo" value="" size="1">
+        Dis
+        <input type="text" id="disPixelInfo" value="" size="1">
+      </div>
+    </div>
+    <div>
+
+
+      <canvas id="webcamCanvas" class="d-none"></canvas>
+    </div>
+
+
+
+
+  
+</body>
+
+</html>

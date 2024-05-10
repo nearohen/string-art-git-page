@@ -1,0 +1,23 @@
+{
+  "dependencies": {
+    "firebase": "^10.7.2"
+  },
+  "name": "string-art-git-page",
+  "description": "string hosting by git",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nearohen/string-art-git-page.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/nearohen/string-art-git-page/issues"
+  },
+  "homepage": "https://github.com/nearohen/string-art-git-page#readme"
+}
