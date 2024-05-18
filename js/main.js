@@ -152,12 +152,48 @@ function initMainCanvas() {
   mainCanvas.onwheel = canvasMouseWheel;
   mainCanvas.onmousedown = canvasMousedown;
   mainCanvas.onmouseup = canvasMouseup;
+  mainCanvas.ontouc
   mainCanvas.height = height + 1;//plus 1 cus most right circle dot out of bounds
   mainCanvas.width = width + 1;
   ctxMainCanvas = mainCanvas.getContext("2d")
 
+
+  mainCanvas.addEventListener('touchstart', function(event) {
+      if (event.touches.length === 2) {
+          prevDistance = getTouchesDistance(event.touches);
+      }
+    });
+
+    mainCanvas.addEventListener('touchmove', function(event) {
+      event.preventDefault();
+      if (event.touches.length === 2) {
+          const currentDistance = getTouchesDistance(event.touches);
+          const delta = currentDistance - prevDistance;
+          prevDistance = currentDistance;
+          handleGrow(delta * 0.01); // You can adjust the sensitivity here
+      }
+  });
+
+
 }
 
+function handleGrow(grow){
+
+  if (growth < 1 || sessionState.recWidth * growth < can.original.canvas.width && sessionState.recHeight * growth < can.original.canvas.height) {//can grow
+    let growX = sessionState.recWidth * growth - sessionState.recWidth;
+    let growXLeft = relativePosX * growX;
+    let growY = sessionState.recHeight * growth - sessionState.recHeight;
+    let growYUp = relativePosY * growY;
+    sessionState.recWidth += growX;
+    sessionState.recHeight += growY;
+    sessionState.recOffX -= growXLeft;
+    sessionState.recOffY -= growYUp;
+    fixRec();
+
+
+  }
+  UpdateNewServerImg();
+}
 function canvasMouseWheel(event) {
 
   if (runTimeState.mouseOnCanvas) {
@@ -198,21 +234,8 @@ function canvasMouseWheel(event) {
         growth = 0.98;
       }
 
-
-      if (growth < 1 || sessionState.recWidth * growth < can.original.canvas.width && sessionState.recHeight * growth < can.original.canvas.height) {//can grow
-        let growX = sessionState.recWidth * growth - sessionState.recWidth;
-        let growXLeft = relativePosX * growX;
-        let growY = sessionState.recHeight * growth - sessionState.recHeight;
-        let growYUp = relativePosY * growY;
-        sessionState.recWidth += growX;
-        sessionState.recHeight += growY;
-        sessionState.recOffX -= growXLeft;
-        sessionState.recOffY -= growYUp;
-        fixRec();
-
-
-      }
-      UpdateNewServerImg();
+      handleGrow(growth) ;
+      
 
     }
   }
