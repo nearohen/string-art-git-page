@@ -5,6 +5,9 @@ function InitWebcam(){
     cam.webcam = new Webcam(cam.webcamElement, 'user',cam.canvasElement,cam.snapSoundElement);
     document.getElementById("webcamDiv").style.display = "none"  ;
     webcam.stream =false ;
+    cam.webcam.info().then((res)=>{
+      console.log(res) ;
+    })
   }
   
 function StreamPictures()

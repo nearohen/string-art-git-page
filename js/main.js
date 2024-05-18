@@ -773,6 +773,7 @@ function main() {
     
       document.getElementById("signOut").style.display = "block";
       document.getElementById("signIn").style.display = "none";
+      document.getElementById("advanced").style.display = "none";
     }
     else{
       document.getElementById("signOut").style.display = "none";
@@ -781,6 +782,7 @@ function main() {
     
 
   })
+
 
 }
 
