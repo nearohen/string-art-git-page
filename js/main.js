@@ -177,7 +177,7 @@ function initMainCanvas() {
 
 }
 
-function handleGrow(grow){
+function handleGrow(growth){
 
   if (growth < 1 || sessionState.recWidth * growth < can.original.canvas.width && sessionState.recHeight * growth < can.original.canvas.height) {//can grow
     let growX = sessionState.recWidth * growth - sessionState.recWidth;
