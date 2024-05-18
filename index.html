@@ -78,7 +78,7 @@
       </div>
 
     </div>
-    
+
   </div>
   <div>
    
@@ -140,8 +140,20 @@
           oninput="updateStringPixelRatio(this.value,false);" onchange="updateStringPixelRatio(this.value,true);">
         1/
         <input type="text" id="stringPixelRatioText" value="" size="1">
-          
+        
+        
+        <canvas id="thumbnailMain"></canvas><br>
+
+        <canvas id="original"></canvas>
+        <br>
+
+        <br>
+
+
         </div>
+
+
+
     </div>
 
 
@@ -391,9 +403,7 @@
     <div id="container">
       <div>
 
-        <canvas id="thumbnailMain"></canvas>
-        <canvas id="original"></canvas>
-        <br>
+
         <canvas id="thumbnailStrings"></canvas>
         <canvas id="focus"></canvas>
         <br>
