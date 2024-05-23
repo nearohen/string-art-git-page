@@ -125,7 +125,16 @@ function getNeighborDot(dotIndex, distance) {
 
 }
 
+var mainCanvasWindow = window.open("","canvas-window","width=800,height=600") ;
+mainCanvasWindow.document.write(`
+<!doctype html>
 
+<html lang="en">
+<body>
+<canvas id="main-canvas"></canvas>
+</body>
+</html>
+`) ;
 
 
 
@@ -138,7 +147,7 @@ function saveSession() {
   saveLinesImage(filename);
 }
 function getMainCanvas() {
-  return document.getElementById("main-canvas")
+  return mainCanvasWindow.document.getElementById("main-canvas")
 }
 function initMainCanvas() {
 
@@ -177,7 +186,7 @@ function initMainCanvas() {
 
 }
 
-function handleGrow(growth){
+function handleGrow(growth,relativePosX,relativePosY){
 
   if (growth < 1 || sessionState.recWidth * growth < can.original.canvas.width && sessionState.recHeight * growth < can.original.canvas.height) {//can grow
     let growX = sessionState.recWidth * growth - sessionState.recWidth;
@@ -234,7 +243,7 @@ function canvasMouseWheel(event) {
         growth = 0.98;
       }
 
-      handleGrow(growth) ;
+      handleGrow(growth,relativePosX,relativePosY) ;
       
 
     }
