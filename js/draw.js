@@ -208,7 +208,7 @@ function DrawLinesMainCanvas() {
     let {count,changes} = DrawLines(mainCanvas, ctxMainCanvas, false, sessionState.serverSnapshot) ;
     mainCanvasWindow.document.getElementById("lines").value = count ; 
     if(changes)
-      mainCanvasWindow.document.getElementById("improvements").value = changes ; 
+      mainCanvasWindow.document.getElementById("improvements").value = changes-1 ; 
     runTimeState.previousSnapshot = sessionState.serverSnapshot;
     return count;
   }
