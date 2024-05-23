@@ -125,16 +125,7 @@ function getNeighborDot(dotIndex, distance) {
 
 }
 
-var mainCanvasWindow = window.open("","canvas-window","width=800,height=600") ;
-mainCanvasWindow.document.write(`
-<!doctype html>
-
-<html lang="en">
-<body>
-<canvas id="main-canvas"></canvas>
-</body>
-</html>
-`) ;
+var mainCanvasWindow = window.open("controls.html","canvas-window","width=800,height=600") ;
 
 
 

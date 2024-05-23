@@ -499,7 +499,7 @@ function DrawLinesAnimationCanvasCanvas(sapshot,width,height,index) {
   can.animation.canvas.width = width+tocut
   can.animation.canvas.height = height
   fillCanvas("animation","#FFFFFF");
-  let count = DrawLines(can.animation.canvas, can.animation.ctx,true,sapshot);
+  let {count,changes} = DrawLines(can.animation.canvas, can.animation.ctx,true,sapshot);
   let left = can.animation.ctx.getImageData(0, 0, (width/2), height);
   let right = can.animation.ctx.getImageData((width/2)+tocut, 0,(width/2), height);
   can.animation.canvas.width = width
