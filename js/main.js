@@ -83,7 +83,7 @@ function InitState() {
   initRelevantPixels();
 }
 InitState();
-const MAIN_CANVAS_WIDTH = 256;
+const MAIN_CANVAS_WIDTH = 384;
 const IMG_TO_CANVAS_SCLAE = MAIN_CANVAS_WIDTH / sessionState.sourceWidth;
 function ApplyWeight() {
   SendRawWeight();
@@ -924,8 +924,8 @@ function initDots() {
     }
     sessionState.dots = pointsAr
 
-    sessionState.sourceWidth = 128
-    sessionState.sourceHeight = 128
+    sessionState.sourceWidth = 64
+    sessionState.sourceHeight = 64
 
   }
   else {
