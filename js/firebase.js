@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getAuth , GoogleAuthProvider ,signInWithPopup,onAuthStateChanged,createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getAuth , GoogleAuthProvider ,signInWithPopup,onAuthStateChanged,signInWithRedirect,createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { getDatabase, ref, update,onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
 
@@ -53,7 +53,7 @@ const firebaseConfig = {
   function signIn(cb) {
     console.log("signIn addScope");
     //provider.addScope('https://www.googleapis.com/auth/contacts.readonly');
-    signInWithPopup(auth, provider)
+    signInWithRedirect(auth, provider)
     .then((result) => {
       // This gives you a Google Access Token. You can use it to access the Google API.
       const credential = GoogleAuthProvider.credentialFromResult(result);

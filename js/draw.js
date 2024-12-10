@@ -206,9 +206,9 @@ function DrawLinesMainCanvas() {
   drawPoints();
   if (sessionState.serverSnapshot) {
     let {count,changes} = DrawLines(mainCanvas, ctxMainCanvas, false, sessionState.serverSnapshot) ;
-    mainCanvasWindow.document.getElementById("lines").value = count ; 
+    document.getElementById("lines").value = count ; 
     if(changes)
-      mainCanvasWindow.document.getElementById("improvements").value = changes-1 ; 
+      document.getElementById("improvements").value = changes-1 ; 
     runTimeState.previousSnapshot = sessionState.serverSnapshot;
     return count;
   }

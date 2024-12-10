@@ -125,7 +125,7 @@ function getNeighborDot(dotIndex, distance) {
 
 }
 
-var mainCanvasWindow = window.open("controls.html","canvas-window","width=800,height=600") ;
+
 
 
 
@@ -138,7 +138,7 @@ function saveSession() {
   saveLinesImage(filename);
 }
 function getMainCanvas() {
-  return mainCanvasWindow.document.getElementById("main-canvas")
+  return document.getElementById("main-canvas")
 }
 function initMainCanvas() {
 
@@ -791,7 +791,7 @@ function main() {
   startMainCanvas();
 
   window.getUser((user)=>{
-    sessionState.user =user ;
+    sessionState.user = user ;
     if(user){
     
       document.getElementById("signOut").style.display = "block";
