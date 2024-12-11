@@ -24,6 +24,7 @@ runTimeState = {
   lastMouseY: -1,
   lastMouseR: -1,
   mouseOnCanvas: false,
+  imgManipulationMode: IMG_MANIPULATION_ZOOM_MOVE,
   intervals: {
     intervalUpdateBackend: 0,
     intervalStreamPictures: 0,
@@ -65,7 +66,7 @@ function InitState() {
     pointsArr: [],
     snapshot: "",
     onCanvas: ON_CANVAS_IMG,
-    imgManipulationMode: IMG_MANIPULATION_SELECT_PIXELS,
+    
     stateId: "",
     bgColors: [0x7f, 0x7f, 0x7f, 0x7f],
     bgStrength: 0.5,
@@ -83,20 +84,29 @@ function InitState() {
   initRelevantPixels();
 }
 InitState();
+
 const MAIN_CANVAS_WIDTH = 384;
 const IMG_TO_CANVAS_SCLAE = MAIN_CANVAS_WIDTH / sessionState.sourceWidth;
+if(runTimeState.onPublicDefaults){
+  OnZoomMove() ;
+  document.getElementById("thumbnails").style.display = "none";
+
+}
+
 function ApplyWeight() {
   SendRawWeight();
 }
+
 function OnPixelWeight() {
-  sessionState.imgManipulationMode = IMG_MANIPULATION_PIXELS_WEIGHT;
+  runTimeState.imgManipulationMode = IMG_MANIPULATION_PIXELS_WEIGHT;
   GoToCanvas(ON_CANVAS_PIXEL_WEIGHT);
 }
+
 function OnZoomMove() {
-  sessionState.imgManipulationMode = IMG_MANIPULATION_ZOOM_MOVE;
+  runTimeState.imgManipulationMode = IMG_MANIPULATION_ZOOM_MOVE;
 }
 function OnSelect() {
-  sessionState.imgManipulationMode = IMG_MANIPULATION_SELECT_PIXELS;
+  runTimeState.imgManipulationMode = IMG_MANIPULATION_SELECT_PIXELS;
 }
 
 function newSession() {
@@ -124,10 +134,6 @@ function getNeighborDot(dotIndex, distance) {
   return [fixDotIndex(dotIndex - distance), fixDotIndex(dotIndex + distance)];
 
 }
-
-
-
-
 
 
 function saveSession() {
@@ -198,7 +204,7 @@ function canvasMouseWheel(event) {
 
   if (runTimeState.mouseOnCanvas) {
     event.preventDefault();
-    if (sessionState.imgManipulationMode == IMG_MANIPULATION_SELECT_PIXELS || sessionState.imgManipulationMode == IMG_MANIPULATION_PIXELS_WEIGHT) {
+    if (runTimeState.imgManipulationMode == IMG_MANIPULATION_SELECT_PIXELS || runTimeState.imgManipulationMode == IMG_MANIPULATION_PIXELS_WEIGHT) {
 
       if (event.deltaY < 0) {
 
@@ -222,7 +228,7 @@ function canvasMouseWheel(event) {
       }
 
     }
-    else if (sessionState.imgManipulationMode == IMG_MANIPULATION_ZOOM_MOVE) {
+    else if (runTimeState.imgManipulationMode == IMG_MANIPULATION_ZOOM_MOVE) {
 
       let relativePosX = event.offsetX / mainCanvas.width;
       let relativePosY = event.offsetY / mainCanvas.height;
@@ -359,7 +365,13 @@ function bgValToColor(val) {
   num = "#" + num + num + num
   return num
 }
+function updateOptionalValue(name,value){
+  if(document.getElementById(name)){
+    document.getElementById(name).value = value
+  }
+  
 
+}
 function LoadStateValuesToUI() {
 
   document.getElementById("stringPixelRatio").value = sessionState.stringPixelRation;
@@ -388,13 +400,14 @@ function LoadStateValuesToUI() {
 
 
 
-  document.getElementById("contrastRangeText").value = sessionState.contrast
-  document.getElementById("contrastRange").value = sessionState.contrast
+  updateOptionalValue("contrastRangeText",sessionState.contrast);
+  updateOptionalValue("contrastRange",sessionState.contrast);
 
-  document.getElementById("brightnessRangeText").value = sessionState.brightness
-  document.getElementById("brightnessRange").value = sessionState.brightness
-
-  document.getElementById("bgStrength").value = sessionState.bgStrength
+  updateOptionalValue("brightnessRangeText",sessionState.brightness);
+  updateOptionalValue("brightnessRange",sessionState.brightness);
+  updateOptionalValue("bgStrength",sessionState.bgStrength);
+  
+  
 
   if (sessionState.circle) {
     document.getElementById("circle").checked = true
@@ -593,11 +606,11 @@ function canvasMouseMove(event) {
           xD = (x - X) ** 2;
           yD = (y - Y) ** 2;
           if (xD + yD < R * R) {
-            if (sessionState.imgManipulationMode == IMG_MANIPULATION_SELECT_PIXELS) {
+            if (runTimeState.imgManipulationMode == IMG_MANIPULATION_SELECT_PIXELS) {
               can.focus.ctx.fillStyle = runTimeState.mouseButton == 0 ? 'rgb(255,255,255)' : 'rgb(0,0,0)';
               can.focus.ctx.fillRect(xToOriginal(x), yToOriginal(y), pixelWidthToOriginal(), pixelWidthToOriginal())
             }
-            else if (sessionState.imgManipulationMode == IMG_MANIPULATION_PIXELS_WEIGHT) {
+            else if (runTimeState.imgManipulationMode == IMG_MANIPULATION_PIXELS_WEIGHT) {
               let color = 0x7f;
               if (runTimeState.mouseButton == 0) {
                 color = 255 - runTimeState.pixelWeightColor
@@ -622,7 +635,7 @@ function canvasMouseMove(event) {
 }
 
 function imgManipulationMode(type) {
-  sessionState.imgManipulationMode = type;
+  runTimeState.imgManipulationMode = type;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -784,7 +797,7 @@ function main() {
   document.getElementById('loadSessionFile').addEventListener('input', LoadSession, false);
   document.getElementById("instructions").style.display = "none"
   document.getElementById("signOut").style.display = "none";
-  document.getElementById("ip").value = sessionState.serverAddr;
+  updateOptionalValue("ip",sessionState.serverAddr);
   RestartState();
   updateServerSnapshot(sessionState.serverSnapshot);
   GoToCanvas(ON_CANVAS_IMG);
@@ -834,6 +847,7 @@ function handleImageFileSelect(evt) {
   reader.onloadend = function () {
     originalImg.src = reader.result;
     document.getElementById("saveSession").value = getImageFileName();
+    document.getElementById("loadImgFile").value = getImageFileName();
     sessionState.sessionFileName = document.getElementById("saveSession").value;
     GoToCanvas(ON_CANVAS_IMG);
   }
@@ -1083,10 +1097,10 @@ function canvasMouseup(event) {
 
   runTimeState.mouseUpX = event.offsetX
   runTimeState.mouseUpY = event.offsetY
-  if (sessionState.imgManipulationMode == IMG_MANIPULATION_PIXELS_WEIGHT) {
+  if (runTimeState.imgManipulationMode == IMG_MANIPULATION_PIXELS_WEIGHT) {
     UpdateNewServerImg();
   }
-  else if (sessionState.imgManipulationMode == IMG_MANIPULATION_ZOOM_MOVE) {
+  else if (runTimeState.imgManipulationMode == IMG_MANIPULATION_ZOOM_MOVE) {
     const diffX = runTimeState.mouseUpX - runTimeState.mouseDownX;
     const diffY = runTimeState.mouseUpY - runTimeState.mouseDownY;
     let relativeMoveX = diffX / mainCanvas.width;
@@ -1249,10 +1263,10 @@ function playPauseToggle(cb) {
 function canvasToggle(img) {
   sessionState.onCanvas = img
   if (img == ON_CANVAS_IMG) {
-    sessionState.imgManipulationMode = IMG_MANIPULATION_SELECT_PIXELS
+    runTimeState.imgManipulationMode = IMG_MANIPULATION_SELECT_PIXELS
   }
   if (img == ON_CANVAS_PIXEL_WEIGHT) {
-    sessionState.imgManipulationMode = IMG_MANIPULATION_PIXELS_WEIGHT;
+    runTimeState.imgManipulationMode = IMG_MANIPULATION_PIXELS_WEIGHT;
   }
 
 }

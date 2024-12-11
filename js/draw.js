@@ -53,7 +53,7 @@ function DrawMouse(light) {
     }
     runTimeState.lastMouseImage = ctxMainCanvas.getImageData(x - imgDataR, y - imgDataR, 2 * imgDataR, 2 * imgDataR)
     ctxMainCanvas.strokeStyle = "#" + bgValToBaseColor(255) + bgValToBaseColor(128) + bgValToBaseColor(0);
-    if (sessionState.imgManipulationMode == IMG_MANIPULATION_SELECT_PIXELS || sessionState.imgManipulationMode == IMG_MANIPULATION_PIXELS_WEIGHT) {
+    if (runTimeState.imgManipulationMode == IMG_MANIPULATION_SELECT_PIXELS || runTimeState.imgManipulationMode == IMG_MANIPULATION_PIXELS_WEIGHT) {
       ctxMainCanvas.beginPath();
       ctxMainCanvas.arc(x, y, R, 0, 2 * Math.PI);
       ctxMainCanvas.closePath();
@@ -285,12 +285,12 @@ function DrawImg() {
       }
 
 
-      if (sessionState.imgManipulationMode == IMG_MANIPULATION_ZOOM_MOVE) {
+      if (runTimeState.imgManipulationMode == IMG_MANIPULATION_ZOOM_MOVE) {
         if (isFocusEdge(i, j)) {
           alpha = 0.5 + Math.random() / 2;
         }
       }
-      if (sessionState.imgManipulationMode == IMG_MANIPULATION_SELECT_PIXELS) {
+      if (runTimeState.imgManipulationMode == IMG_MANIPULATION_SELECT_PIXELS) {
         if (runTimeState.mouseOnCanvas) {
 
           if (isFocusEdge(i, j)) {
@@ -304,7 +304,7 @@ function DrawImg() {
 
       }
 
-      else if (sessionState.imgManipulationMode == IMG_MANIPULATION_PIXELS_WEIGHT) {
+      else if (runTimeState.imgManipulationMode == IMG_MANIPULATION_PIXELS_WEIGHT) {
         a = runTimeState.thumbnailWeightBuf[thPos(i, j)];
         if (runTimeState.mouseOnCanvas) {
           color = bgColor;

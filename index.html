@@ -37,7 +37,10 @@
   <script src="./js/main.js"></script>
 
   <script >
-    console.log("B");
+    runTimeState.onPublicDefaults = true;
+    
+  
+    
   </script>
 
 
@@ -91,37 +94,40 @@
     
     <button type="button" onclick="restartSession()">Restart session</button>
     <button type="button" onclick="destroySession()">Destroy Session</button>
-
+    <div>
+        <label for="circle">circle</label>
+        <input type="radio" id="circle" name="circleSquare" onclick='handlePointsChange(true);'>
+        <label for="rectangle">rectangle</label>
+        <input type="radio" id="rectangle" name="circleSquare" checked onclick='handlePointsChange(true);'>
+        W
+        <input type="text" id="pointsW" value="" size="1" onchange="handlePointsChange(true);">
+        H
+        <input type="text" id="pointsH" value="" size="1" onchange="handlePointsChange(true);">
+        C
+        <input type="text" id="pointsC" value="" size="1" onchange="handlePointsChange(true);">
+      </div>
 
     <div>
       <input type="radio" id="strings" name="canvasSwitch" value="1" onclick='canvasToggle(0);'>
       <label for="strings">strings</label>
       <input type="radio" id="image" name="canvasSwitch" value="0" checked onclick='canvasToggle(1);'>
       <label for="image">image</label>
-      <input type="radio" id="distance" name="canvasSwitch" value="2" onclick='canvasToggle(2);'>
-      <label for="distance">distance</label>
-      <input type="radio" id="stringColor" name="canvasSwitch" value="3" onclick='canvasToggle(3);'>
-      <label for="stringColor">stringColor</label>
     </div>
   </div>
-      <button type="button" onclick="StopScreenSaver()">Stop</button>
       <input type="text" id="testID" value="" size="1">
     </div>
     <br>
 
-    <canvas id="main-canvas"></canvas>
+
     <div>
       <input type="file" id="loadImgFile" name="imgFileLoader" value="asda" accept="image/png, image/jpeg" />
-      <button type="button" onclick="StartWebcam()">Start Webcam</button>
-      <button type="button" onclick="StreamPictures()">Stream Picrures</button>
       <button type="button" onclick="SaveImage()">Save image</button>
-      <button type="button" onclick="OnZoomMove()">ZoomMove</button>
-      <button type="button" onclick="OnSelect()">Select</button>
       <br>
-
-
       <div id="container">
         <div id="canvas-container">
+            <canvas id="main-canvas"></canvas>
+            <input type="text" id="lines" value="0" size="2">string used</input>
+            <input type="text" id="improvements" value="0" size="2">improvements</input>
         </div>
         <div id="controls">
           <label for="contarst">C</label>
@@ -260,29 +266,14 @@
 
 
       </div> 
-      <div>
-        <label for="circle">circle</label>
-        <input type="radio" id="circle" name="circleSquare" onclick='handlePointsChange(true);'>
-        <label for="rectangle">rectangle</label>
-        <input type="radio" id="rectangle" name="circleSquare" checked onclick='handlePointsChange(true);'>
-        W
-        <input type="text" id="pointsW" value="" size="1" onchange="handlePointsChange(true);">
-        H
-        <input type="text" id="pointsH" value="" size="1" onchange="handlePointsChange(true);">
-        C
-        <input type="text" id="pointsC" value="" size="1" onchange="handlePointsChange(true);">
-      </div>
+
       <br>
 
 
     </div>
   
-   
     <br>
 
-    <button  type="button" onclick="SetAddr(`http:\/\/localhost`)">LocalHost</button>
-    <button type="button" onclick="SetAddr()">Use IP</button>
-    <input type="text" id="ip" value="" size="15">
     <button type="button" onclick="initInstructions()">Instructions</button>
     <div id="instructions">
       <br>
@@ -353,51 +344,13 @@
     <!--  IMAGE -->
 
     <div id="image" style="padding-top: 20px;padding-left: 20px;padding-bottom: 20px;">
-
-      <div>
-
-
-
-      </div>
-
-
-
-     
-      
-      <div>
-
-        <input type="range" id="bgColorRange" value="128" min='0' max='250' step='1'
-          oninput="updateBGColor(this.value);" onchange="updateBGColor(this.value);">
-
-      </div>
-
-      <div>
-        bg Strength
-        <input type="range" id="bgStrength" value="0.5" min='0' max='1' step='0.1'
-          oninput="updateBGStength(this.value);" onchange="updateBGStength(this.value);">
-
-      </div>
-
-
     </div>
 
     <!--  STATUS -->
     <div id="status" style="padding-top: 20px;padding-left: 20px;padding-bottom: 20px;">
-      <div>
-
-        <input type="text" id="totalDistance"></input>
-
-      </div>
-
-
-
     </div>
 
-
-    <div id="container">
-      <div>
-
-
+    <div id="thumbnails">
         <canvas id="thumbnailStrings"></canvas>
         <canvas id="focus"></canvas>
         <br>
@@ -405,15 +358,7 @@
         <br>
         <canvas id="thumbnailWeight"></canvas>
         <canvas id="weight"></canvas>
-  
-  
-      </div>
-
-
-    </div>
     <div>
-
-
       <canvas id="webcamCanvas" class="d-none"></canvas>
     </div>
 
