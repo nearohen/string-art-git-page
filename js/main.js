@@ -87,11 +87,7 @@ InitState();
 
 const MAIN_CANVAS_WIDTH = 384;
 const IMG_TO_CANVAS_SCLAE = MAIN_CANVAS_WIDTH / sessionState.sourceWidth;
-if(runTimeState.onPublicDefaults){
-  OnZoomMove() ;
-  document.getElementById("thumbnails").style.display = "none";
 
-}
 
 function ApplyWeight() {
   SendRawWeight();
@@ -495,7 +491,6 @@ function updateRaw(name, binary) {
 
 
 function Init() {
-
 
   sessionState.normalize = document.getElementById("normalizeRangeText").value;
 
