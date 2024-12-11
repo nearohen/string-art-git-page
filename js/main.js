@@ -294,7 +294,10 @@ function handlePointsChange(initRec) {
     sessionState.recWidth = 1;
   }
   initMainCanvas();
-  originalImg.src = sessionState.originalImgSrc;//to trigger onLoad
+  if(sessionState.originalImgSrc){
+    originalImg.src = sessionState.originalImgSrc;//to trigger onLoad
+  }
+
   loadSavedToCanvas("weight", sessionState.weightImg);
   loadSavedToCanvas("focus", sessionState.focusImg);
 
