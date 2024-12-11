@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getAuth ,getRedirectResult, GoogleAuthProvider ,signInWithPopup,onAuthStateChanged,signInWithRedirect,createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getAuth ,signOut ,getRedirectResult, GoogleAuthProvider ,signInWithPopup,onAuthStateChanged,signInWithRedirect,createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { getDatabase, ref, update,onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
 
@@ -33,6 +33,9 @@ const firebaseConfig = {
 
 function handleUser(userE){
   if (userE) {
+    document.getElementById("signOut").style.display = "block";
+    document.getElementById("signInButton").style.display = "none";
+    document.getElementById("advanced").style.display = "none";
     // User is signed in, see docs for a list of available properties
     // https://firebase.google.com/docs/reference/js/auth.user
     sessionState.userId = userE.uid ;
@@ -53,6 +56,32 @@ function handleUser(userE){
     handleUser(userE) ;
     
   });
+
+
+
+
+
+
+  async function signOutUser() {
+    try {
+      await signOut(auth);
+      document.getElementById("signOut").style.display = "none";
+      document.getElementById("signInButton").style.display = "block";
+      console.log("User signed out successfully");
+    } catch (error) {
+      console.error("Error signing out:", error);
+    }
+  }
+
+  
+  document.getElementById('signOutButton').addEventListener('click', async () => {
+    try {
+      signOutUser();
+    } catch (error) {
+      console.error("Sign-out failed:", error);
+    }
+  });
+
 
   document.getElementById('signInButton').addEventListener('click', async () => {
     try {

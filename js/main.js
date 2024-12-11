@@ -806,12 +806,12 @@ function main() {
     if(user){
     
       document.getElementById("signOut").style.display = "block";
-      document.getElementById("signIn").style.display = "none";
+      document.getElementById("signInButton").style.display = "none";
       document.getElementById("advanced").style.display = "none";
     }
     else{
       document.getElementById("signOut").style.display = "none";
-      document.getElementById("signIn").style.display = "block";
+      document.getElementById("signInButton").style.display = "block";
     }
     
 
