@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getAuth , GoogleAuthProvider ,signInWithPopup,onAuthStateChanged,signInWithRedirect,createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getAuth ,getRedirectResult, GoogleAuthProvider ,signInWithPopup,onAuthStateChanged,signInWithRedirect,createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { getDatabase, ref, update,onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
 
@@ -31,7 +31,20 @@ const firebaseConfig = {
     }
   }
 
+  getRedirectResult(auth)
+  .then((result) => {
+    if (result) {
+      const credential = GoogleAuthProvider.credentialFromResult(result);
+      const token = credential.accessToken;
+      const user = result.user;
 
+      console.log("Redirect sign-in successful:", user);
+      // Perform post-sign-in actions here
+    }
+  })
+  .catch((error) => {
+    console.error("Error handling redirect result:", error);
+  });
 
   console.log("End")
   const provider = new GoogleAuthProvider();
@@ -50,10 +63,39 @@ const firebaseConfig = {
   });
 
 
-  function signIn(cb) {
+  async function signIn(cb) {
     console.log("signIn addScope");
+     // Check if a user is already signed in
+    const user = auth.currentUser;
+    if (user) {
+      console.log("User already signed in:", user);
+
+      // Trigger the callback with the user ID
+      const userId = user.uid;
+      if (cb) {
+        cb(userId);
+      }
+
+      // Call additional logic for a signed-in user if needed
+      if (getUserCB) {
+        getUserCB(user);
+      }
+      return; // Exit since the user is already signed in
+    }
     //provider.addScope('https://www.googleapis.com/auth/contacts.readonly');
-    signInWithRedirect(auth, provider)
+
+    console.log("No user signed in, proceeding with sign-in...");
+    // If no user is signed in, proceed with redirect sign-in
+    try {
+      await signInWithRedirect(auth, provider);
+      // Handle successful redirect in a separate callback or listener
+    } catch (error) {
+      console.error("Error during sign-in:", error);
+      // Optional: Handle specific error scenarios
+    }
+
+
+    await signInWithRedirect(auth, provider)
     .then((result) => {
       // This gives you a Google Access Token. You can use it to access the Google API.
       const credential = GoogleAuthProvider.credentialFromResult(result);

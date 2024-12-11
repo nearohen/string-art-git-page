@@ -93,19 +93,19 @@
         <input type="radio" id="circle" name="circleSquare" onclick='handlePointsChange(true);'>
         <label for="rectangle">rectangle</label>
         <input type="radio" id="rectangle" name="circleSquare" checked onclick='handlePointsChange(true);'>
-        W
+        <label for="pointsW">W</label>
+        <label for="pointsW">W</label>
         <input type="text" id="pointsW" value="" size="1" onchange="handlePointsChange(true);">
-        H
+        
+        <label for="pointsH">H</label>
         <input type="text" id="pointsH" value="" size="1" onchange="handlePointsChange(true);">
-        C
+        <label for="pointsH">C</label>
         <input type="text" id="pointsC" value="" size="1" onchange="handlePointsChange(true);">
       </div>
 
     <div>
       <input type="radio" id="strings" name="canvasSwitch" value="1" onclick='canvasToggle(0);'>
       <label for="strings">strings</label>
-      <input type="radio" id="image" name="canvasSwitch" value="0" checked onclick='canvasToggle(1);'>
-      <label for="image">image</label>
     </div>
   </div>
       <input type="text" id="testID" value="" size="1">
@@ -126,16 +126,15 @@
 
         
         <div id="controls">
-          <label for="contarst">C</label>
+          <label for="contrastRange">C</label>
           <input type="range" id="contrastRange" value="50" min='0' max='100' step='1'
             oninput="updateContrast(this.value,false);" onchange="updateContrast(this.value,true);">
           <input type="text" id="contrastRangeText" value="50" size="1"><br>
   
-          <label for="brightness">B</label>
+          <label for="brightnessRange">B</label>
           <input type="range" id="brightnessRange" value="50" min='0' max='100' step='1'
             oninput="updateBrightness(this.value,false);" onchange="updateBrightness(this.value,true);">
           <input type="text" id="brightnessRangeText" value="50" size="1"><br>
-
           <label for="stringPixelRatio">T</label>
           <input type="range" id="stringPixelRatio" value="" min='2' max='128' step='1'
           oninput="updateStringPixelRatio(this.value,false);" onchange="updateStringPixelRatio(this.value,true);">
@@ -155,17 +154,10 @@
     <canvas id="original"></canvas>
     <br>
       <div id="advanced">
-
-        <div>
-          <div>
-            <input type="text" id="lines" value="0" size="2">string used</input>
-            <input type="text" id="improvements" value="0" size="2">improvements</input>
-          </div>
-        </div>
         <div>
           <button type="button" onclick="OnPixelWeight()">Weight</button>
           <button type="button" onclick="ApplyWeight()">Apply</button>
-          <label for="pixelweight">Pixel weight</label>
+          <label for="pixelWeightRange">Pixel weight</label>
           <input type="range" id="pixelWeightRange" value="0x7x" min='0' max='255' step='1'
             oninput="updatePixelWeight(this.value,false);" onchange="updatePixelWeight(this.value,true);">
           <input id="pixelWeightColor" style="background-color:#7f7f7f;color:white;width:40px;height:40px;" value=""
