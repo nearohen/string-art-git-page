@@ -1231,13 +1231,7 @@ function restartSession() {
 
 }
 
-function SignIn()
-{
-  window.signIn((sessionKey) =>{
-    sessionState.userId = sessionKey ;
-    console.log("sessionkey:"+sessionKey) ;
-  }); 
-}
+
 function playPauseToggle(cb) {
   sessionState.stateId
   if (cb.checked) {
