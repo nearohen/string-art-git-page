@@ -149,12 +149,14 @@ function initMainCanvas() {
 
   mainCanvas = getMainCanvas()
   mainCanvas.onmousemove = canvasMouseMove
+  mainCanvas.touchmove = canvasMouseMove
   mainCanvas.onmouseenter = () => { runTimeState.mouseOnCanvas = true };
   mainCanvas.onmouseleave = () => { runTimeState.mouseOnCanvas = false };
   mainCanvas.onwheel = canvasMouseWheel;
   mainCanvas.onmousedown = canvasMousedown;
   mainCanvas.onmouseup = canvasMouseup;
-  mainCanvas.ontouc
+  mainCanvas.ontouchstart = canvasMousedown ;
+  mainCanvas.ontouchend = canvasMouseup ;
   mainCanvas.height = height + 1;//plus 1 cus most right circle dot out of bounds
   mainCanvas.width = width + 1;
   ctxMainCanvas = mainCanvas.getContext("2d")
@@ -195,6 +197,17 @@ function handleGrow(growth,relativePosX,relativePosY){
 
   }
   UpdateNewServerImg();
+}
+function Zoom(positive){
+  let growth = 1.02;
+  if(positive) {
+    growth = 1.02;
+  }
+  else {
+    growth = 0.98;
+  }
+  handleGrow(growth,0.5,0.5) ;
+
 }
 function canvasMouseWheel(event) {
 
@@ -845,7 +858,7 @@ function handleImageFileSelect(evt) {
   reader.onloadend = function () {
     originalImg.src = reader.result;
     document.getElementById("saveSession").value = getImageFileName();
-    document.getElementById("loadImgFile").value = getImageFileName();
+    document.getElementById("loadImgFile").value ="";
     sessionState.sessionFileName = document.getElementById("saveSession").value;
     GoToCanvas(ON_CANVAS_IMG);
   }
