@@ -3,7 +3,7 @@ let improveWorker = new Worker("./js/improveWorker.js");
 improveWorker.onmessage = function ({data :{type,args}}){
     if(type=="snapshotBuffer")
     {
-        sessionState.serverSnapshot  = args.buffer.slice();
+        sessionState.snapshotBuffer  = args.buffer.slice();
         improveWorker.postMessage({cmd : "snapshotBuffer",args },[args.buffer]);
     }
     else if(type=="sessionLock")

@@ -179,7 +179,7 @@ function DrawLines(canvas, ctxCanvas, updateImprovements, snapshot) {
 function DrawLinesThumbnailCanvas() {
 
   fillCanvas("thumbnailStrings", "#FFFFFF");
-  let {count,changes} = DrawLines(can.thumbnailStrings.canvas, can.thumbnailStrings.ctx, true, sessionState.serverSnapshot) ;
+  let {count,changes} = DrawLines(can.thumbnailStrings.canvas, can.thumbnailStrings.ctx, true, sessionState.snapshotBuffer) ;
  
   return count;
 
@@ -204,18 +204,18 @@ async function ss1() {
 
 function DrawLinesMainCanvas() {
   drawPoints();
-  if (sessionState.serverSnapshot) {
-    let {count,changes} = DrawLines(mainCanvas, ctxMainCanvas, false, sessionState.serverSnapshot) ;
+  if (sessionState.snapshotBuffer) {
+    let {count,changes} = DrawLines(mainCanvas, ctxMainCanvas, false, sessionState.snapshotBuffer) ;
     document.getElementById("lines").value = count ; 
     if(changes)
       document.getElementById("improvements").value = changes-1 ; 
-    runTimeState.previousSnapshot = sessionState.serverSnapshot;
+    runTimeState.previousSnapshot = sessionState.snapshotBuffer;
     return count;
   }
 }
 function updateServerSnapshot(snapshot) {
   if (snapshot != undefined) {
-    sessionState.serverSnapshot = snapshot;
+    sessionState.snapshotBuffer = snapshot;
     document.getElementById('lines').value = DrawLinesThumbnailCanvas()
   }
 }

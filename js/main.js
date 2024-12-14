@@ -132,10 +132,18 @@ function getNeighborDot(dotIndex, distance) {
 }
 
 
+function arrayBufferToBase64(buffer) {
+  const uint8Array = new Uint8Array(buffer);
+  const binaryString = uint8Array.reduce((str, byte) => str + String.fromCharCode(byte), "");
+  return btoa(binaryString); // Convert binary string to base64
+}
+
+
 function saveSession() {
 
 
   let filename = getSessionOutFileName()
+  sessionState.serverSnapshot = arrayBufferToBase64(sessionState.snapshotBuffer) ;
   saveText(JSON.stringify(sessionState), filename)
   saveLinesImage(filename);
 }
@@ -343,7 +351,15 @@ function handleNewState(params) {
   GoToCanvas(ON_CANVAS_STRINGS);
 }
 
-
+function base64ToArrayBuffer(base64) {
+  const binaryString = atob(base64); // Decode base64
+  const len = binaryString.length;
+  const uint8Array = new Uint8Array(len);
+  for (let i = 0; i < len; i++) {
+      uint8Array[i] = binaryString.charCodeAt(i);
+  }
+  return uint8Array.buffer; // Convert back to ArrayBuffer
+}
 
 function LoadSession(evt) {
 
@@ -356,6 +372,8 @@ function LoadSession(evt) {
   reader.onloadend = function () {
 
     params = JSON.parse(reader.result);
+
+    params.snapshotBuffer =  base64ToArrayBuffer(params.serverSnapshot)  ;
     if (params != null) {
 
       handleNewState(params);
