@@ -9,11 +9,10 @@ improveWorker.onmessage = function ({data :{type,args}}){
     else if(type=="sessionLock")
     {
         sessionState.sessionLock  = args.sessionLock;
-        document.getElementById('lock').value = sessionState.sessionLock ;
+        document.getElementById('lock').textContent = sessionState.sessionLock.length > 0 ? "locked" : "..." ;
         window.updateDB(sessionState.user.uid,sessionState.sessionLock,(key) => {
             sessionState.sessionKey = key ;
-            
-            document.getElementById('key').value = sessionState.sessionKey;
+            document.getElementById('key').textContent = sessionState.sessionKey.length > 0 ? "got key" : "..." ;;
         });
 
     }

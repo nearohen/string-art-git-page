@@ -33,6 +33,7 @@ const firebaseConfig = {
 
 function handleUser(userE){
   if (userE) {
+    document.getElementById("displayName").textContent = userE.displayName ; 
     document.getElementById("signOut").style.display = "block";
     document.getElementById("signInButton").style.display = "none";
     document.getElementById("advanced").style.display = "none";

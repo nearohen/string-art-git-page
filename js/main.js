@@ -425,7 +425,7 @@ function LoadStateValuesToUI() {
   document.getElementById("bgColor1").style.backgroundColor = bgValToColor(sessionState.bgColors[1]);
   document.getElementById("bgColor2").style.backgroundColor = bgValToColor(sessionState.bgColors[2]);
   document.getElementById("bgColor3").style.backgroundColor = bgValToColor(sessionState.bgColors[3]);
-  document.getElementById("saveSession").value = sessionState.sessionFileName
+  document.getElementById("sessionFileName").value = sessionState.sessionFileName
 
 
 
@@ -820,7 +820,6 @@ function initRec() {
 }
 function main() {
 
-  InitWebcam();
   canvasPixelScale = 4;
   document.getElementById('loadImgFile').addEventListener('input', handleImageFileSelect, false);
   document.getElementById('loadSessionFile').addEventListener('input', LoadSession, false);
@@ -875,15 +874,14 @@ function handleImageFileSelect(evt) {
   var reader = new FileReader();
   reader.onloadend = function () {
     originalImg.src = reader.result;
-    document.getElementById("saveSession").value = getImageFileName();
-    document.getElementById("loadImgFile").value ="";
-    sessionState.sessionFileName = document.getElementById("saveSession").value;
+    document.getElementById("sessionFileName").value = getImageFileName();
+    sessionState.sessionFileName = document.getElementById("sessionFileName").value;
     GoToCanvas(ON_CANVAS_IMG);
   }
   reader.readAsDataURL(file);
 
 
-
+  return true;
 
 
 }

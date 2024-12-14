@@ -45,35 +45,23 @@
   <button id="signInButton">Sign In</button>
 
   <div id = signOut display = "none" >
+    <span  type="text" id="displayName" value="" size="32" readonly></span>
     <button id = signOutButton type="button">Sign Out </button>
-    <div id="session" style="padding-top: 20px;padding-left: 20px;padding-bottom: 20px;">
     
-      
+
+    <div id="session" style="padding-top: 20px;padding-left: 20px;padding-bottom: 20px;">
       <div>
         <button type="button" onclick="saveSession()">Save Session </button>
         <button type="button" onclick="document.getElementById('loadSessionFile').click()">Load Session</button>
-        <button type="button" onclick="newSession()">New Session</button>
-  
+        <input id="sessionFileName">
         <input id="loadSessionFile" style="visibility:hidden;" type="file"  name="imgFileLoader"
-          accept="" />
-        <input id="saveSession">
-  
+        accept="" />
       </div>
    <div>
 
     <div>
-
-      <div>
-        user id
-        <input type="text" id="stateId" value="" size="32">
-      </div>
-      lock
-        <input type="text" id="lock" value="" size="32">
-        key
-      <div>
-        <input type="text" id="key" value="" size="32">
-      </div>
-
+      <p type="text" id="lock" texContent="Lock" size="10">
+      <p type="text" id="key"  texContent="key" size="10">
     </div>
 
   </div>
@@ -102,19 +90,15 @@
       <input type="radio" id="strings" name="canvasSwitch" value="1" onclick='canvasToggle(0);'>
       <label for="strings">strings</label>
     </div>
-  </div>
-      <input type="text" id="testID" value="" size="1">
+     </div>
     </div>
     <br>
 
 
     <div>
-      <input type="file" id="loadImgFile" name="imgFileLoader" value="asda" accept="image/png, image/jpeg" />
+      <input type="file" id="loadImgFile"  />
       <button type="button" onclick="SaveImage()">Save image</button>
-      <br>
-      <input type="text" id="lines" value="0" size="2">string used</input>
-      <input type="text" id="improvements" value="0" size="2">improvements</input>
-      <br>
+
       <div id="container">
         
             <canvas id="main-canvas"></canvas>
@@ -148,8 +132,12 @@
        
   
       </div>
-    </div>
 
+    </div>
+    <br>
+    <input type="text" id="lines" value="0" size="2">string used</input>
+    <input type="text" id="improvements" value="0" size="2">improvements</input>
+    <br>
 
     <br>
     <canvas id="original"></canvas>
