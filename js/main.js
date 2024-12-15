@@ -842,10 +842,14 @@ function handleNewServerImg() {
   drawSrcImageOnCanvas(0, 0, 1 / IMG_TO_CANVAS_SCLAE, originalImg, can.original.canvas, can.original.ctx)
   updateThumbnails();
   saveState();
+
+
+  can.original.ctx.save();
+  can.original.ctx.strokeStyle = "red";
   can.original.ctx.beginPath();
   can.original.ctx.rect(sessionState.recOffX, sessionState.recOffY, sessionState.recWidth, sessionState.recHeight);
   can.original.ctx.stroke();
-
+  can.original.ctx.restore();
 }
 
 function fillCanvas(name, color) {
