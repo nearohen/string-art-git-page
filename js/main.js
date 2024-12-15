@@ -2,7 +2,7 @@
 var Buffer = require('Buffer');
 const EventBus = new EventTarget();
 // Emit (dispatch) a global event
-function emitStateChnage(newState){
+function emitStateChange(newState){
   emitEvent("stateChange",{state:newState}) ;
 }
 
@@ -22,7 +22,7 @@ function listenToEvent(eventName, callback) {
 }
 
 function newSession(){
-  emitStateChnage(States.SI);
+  emitStateChange(States.SI);
 }
   
 
@@ -57,6 +57,7 @@ const States = {
   SS: 'SESSION_STARTED',
   PL:"ON_PLAY",
   ST:"ON_STOP",
+  IN:"INSTRUCTIONS",
 };
 
 runTimeState = {
@@ -880,6 +881,9 @@ onStateChange((newState)=>{
     document.getElementById("loadImgFile").style.visibility = "hidden";
     document.getElementById("saveSession").style.visibility = "hidden";
     document.getElementById("onStop").style.visibility = "hidden";
+    document.getElementById("original").style.display = "block";
+    document.getElementById("instructions").style.visibility = "hidden";
+    
   }
   else if(newState==States.SI){
     document.getElementById("loadImgDiv").style.visibility = "visible";
@@ -890,8 +894,10 @@ onStateChange((newState)=>{
     document.getElementById("saveSession").style.visibility = "hidden";
     document.getElementById("loadSession").style.visibility = "visible";
     document.getElementById("onStop").style.visibility = "hidden";
+    document.getElementById("original").style.display = "block";
+    document.getElementById("instructions").style.visibility = "hidden";
     if(sessionState.originalImgSrc){
-      emitStateChnage(States.RD);
+      emitStateChange(States.RD);
     }
     
   }
@@ -904,6 +910,8 @@ onStateChange((newState)=>{
     document.getElementById("startSession").style.visibility = "visible";
     document.getElementById("saveSession").style.visibility = "hidden";
     document.getElementById("onStop").style.visibility = "hidden";
+    document.getElementById("original").style.display = "block";
+    document.getElementById("instructions").style.visibility = "hidden";
     startSession() ;
   }
   else if(newState==States.SS){
@@ -916,6 +924,9 @@ onStateChange((newState)=>{
     document.getElementById("onStop").style.visibility = "hidden";
     document.getElementById("signOut").style.visibility = "hidden";
     document.getElementById("beforeSS").style.visibility = "hidden";
+    document.getElementById("instructions").style.visibility = "hidden";
+    document.getElementById("original").style.display = "block";
+    
     Play();
   }
   else if(newState==States.PL){
@@ -929,8 +940,9 @@ onStateChange((newState)=>{
     document.getElementById("saveSession").style.visibility = "hidden";
     document.getElementById("onStop").style.visibility = "hidden";
     document.getElementById("beforeSS").style.visibility = "hidden";
-
+    document.getElementById("instructions").style.visibility = "hidden";
     document.getElementById("playStop").style.visibility = "visible";
+    document.getElementById("original").style.display = "block";
   }
   else if(newState==States.ST){
     document.getElementById("loadImgDiv").style.visibility = "visible";
@@ -941,6 +953,12 @@ onStateChange((newState)=>{
     document.getElementById("signOut").style.visibility = "visible";
     document.getElementById("beforeSS").style.visibility = "hidden";
     document.getElementById("playStop").style.visibility = "visible";
+    document.getElementById("original").style.display = "block";
+    document.getElementById("instructions").style.visibility = "hidden";
+  }
+  else if(newState==States.IN){
+    document.getElementById("original").style.display = "none";
+    document.getElementById("instructions").style.visibility = "visible";
   }
 })
 
@@ -960,13 +978,13 @@ function main() {
   window.getUser((user)=>{
     sessionState.user = user ;
     if(user){
-      emitStateChnage(States.SI) ;
+      emitStateChange(States.SI) ;
     }
     else{
-      emitStateChnage(States.NS) ;
+      emitStateChange(States.NS) ;
     }
   })
-  emitStateChnage(States.NS);
+  emitStateChange(States.NS);
 }
 
 
@@ -996,7 +1014,7 @@ function handleImageFileSelect(evt) {
     document.getElementById("sessionFileName").value = getImageFileName();
     sessionState.sessionFileName = document.getElementById("sessionFileName").value;
     GoToCanvas(ON_CANVAS_STRINGS);
-    emitStateChnage(States.RD) ;
+    emitStateChange(States.RD) ;
   }
   reader.readAsDataURL(file);
 
@@ -1335,7 +1353,7 @@ function loader() {
     fixRec();
     handleNewServerImg();
     if(runTimeState.state==States.SI){
-      emitStateChnage(States.RD);
+      emitStateChange(States.RD);
 
     }
 
@@ -1380,7 +1398,7 @@ function Play() {
 function Stop(cb) {
   pauseSender();
   PostWorkerMessage({cmd : "stopImprove" ,args : { }});
-  emitStateChnage(States.ST) ;  
+  emitStateChange(States.ST) ;  
 }
 
 

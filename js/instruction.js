@@ -73,12 +73,11 @@ function removeItemOnce(arr, value) {
 function goToInstruction() {
 
   let index = document.getElementById("goToInstruction").value;
-
-
   if (index != -1) {
     sessionState.instructions.currentInstruction = parseInt(index) + 3;
     refreshtoCurrentInstruction();
   }
+  
 
 }
 
@@ -118,7 +117,7 @@ function refreshtoCurrentInstruction() {
 }
 function initInstructions() {
 
-
+  emitStateChange(States.IN);
   sessionState.instructions.instructionBatch = 8;
   sessionState.onCanvas = ON_CANVAS_INSTRUCTION;
   document.getElementById("instructions").style.display = "block";

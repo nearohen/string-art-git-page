@@ -69,7 +69,7 @@ function handleUser(userE){
       document.getElementById("signOut").style.display = "none";
       document.getElementById("signInButton").style.display = "block";
       console.log("User signed out successfully");
-      emitStateChnage(States.NS) ;
+      emitStateChange(States.NS) ;
     } catch (error) {
       console.error("Error signing out:", error);
     }

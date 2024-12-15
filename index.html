@@ -115,7 +115,7 @@
             <div id="zoom">
              <button type="button" onclick="Zoom(true)">+</button>
              <button type="button" onclick="Zoom(false)">-</button>
-            </div>
+            </div>g
             <br>
           <label for="contrastRange">C</label>
           <input type="range" id="contrastRange" value="50" min='0' max='100' step='1'
@@ -137,8 +137,6 @@
         <canvas id="original"></canvas>
         <canvas id="thumbnailMain"></canvas>
         <div id="instructions">
-          <br>
-          <br>
           <div>
             step
             <input type="text" id="instruction" value="" size="3">
@@ -149,7 +147,6 @@
             <button type="button" onclick="stopInstructions()">[]</button>
           </div>
           <br>
-    
           <div>
     
             <button type="button" onclick="nextInstruction()">+</button>
@@ -172,7 +169,7 @@
             <input type="text" id="step6" value="" size="3" style="font-size:2vw">
             <input type="text" id="step7" value="" size="3" style="font-size:2vw">
             <input type="text" id="step8" value="" size="3" style="font-size:2vw">
-          </div>
+          
     
     
           <button type="button" onclick="findInstruction()">find line</button>
@@ -181,8 +178,7 @@
           pos
           <input type="text" id="goToInstruction" value="-1" size="1">
           <button type="button" onclick="goToInstruction()">go to</button>
-    
-    
+        </div>
         </div>
   
       </div>
