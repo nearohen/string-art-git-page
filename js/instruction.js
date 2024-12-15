@@ -145,7 +145,7 @@ function initInstructions() {
     sessionState.instructions.currentInstruction = 0;
 
 
-    var decoded = Buffer.from(sessionState.serverSnapshot, 'base64');
+    var decoded = Buffer.from(sessionState.snapshotBuffer, 'base64');
     let lineIndex = 0
     for (let i = 0; i < decoded.length; i++) {
       let byte = decoded.readInt8(i);
