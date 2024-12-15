@@ -136,7 +136,9 @@ function initInstructions() {
       sessionState.instructions.instructionDots[i] = [];
     }
 
-    document.getElementById('strings').checked = true;
+    if(document.getElementById('strings')){
+      document.getElementById('strings').checked = true;
+    }
     clearMainCanvas();
     drawPoints();
     sessionState.instructions.instructionsArray = [];
