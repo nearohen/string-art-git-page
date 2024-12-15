@@ -1,5 +1,39 @@
 
 var Buffer = require('Buffer');
+const EventBus = new EventTarget();
+// Emit (dispatch) a global event
+function emitStateChnage(newState){
+  emitEvent("stateChange",{state:newState}) ;
+}
+
+
+
+
+function emitEvent(eventName, detail = {}) {
+  const event = new CustomEvent(eventName, { detail }); // Pass data with the event
+  EventBus.dispatchEvent(event);
+}
+
+// Listen for a global event
+function listenToEvent(eventName, callback) {
+  EventBus.addEventListener(eventName, (event) => {
+      callback(event.detail); // Access the passed data
+  });
+}
+
+function newSession(){
+  emitStateChnage(States.SI);
+}
+  
+
+function onStateChange(cb){
+  listenToEvent("stateChange",({state})=>{
+    runTimeState.state = state ;
+    cb(state) ;
+  }) ;
+}
+
+
 
 const IMG_MANIPULATION_SELECT_PIXELS = 0
 const IMG_MANIPULATION_ZOOM_MOVE = 1
@@ -15,7 +49,18 @@ const ON_CANVAS_PIXEL_WEIGHT = 5;
 let lastStringColor = null
 let lastDistance = null;
 
+
+const States = {
+  NS :'NOT_SIGNED',
+  SI: 'SIGNED',
+  RD: 'READY',
+  SS: 'SESSION_STARTED',
+  PL:"ON_PLAY",
+  ST:"ON_STOP",
+};
+
 runTimeState = {
+  state: States.NS ,
   mouseDown: false,
   mouseButton: -1,
   mouseX: -1,
@@ -524,7 +569,7 @@ function updateRaw(name, binary) {
 
 
 
-function Init() {
+function startSession() {
 
   sessionState.normalize = document.getElementById("normalizeRangeText").value;
 
@@ -760,7 +805,10 @@ function GoToCanvas(type) {
     document.getElementById('image').checked = true;
   }
   if (sessionState.onCanvas == ON_CANVAS_STRINGS) {
-    document.getElementById('strings').checked = true;
+    if(document.getElementById('strings')){
+      document.getElementById('strings').checked = true;
+    }
+    
   }
   if (sessionState.onCanvas == ON_CANVAS_DISTANCE) {
     document.getElementById('distance').checked = true;
@@ -818,6 +866,80 @@ function initRec() {
     sessionState.recWidth = sessionState.recHeight * sessionState.sourceWidth / sessionState.sourceHeight
   }
 }
+
+onStateChange((newState)=>{
+  if(newState==States.NS){
+    document.getElementById("loadImgDiv").style.visibility = "hidden";
+    document.getElementById("signOut").style.visibility = "hidden";
+    document.getElementById("signInButton").style.visibility = "visible";
+    document.getElementById("beforeSS").style.visibility = "hidden";
+    document.getElementById("afterSS").style.visibility = "hidden";
+    document.getElementById("newSession").style.visibility = "hidden";
+    document.getElementById("startSession").style.visibility = "hidden";
+    document.getElementById("loadImgFile").style.visibility = "hidden";
+    document.getElementById("saveSession").style.visibility = "hidden";
+    document.getElementById("saveImage").style.visibility = "hidden";
+  }
+  else if(newState==States.SI){
+    document.getElementById("loadImgDiv").style.visibility = "visible";
+    document.getElementById("signOut").style.visibility = "visible";
+    document.getElementById("startSession").style.visibility = "hidden";
+    document.getElementById("loadImgFile").style.visibility = "visible";
+    document.getElementById("beforeSS").style.visibility = "visible";
+    document.getElementById("saveSession").style.visibility = "hidden";
+    document.getElementById("loadSession").style.visibility = "visible";
+    document.getElementById("saveImage").style.visibility = "hidden";
+    if(sessionState.originalImgSrc){
+      emitStateChnage(States.RD);
+    }
+    
+  }
+  else if(newState==States.RD){
+    document.getElementById("loadImgDiv").style.visibility = "visible";
+    document.getElementById("signOut").style.visibility = "visible";
+    document.getElementById("signInButton").style.visibility = "hidden";
+    document.getElementById("advanced").style.visibility = "hidden";
+    document.getElementById("newSession").style.visibility = "hidden";
+    document.getElementById("startSession").style.visibility = "visible";
+    document.getElementById("saveSession").style.visibility = "hidden";
+    document.getElementById("saveImage").style.visibility = "hidden";
+  }
+  else if(newState==States.SS){
+
+    document.getElementById("loadImgDiv").style.visibility = "visible";
+    document.getElementById("startSession").style.visibility = "hidden";
+    document.getElementById("afterSS").style.visibility = "visible";
+    document.getElementById("saveSession").style.visibility = "hidden";
+    document.getElementById("loadSession").style.visibility = "hidden";
+    document.getElementById("saveImage").style.visibility = "hidden";
+    document.getElementById("signOut").style.visibility = "hidden";
+    document.getElementById("beforeSS").style.visibility = "hidden";
+  }
+  else if(newState==States.PL){
+
+    
+    document.getElementById("loadImgDiv").style.visibility = "visible";
+    document.getElementById("signOut").style.visibility = "hidden";
+    document.getElementById("beforeSS").style.visibility = "hidden";
+    document.getElementById("newSession").style.visibility = "hidden";
+    document.getElementById("startSession").style.visibility = "hidden";
+    document.getElementById("saveSession").style.visibility = "hidden";
+    document.getElementById("saveImage").style.visibility = "hidden";
+    document.getElementById("beforeSS").style.visibility = "hidden";
+
+  }
+  else if(newState==States.ST){
+    document.getElementById("loadImgDiv").style.visibility = "visible";
+    document.getElementById("beforeSS").style.visibility = "hidden";
+    document.getElementById("newSession").style.visibility = "visible";
+    document.getElementById("saveSession").style.visibility = "visible";
+    document.getElementById("saveImage").style.visibility = "visible";
+    document.getElementById("signOut").style.visibility = "visible";
+    document.getElementById("beforeSS").style.visibility = "hidden";
+    
+  }
+})
+
 function main() {
 
   canvasPixelScale = 4;
@@ -828,26 +950,19 @@ function main() {
   updateOptionalValue("ip",sessionState.serverAddr);
   RestartState();
   updateServerSnapshot(sessionState.serverSnapshot);
-  GoToCanvas(ON_CANVAS_IMG);
+  GoToCanvas(ON_CANVAS_STRINGS);
   startMainCanvas();
 
   window.getUser((user)=>{
     sessionState.user = user ;
     if(user){
-    
-      document.getElementById("signOut").style.display = "block";
-      document.getElementById("signInButton").style.display = "none";
-      document.getElementById("advanced").style.display = "none";
+      emitStateChnage(States.SI) ;
     }
     else{
-      document.getElementById("signOut").style.display = "none";
-      document.getElementById("signInButton").style.display = "block";
+      emitStateChnage(States.NS) ;
     }
-    
-
   })
-
-
+  emitStateChnage(States.NS);
 }
 
 
@@ -876,7 +991,8 @@ function handleImageFileSelect(evt) {
     originalImg.src = reader.result;
     document.getElementById("sessionFileName").value = getImageFileName();
     sessionState.sessionFileName = document.getElementById("sessionFileName").value;
-    GoToCanvas(ON_CANVAS_IMG);
+    GoToCanvas(ON_CANVAS_STRINGS);
+    emitStateChnage(States.RD) ;
   }
   reader.readAsDataURL(file);
 
@@ -1200,14 +1316,25 @@ function loader() {
     can.focus.canvas.width = originalImg.width / IMG_TO_CANVAS_SCLAE;
     can.focus.canvas.height = originalImg.height / IMG_TO_CANVAS_SCLAE;
     fillCanvas("focus", "#FFFFFF");
+    let oldW = can.original.canvas.width ;
+    let oldH = can.original.canvas.height ;
+    
     can.original.canvas.width = originalImg.width / IMG_TO_CANVAS_SCLAE;
     can.original.canvas.height = originalImg.height / IMG_TO_CANVAS_SCLAE;
+    if(can.original.canvas.width!=oldW || can.original.canvas.height){
+      initRec();
 
-    if (sessionState.recWidth == 1 || sessionState.recWidth == -1) {
+    }
+    else if (sessionState.recWidth == 1 || sessionState.recWidth == -1) {
       initRec();
     }
     fixRec();
     handleNewServerImg();
+    if(runTimeState.state==States.SI){
+      emitStateChnage(States.RD);
+
+    }
+
   }
   LoadStateFromLocalStorage()
   main()
@@ -1233,14 +1360,12 @@ function inputControler(name, unit, callback) {
 function Play() {
 
   GoToCanvas(ON_CANVAS_STRINGS);
- 
- 
   StartCapturing();
 }
 function Stop(cb) {
   pauseSender();
   PostWorkerMessage({cmd : "stopImprove" ,args : { }});
-  
+  emitStateChnage(States.ST) ;  
 }
 
 
@@ -1252,7 +1377,7 @@ function restartSession() {
     Stop(() => {
       document.getElementById("playPauseToggleCheckBox").checked = false;
       RestartState();
-      Init();
+      startSession();
 
     });
   }
@@ -1265,7 +1390,7 @@ function playPauseToggle(cb) {
   sessionState.stateId
   if (cb.checked) {
     if (sessionState.stateId.length == 0) {
-      Init();
+      startSession();
       Play();
     }
     else {

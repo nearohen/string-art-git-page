@@ -13,6 +13,9 @@ improveWorker.onmessage = function ({data :{type,args}}){
         window.updateDB(sessionState.user.uid,sessionState.sessionLock,(key) => {
             sessionState.sessionKey = key ;
             document.getElementById('key').textContent = sessionState.sessionKey.length > 0 ? "got key" : "..." ;;
+            emitStateChnage(States.SS) ;
+            
+            
         });
 
     }
@@ -37,15 +40,12 @@ function UpdatThumbnailMainRaw(){
 
 function StartCapturing()
 {
-    setTimeout(()=>{
-
-        PostWorkerMessage({cmd: "startImprove",args : 
+    PostWorkerMessage({cmd: "startImprove",args : 
         {
              thumbnailMainRaw : sessionState.thumbnailMainRaw,
              sessionKey : sessionState.sessionKey,
          }},[sessionState.thumbnailMainRaw]);
-        // Display the buffer contents
-    
-    },1000);
+
+    emitStateChnage(States.PL) ;
 }
 

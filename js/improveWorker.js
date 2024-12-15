@@ -63,8 +63,8 @@ onmessage = function (msg){
     const {data : {cmd ,args}} = msg ;
     if(cmd === "stopImprove")
     {
-        this.clearInterval(workerStae.improveInterval) ;
-        workerStae.improveInterva = 0;
+        clearInterval(workerStae.improveInterval) ;
+        workerStae.improveInterval = 0;
     }
     else if(cmd === "startImprove")
     {
