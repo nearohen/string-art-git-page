@@ -40,12 +40,16 @@ function UpdatThumbnailMainRaw(){
 
 function StartCapturing()
 {
-    PostWorkerMessage({cmd: "startImprove",args : 
+    if(sessionState.thumbnailMainRaw){
+        PostWorkerMessage({cmd: "startImprove",args : 
         {
              thumbnailMainRaw : sessionState.thumbnailMainRaw,
              sessionKey : sessionState.sessionKey,
          }},[sessionState.thumbnailMainRaw]);
 
          emitStateChange(States.PL) ;
+
+    }
+
 }
 

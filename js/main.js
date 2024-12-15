@@ -21,9 +21,7 @@ function listenToEvent(eventName, callback) {
   });
 }
 
-function newSession(){
-  emitStateChange(States.SI);
-}
+
   
 
 function onStateChange(cb){
@@ -152,10 +150,7 @@ function OnSelect() {
 }
 
 function newSession() {
-  InitState();
-  saveState();
-  LoadStateFromLocalStorage();
-
+  emitStateChange(States.SI);
 }
 
 
@@ -896,6 +891,7 @@ onStateChange((newState)=>{
     document.getElementById("onStop").style.visibility = "hidden";
     document.getElementById("original").style.display = "block";
     document.getElementById("instructions").style.visibility = "hidden";
+    document.getElementById("afterSS").style.visibility = "hidden";
     if(sessionState.originalImgSrc){
       emitStateChange(States.RD);
     }
@@ -912,12 +908,13 @@ onStateChange((newState)=>{
     document.getElementById("onStop").style.visibility = "hidden";
     document.getElementById("original").style.display = "block";
     document.getElementById("instructions").style.visibility = "hidden";
+    document.getElementById("playStop").style.visibility = "hidden";
   }
   else if(newState==States.SS){
 
     document.getElementById("loadImgDiv").style.visibility = "visible";
     document.getElementById("startSession").style.visibility = "hidden";
-    document.getElementById("afterSS").style.visibility = "visible";
+    document.getElementById("playStop").style.visibility = "visible";
     document.getElementById("saveSession").style.visibility = "hidden";
     document.getElementById("loadSession").style.visibility = "hidden";
     document.getElementById("onStop").style.visibility = "hidden";
