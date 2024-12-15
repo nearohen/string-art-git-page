@@ -912,7 +912,6 @@ onStateChange((newState)=>{
     document.getElementById("onStop").style.visibility = "hidden";
     document.getElementById("original").style.display = "block";
     document.getElementById("instructions").style.visibility = "hidden";
-    startSession() ;
   }
   else if(newState==States.SS){
 
