@@ -869,6 +869,7 @@ function initRec() {
 
 onStateChange((newState)=>{
   if(newState==States.NS){
+    document.getElementById("thumbnailMain").style.visibility = "hidden";
     document.getElementById("loadImgDiv").style.visibility = "hidden";
     document.getElementById("signOut").style.visibility = "hidden";
     document.getElementById("signInButton").style.visibility = "visible";
@@ -878,7 +879,7 @@ onStateChange((newState)=>{
     document.getElementById("startSession").style.visibility = "hidden";
     document.getElementById("loadImgFile").style.visibility = "hidden";
     document.getElementById("saveSession").style.visibility = "hidden";
-    document.getElementById("saveImage").style.visibility = "hidden";
+    document.getElementById("onStop").style.visibility = "hidden";
   }
   else if(newState==States.SI){
     document.getElementById("loadImgDiv").style.visibility = "visible";
@@ -888,7 +889,7 @@ onStateChange((newState)=>{
     document.getElementById("beforeSS").style.visibility = "visible";
     document.getElementById("saveSession").style.visibility = "hidden";
     document.getElementById("loadSession").style.visibility = "visible";
-    document.getElementById("saveImage").style.visibility = "hidden";
+    document.getElementById("onStop").style.visibility = "hidden";
     if(sessionState.originalImgSrc){
       emitStateChnage(States.RD);
     }
@@ -902,7 +903,7 @@ onStateChange((newState)=>{
     document.getElementById("newSession").style.visibility = "hidden";
     document.getElementById("startSession").style.visibility = "visible";
     document.getElementById("saveSession").style.visibility = "hidden";
-    document.getElementById("saveImage").style.visibility = "hidden";
+    document.getElementById("onStop").style.visibility = "hidden";
     startSession() ;
   }
   else if(newState==States.SS){
@@ -912,7 +913,7 @@ onStateChange((newState)=>{
     document.getElementById("afterSS").style.visibility = "visible";
     document.getElementById("saveSession").style.visibility = "hidden";
     document.getElementById("loadSession").style.visibility = "hidden";
-    document.getElementById("saveImage").style.visibility = "hidden";
+    document.getElementById("onStop").style.visibility = "hidden";
     document.getElementById("signOut").style.visibility = "hidden";
     document.getElementById("beforeSS").style.visibility = "hidden";
     Play();
@@ -926,21 +927,20 @@ onStateChange((newState)=>{
     document.getElementById("newSession").style.visibility = "hidden";
     document.getElementById("startSession").style.visibility = "hidden";
     document.getElementById("saveSession").style.visibility = "hidden";
-    document.getElementById("saveImage").style.visibility = "hidden";
+    document.getElementById("onStop").style.visibility = "hidden";
     document.getElementById("beforeSS").style.visibility = "hidden";
-    document.getElementById("play").style.visibility = "hidden";
-    document.getElementById("stop").style.visibility = "visible";
+
+    document.getElementById("playStop").style.visibility = "visible";
   }
   else if(newState==States.ST){
     document.getElementById("loadImgDiv").style.visibility = "visible";
     document.getElementById("beforeSS").style.visibility = "hidden";
     document.getElementById("newSession").style.visibility = "visible";
     document.getElementById("saveSession").style.visibility = "visible";
-    document.getElementById("saveImage").style.visibility = "visible";
+    document.getElementById("onStop").style.visibility = "visible";
     document.getElementById("signOut").style.visibility = "visible";
     document.getElementById("beforeSS").style.visibility = "hidden";
-    document.getElementById("play").style.visibility = "visible";
-    document.getElementById("stop").style.visibility = "hidden";
+    document.getElementById("playStop").style.visibility = "visible";
   }
 })
 
@@ -1360,11 +1360,22 @@ function inputControler(name, unit, callback) {
 }
 
 
+function PlayStop(){
 
+  if(runTimeState.state==States.PL){
+      Stop() ;
+      document.getElementById("playStop").value = "Play" ;
+  }else {
+    Play() ;
+    
+}
+
+}
 function Play() {
 
   GoToCanvas(ON_CANVAS_STRINGS);
   StartCapturing();
+  document.getElementById("playStop").value = "Stop" ;
 }
 function Stop(cb) {
   pauseSender();

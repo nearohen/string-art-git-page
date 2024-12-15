@@ -92,14 +92,22 @@
     <div>
       <button id="startSession" type="button" onclick="startSession()">Start Session</button>
       <div id="afterSS">
-        <button id="play" type="button" onclick="Play()">Play</button>
-        <button id="stop" type="button" onclick="Stop()">Stop</button>
-      </div>
-      <button id="saveImage" type="button" onclick="SaveImage()">Save image</button>
+        <input type="button" id="playStop" type="button" value="Play" onclick="PlayStop()"></button>
 
+      </div>
+      <div id="onStop">
+      <button id="saveImage" type="button" onclick="SaveImage()">Save image</button>
+      <button type="button" onclick="initInstructions()">Instructions</button>
+      </div>
       <div id="container">
-        
-            <canvas id="main-canvas"></canvas>
+      <div>
+        <br>
+        <input type="text" id="lines" value="0" size="2">string used</input>
+        <input type="text" id="improvements" value="0" size="2">improvements</input>
+        <br>
+       <canvas id="main-canvas"></canvas>
+      </div>
+
 
         
         <div id="controls">
@@ -125,20 +133,17 @@
         <input type="text" id="stringPixelRatioText" value="" size="1">
         
         <br>
+        
+        <canvas id="original"></canvas>
         <canvas id="thumbnailMain"></canvas>
-
-       
   
       </div>
 
     </div>
-    <br>
-    <input type="text" id="lines" value="0" size="2">string used</input>
-    <input type="text" id="improvements" value="0" size="2">improvements</input>
-    <br>
+
 
     <br>
-    <canvas id="original"></canvas>
+   
     <br>
       <div id="advanced">
         <div>
@@ -195,7 +200,7 @@
 
 
 
-      <div id="webcamDiv" style=" align-items:center;">
+      <div id="webcamDiv" style="visibility:hidden; align-items:center;">
         <div>
           <video id="webcam" autoplay playsinline width="320" height="240"></video>
         </div>
@@ -243,7 +248,7 @@
   
     <br>
 
-    <button type="button" onclick="initInstructions()">Instructions</button>
+    
     <div id="instructions">
       <br>
       <br>
