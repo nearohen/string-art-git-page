@@ -92,8 +92,8 @@ runTimeState = {
 let sessionState = {};
 function InitState() {
   sessionState = {
-    pointsW: 55,
-    pointsH: 75,
+    pointsW:86,
+    pointsH: 106,
     pointsC: 256,
     sourceWidth: 128,
     sourceHeight: 128,
