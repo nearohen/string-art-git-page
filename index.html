@@ -14,13 +14,11 @@
 
   <link rel="stylesheet" href="css/styles.css">
   <link rel="stylesheet" href="css/pause.css">
-
 </head>
 
 <body oncontextmenu="return false;">
   <script src="https://unpkg.com/react@17/umd/react.development.js" crossorigin></script>
   <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js" crossorigin></script>
-
   <!-- Load our React component. -->
   <script type="module" src="./js/firebase.js"></script>
   <script src="./js/stringArtWasm.js"></script>
@@ -35,29 +33,31 @@
   <script src="./js/animation.js"></script>
   <script src="./js/gcode.js"></script>
   <script src="./js/main.js"></script>
-  <script >
+  <script>
     runTimeState.onPublicDefaults = true;
   </script>
-
-
   <!--  SESSION -->
-  <button id="signInButton">Sign In</button>
 
-  <div id = signOut display = "none" >
-    <span  type="text" id="displayName" value="" size="32" readonly></span>
-    <button id = signOutButton type="button">Sign Out </button>
-    <div>
-      <span type="text" id="lock" texContent="Lock" size="10"></span>
-      <span type="text" id="key"  texContent="key" size="10"></span>
-    </div>
+  <div id="signIn">
+    <button id="signInButton">Sign In</button>
   </div>
-  <div>
-    <div id="loadSession">
-    <button type="button" onclick="document.getElementById('loadSessionFile').click()">Load Session</button>
-    <input id="sessionFileName">
-    <input id="loadSessionFile" style="visibility:hidden;" type="file"  name="imgFileLoader" accept="" />
+  
+  <div id=app display="none">
+    <div id=signOut>
+      <span type="text" id="displayName" value="" size="32" readonly></span>
+      <button id=signOutButton type="button">Sign Out </button>
+      <div>
+        <span type="text" id="lock" texContent="Lock" size="10"></span>
+        <span type="text" id="key" texContent="key" size="10"></span>
+      </div>
+      
     </div>
-
+    <div id="loadSession">
+      <button type="button" onclick="document.getElementById('loadSessionFile').click()">Load Existing Session</button>
+      <input id="sessionFileName">
+      <input id="loadSessionFile" style="visibility:hidden;" type="file" name="imgFileLoader" accept="" />
+    </div>
+    
     <span class="slider"></span>
     <button id="newSession" type="button" onclick="newSession()">New Session</button>
     <button id="saveSession" type="button" onclick="saveSession()">Save Session </button>
@@ -65,29 +65,25 @@
     <br>
 
     <div id="loadImgDiv">
-      <label for="loadImgFile">Upload Img</label>
-      <input type="file" id="loadImgFile"  />
+      <label for="loadImgFile">Choose image to stringify</label>
+      <input type="file" id="loadImgFile" />
     </div>
     <div id="beforeSS">
-        <br>
-        <label for="circle">circle</label>
-        <input type="radio" id="circle" name="circleSquare" onclick='handlePointsChange(true);'>
-        <label for="pointsH">C</label>
-        <input type="text" id="pointsC" value="" size="1" onchange="handlePointsChange(true);">
-        <br>
-        <label for="rectangle">rectangle</label>
-        <input type="radio" id="rectangle" name="circleSquare" checked onclick='handlePointsChange(true);'>
-        <label for="pointsW">W</label>
-        <input type="text" id="pointsW" value="" size="1" onchange="handlePointsChange(true);">
-        <label for="pointsH">H</label>
-        <input type="text" id="pointsH" value="" size="1" onchange="handlePointsChange(true);">
-        <br>
-       
-      </div>
-     </div>
-    </div>
-    <br>
+      <br>
+      <label for="circle">circle</label>
+      <input type="radio" id="circle" name="circleSquare" onclick='handlePointsChange(true);'>
+      <label for="pointsH">C</label>
+      <input type="text" id="pointsC" value="" size="1" onchange="handlePointsChange(true);">
+      <br>
+      <label for="rectangle">rectangle</label>
+      <input type="radio" id="rectangle" name="circleSquare" checked onclick='handlePointsChange(true);'>
+      <label for="pointsW">W</label>
+      <input type="text" id="pointsW" value="" size="1" onchange="handlePointsChange(true);">
+      <label for="pointsH">H</label>
+      <input type="text" id="pointsH" value="" size="1" onchange="handlePointsChange(true);">
+      <br>
 
+    </div>
 
     <div>
       <button id="startSession" type="button" onclick="startSession()">Start Session</button>
@@ -95,27 +91,27 @@
         <input type="button" id="playStop" type="button" value="Play" onclick="PlayStop()"></button>
       </div>
       <div id="onStop">
-      <button id="saveImage" type="button" onclick="SaveImage()">Save image</button>
-      <button type="button" onclick="initInstructions()">Instructions</button>
+        <button id="saveImage" type="button" onclick="SaveImage()">Save image</button>
+        <button type="button" onclick="initInstructions()">Instructions</button>
       </div>
       <div id="container">
-      <div>
-        <br>
-        <input type="text" id="lines" value="0" size="2">string used</input>
-        <input type="text" id="improvements" value="0" size="2">improvements</input>
-        <br>
-       <canvas id="main-canvas"></canvas>
-      </div>
-
-
-        
+        <div>
+          <br>
+          <input type="text" id="lines" value="0" size="2">string used</input>
+          <input type="text" id="improvements" value="0" size="2">improvements</input>
+          <br>
+          <canvas id="main-canvas"></canvas>
+        </div>
+  
+  
+  
         <div id="controls">
-            <label for="zoom">Zoom</label>
-            <div id="zoom">
-             <button type="button" onclick="Zoom(true)">+</button>
-             <button type="button" onclick="Zoom(false)">-</button>
-            </div>g
-            <br>
+          <label for="zoom">Zoom</label>
+          <div id="zoom">
+            <button type="button" onclick="Zoom(true)">+</button>
+            <button type="button" onclick="Zoom(false)">-</button>
+          </div>g
+          <br>
           <label for="contrastRange">C</label>
           <input type="range" id="contrastRange" value="50" min='0' max='100' step='1'
             oninput="updateContrast(this.value,false);" onchange="updateContrast(this.value,true);">
@@ -126,68 +122,68 @@
             oninput="updateBrightness(this.value,false);" onchange="updateBrightness(this.value,true);">
           <input type="text" id="brightnessRangeText" value="50" size="1"><br>
           <label for="stringPixelRatio">T</label>
-          <input type="range" id="stringPixelRatio" value="" min='2' max='128' step='1'
-          oninput="updateStringPixelRatio(this.value,false);" onchange="updateStringPixelRatio(this.value,true);">
-        1/
-        <input type="text" id="stringPixelRatioText" value="" size="1">
-        
-        <br>
-        
-        <canvas id="original"></canvas>
-        <canvas id="thumbnailMain"></canvas>
-        <div id="instructions">
-          <div>
-            step
-            <input type="text" id="instruction" value="" size="3">
-            /
-            <input type="text" id="totalInstruction" value="" size="3">
-            steps
-            <button type="button" onclick="playInstructions()">>>></button>
-            <button type="button" onclick="stopInstructions()">[]</button>
-          </div>
+          <input type="range" id="stringPixelRatio" value="" min='2' max='48' step='1'
+            oninput="updateStringPixelRatio(this.value,false);" onchange="updateStringPixelRatio(this.value,true);">
+          1/
+          <input type="text" id="stringPixelRatioText" value="" size="1">
+  
           <br>
-          <div>
-    
-            <button type="button" onclick="nextInstruction()">+</button>
-            <button type="button" onclick="prevInstruction()">-</button>
-            <button type="button" onclick="nextInstructionBatch()">>></button>
-    
+  
+          <canvas id="original"></canvas>
+          <canvas id="thumbnailMain"></canvas>
+          <div id="instructions">
             <div>
+              step
+              <input type="text" id="instruction" value="" size="3">
+              /
+              <input type="text" id="totalInstruction" value="" size="3">
+              steps
+              <button type="button" onclick="playInstructions()">>>></button>
+              <button type="button" onclick="stopInstructions()">[]</button>
             </div>
-            <input type="text" id="step0" value="" size="3" style="font-size:2vw">
             <br>
-            <input type="text" id="step1" value="" size="3" style="font-size:2vw">
-            <input type="text" id="step2" value="" size="3" style="font-size:2vw">
-            <input type="text" id="step3" value="" size="3" style="font-size:2vw">
-            <input type="text" id="step4" value="" size="3" style="font-size:2vw">
-            <br>
-            <br>
-            <br>
-    
-            <input type="text" id="step5" value="" size="3" style="font-size:2vw">
-            <input type="text" id="step6" value="" size="3" style="font-size:2vw">
-            <input type="text" id="step7" value="" size="3" style="font-size:2vw">
-            <input type="text" id="step8" value="" size="3" style="font-size:2vw">
-          
-    
-    
-          <button type="button" onclick="findInstruction()">find line</button>
-          <input type="text" id="findPointA" value="0" size="1">
-          <input type="text" id="findPointB" value="0" size="1">
-          pos
-          <input type="text" id="goToInstruction" value="-1" size="1">
-          <button type="button" onclick="goToInstruction()">go to</button>
-        </div>
+            <div>
+  
+              <button type="button" onclick="nextInstruction()">+</button>
+              <button type="button" onclick="prevInstruction()">-</button>
+              <button type="button" onclick="nextInstructionBatch()">>></button>
+  
+              <div>
+              </div>
+              <input type="text" id="step0" value="" size="3" style="font-size:2vw">
+              <br>
+              <input type="text" id="step1" value="" size="3" style="font-size:2vw">
+              <input type="text" id="step2" value="" size="3" style="font-size:2vw">
+              <input type="text" id="step3" value="" size="3" style="font-size:2vw">
+              <input type="text" id="step4" value="" size="3" style="font-size:2vw">
+              <br>
+              <br>
+              <br>
+  
+              <input type="text" id="step5" value="" size="3" style="font-size:2vw">
+              <input type="text" id="step6" value="" size="3" style="font-size:2vw">
+              <input type="text" id="step7" value="" size="3" style="font-size:2vw">
+              <input type="text" id="step8" value="" size="3" style="font-size:2vw">
+  
+  
+  
+              <button type="button" onclick="findInstruction()">find line</button>
+              <input type="text" id="findPointA" value="0" size="1">
+              <input type="text" id="findPointB" value="0" size="1">
+              pos
+              <input type="text" id="goToInstruction" value="-1" size="1">
+              <button type="button" onclick="goToInstruction()">go to</button>
+            </div>
+          </div>
+  
         </div>
   
       </div>
-
-    </div>
-
-
-    <br>
-   
-    <br>
+  
+  
+      <br>
+  
+      <br>
       <div id="advanced">
         <div>
           <button type="button" onclick="OnPixelWeight()">Weight</button>
@@ -198,7 +194,7 @@
           <input id="pixelWeightColor" style="background-color:#7f7f7f;color:white;width:40px;height:40px;" value=""
             size="2">
         </div>
-
+  
         <div style="padding-top: 20px;padding-left: 20px;padding-bottom: 20px;">
           <div>
             Distance View Factor
@@ -218,7 +214,7 @@
             <input type="range" id="normalizeRange" value="" min='-0.5' max='2' step='0.1'
               oninput="updateNormalize(this.value,false);" onchange="updateNormalize(this.value,true);">
             <input type="text" id="normalizeRangeText" value="" size="1">
-    
+  
           </div>
           <div>
             Collisionl value
@@ -228,27 +224,27 @@
           </div>
         </div>
       </div>
-
-
-
-
-
-      
-
-
-
-
-
-
-
-
-
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
       <div id="webcamDiv" style="visibility:hidden; align-items:center;">
         <div>
           <video id="webcam" autoplay playsinline width="320" height="240"></video>
         </div>
         <div>
-
+  
           <button type="button" onclick="StopWebcam()">Stop capture</button>
         </div>
         <div>
@@ -263,10 +259,10 @@
           Dis
           <input type="text" id="disPixelInfo" value="" size="1">
         </div>
-
-
+  
+  
         <div>
-
+  
           <input id="bgColor0" style="background-color:#7f7f7f;color:white;width:40px;height:40px;" value="TL" size="2"
             onclick="onBGColor(0)">
           <input id="bgColor1" style="background-color:#7f7f7f;color:white;width:40px;height:40px;" value="TR" size="2"
@@ -279,55 +275,41 @@
           <input id="bgColor3" style="background-color:#7f7f7f;color:white;width:40px;height:40px;" value="BR" size="2"
             onclick="onBGColor(3)">
         </div>
-
-
-
-      </div> 
-
-      <br>
-
-
-    </div>
   
-    <br>
-
-    
+  
+  
+      </div>
+  
+      <br>
+  
+  
+    </div>
+  </div>
  
 
 
-    <br>
-    
 
  
 
+  <!--  STRINGS -->
 
+  <!--  IMAGE -->
 
-   
-    </dev>
+  <div id="image" style="padding-top: 20px;padding-left: 20px;padding-bottom: 20px;">
+  </div>
 
+  <!--  STATUS -->
+  <div id="status" style="padding-top: 20px;padding-left: 20px;padding-bottom: 20px;">
+  </div>
 
-
-    <!--  STRINGS -->
-
-   
-
-    <!--  IMAGE -->
-
-    <div id="image" style="padding-top: 20px;padding-left: 20px;padding-bottom: 20px;">
-    </div>
-
-    <!--  STATUS -->
-    <div id="status" style="padding-top: 20px;padding-left: 20px;padding-bottom: 20px;">
-    </div>
-
-    <div id="thumbnails" style="visibility:hidden;">
-        <canvas id="thumbnailStrings"></canvas>
-        <canvas id="focus"></canvas>
-        <br>
-        <canvas id="thumbnailFocus"></canvas>
-        <br>
-        <canvas id="thumbnailWeight"></canvas>
-        <canvas id="weight"></canvas>
+  <div id="thumbnails" style="visibility:hidden;">
+    <canvas id="thumbnailStrings"></canvas>
+    <canvas id="focus"></canvas>
+    <br>
+    <canvas id="thumbnailFocus"></canvas>
+    <br>
+    <canvas id="thumbnailWeight"></canvas>
+    <canvas id="weight"></canvas>
     <div>
       <canvas id="webcamCanvas" class="d-none"></canvas>
     </div>
@@ -335,7 +317,7 @@
 
 
 
-  
+
 </body>
 
 </html>

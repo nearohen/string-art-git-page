@@ -865,6 +865,7 @@ function initRec() {
 
 onStateChange((newState)=>{
   if(newState==States.NS){
+
     document.getElementById("thumbnailMain").style.visibility = "hidden";
     document.getElementById("loadImgDiv").style.visibility = "hidden";
     document.getElementById("signOut").style.visibility = "hidden";
@@ -878,9 +879,11 @@ onStateChange((newState)=>{
     document.getElementById("onStop").style.visibility = "hidden";
     document.getElementById("original").style.display = "block";
     document.getElementById("instructions").style.visibility = "hidden";
+    document.getElementById("app").style.visibility = "hidden";
     
   }
   else if(newState==States.SI){
+    document.getElementById("app").style.visibility = "visible";
     document.getElementById("loadImgDiv").style.visibility = "visible";
     document.getElementById("signOut").style.visibility = "visible";
     document.getElementById("startSession").style.visibility = "hidden";
