@@ -903,6 +903,7 @@ onStateChange((newState)=>{
     document.getElementById("startSession").style.visibility = "visible";
     document.getElementById("saveSession").style.visibility = "hidden";
     document.getElementById("saveImage").style.visibility = "hidden";
+    startSession() ;
   }
   else if(newState==States.SS){
 
@@ -914,6 +915,7 @@ onStateChange((newState)=>{
     document.getElementById("saveImage").style.visibility = "hidden";
     document.getElementById("signOut").style.visibility = "hidden";
     document.getElementById("beforeSS").style.visibility = "hidden";
+    Play();
   }
   else if(newState==States.PL){
 
@@ -926,7 +928,8 @@ onStateChange((newState)=>{
     document.getElementById("saveSession").style.visibility = "hidden";
     document.getElementById("saveImage").style.visibility = "hidden";
     document.getElementById("beforeSS").style.visibility = "hidden";
-
+    document.getElementById("play").style.visibility = "hidden";
+    document.getElementById("stop").style.visibility = "visible";
   }
   else if(newState==States.ST){
     document.getElementById("loadImgDiv").style.visibility = "visible";
@@ -936,7 +939,8 @@ onStateChange((newState)=>{
     document.getElementById("saveImage").style.visibility = "visible";
     document.getElementById("signOut").style.visibility = "visible";
     document.getElementById("beforeSS").style.visibility = "hidden";
-    
+    document.getElementById("play").style.visibility = "visible";
+    document.getElementById("stop").style.visibility = "hidden";
   }
 })
 
