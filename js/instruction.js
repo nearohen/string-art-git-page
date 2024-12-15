@@ -1,4 +1,4 @@
-function InitInstructions(sessionState) {
+function InitInstructions() {
 
   sessionState.instructions = {
     currentInstruction: 0,
@@ -117,6 +117,7 @@ function refreshtoCurrentInstruction() {
 }
 function initInstructions() {
 
+  InitInstructions();
   emitStateChange(States.IN);
   sessionState.instructions.instructionBatch = 8;
   sessionState.onCanvas = ON_CANVAS_INSTRUCTION;
