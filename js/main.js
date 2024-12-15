@@ -955,6 +955,7 @@ onStateChange((newState)=>{
     document.getElementById("playStop").style.visibility = "visible";
     document.getElementById("original").style.display = "block";
     document.getElementById("instructions").style.visibility = "hidden";
+    document.getElementById("loadSession").style.visibility = "visible";
   }
   else if(newState==States.IN){
     document.getElementById("original").style.display = "none";
