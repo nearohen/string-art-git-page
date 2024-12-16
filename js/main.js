@@ -52,6 +52,7 @@ const States = {
   NS :'SIGN_IN',
   CP: 'CHOOSE_PROJECT',
   CS: 'CREATE_SESSION',
+  SC: 'SESSION_CREATED',
   PL:"ON_PLAY",
   ST:"ON_STOP",
   IN:"INSTRUCTIONS",
@@ -149,7 +150,7 @@ function OnSelect() {
 }
 
 function newSession() {
-  emitStateChange(States.SI);
+  emitStateChange(States.CP);
 }
 
 
@@ -869,120 +870,37 @@ function initRec() {
 
 
 
-const divsToHide = [] ;
+const divsToHide = ["signIn","chooseProject","createSession","playStop","instructions"] ;
 let allowedDivs = {
-  States.NS : [],
-  States.CP : [],
-  States.CS : [],
-  States.PL : [],
-  States.ST : [],
-  States.IN : [],
-
-
+  [States.NS] : ["signIn"],
+  [States.CP] : ["chooseProject"],
+  [States.CS] : ["createSession"],
+  [States.SC] : ["sessionCreated"],
+  [States.PL] : ["playStop"],
+  [States.ST] : ["playStop"],
+  [States.IN] : ["instructions"],
 }
 
-
+function hideDivsForState(currentState) {
+  // Get allowed divs for the current state
+  const allowed = allowedDivs[currentState] || [];
+  
+  // Iterate over all divs to hide
+  divsToHide.forEach(divId => {
+      const div = document.getElementById(divId);
+      if (div) {
+          // Hide div if it's not in the allowed list
+          if (!allowed.includes(divId)) {
+              div.style.display = "none";
+          } else {
+              div.style.display = ""; // Show it if it is in the allowed list
+          }
+      }
+  });
+}
 
 onStateChange((newState)=>{
-
-  
-
-  if(newState==States.NS){
-
-    document.getElementById("thumbnailMain").style.visibility = "hidden";
-    document.getElementById("loadImgDiv").style.visibility = "hidden";
-    document.getElementById("signOut").style.visibility = "hidden";
-    document.getElementById("signInButton").style.visibility = "visible";
-    document.getElementById("beforeSS").style.visibility = "hidden";
-    document.getElementById("afterSS").style.visibility = "hidden";
-    document.getElementById("newSession").style.visibility = "hidden";
-    document.getElementById("startSession").style.visibility = "hidden";
-    document.getElementById("loadImgFile").style.visibility = "hidden";
-    document.getElementById("saveSession").style.visibility = "hidden";
-    document.getElementById("onStop").style.visibility = "hidden";
-    document.getElementById("original").style.display = "block";
-    document.getElementById("instructions").style.visibility = "hidden";
-    document.getElementById("app").style.visibility = "hidden";
-    
-  }
-  else if(newState==States.SI){
-    document.getElementById("app").style.visibility = "visible";
-    document.getElementById("loadImgDiv").style.visibility = "visible";
-    document.getElementById("signOut").style.visibility = "visible";
-    document.getElementById("startSession").style.visibility = "hidden";
-    document.getElementById("loadImgFile").style.visibility = "visible";
-    document.getElementById("beforeSS").style.visibility = "visible";
-    document.getElementById("saveSession").style.visibility = "hidden";
-    document.getElementById("loadSession").style.visibility = "visible";
-    document.getElementById("onStop").style.visibility = "hidden";
-    document.getElementById("original").style.display = "block";
-    document.getElementById("instructions").style.visibility = "hidden";
-    document.getElementById("afterSS").style.visibility = "hidden";
-    if(sessionState.originalImgSrc){
-      emitStateChange(States.RD);
-    }
-    
-  }
-  else if(newState==States.RD){
-    document.getElementById("loadImgDiv").style.visibility = "visible";
-    document.getElementById("signOut").style.visibility = "visible";
-    document.getElementById("signInButton").style.visibility = "hidden";
-    document.getElementById("advanced").style.visibility = "hidden";
-    document.getElementById("newSession").style.visibility = "hidden";
-    document.getElementById("startSession").style.visibility = "visible";
-    document.getElementById("saveSession").style.visibility = "hidden";
-    document.getElementById("onStop").style.visibility = "hidden";
-    document.getElementById("original").style.display = "block";
-    document.getElementById("instructions").style.visibility = "hidden";
-    document.getElementById("playStop").style.visibility = "hidden";
-  }
-  else if(newState==States.SS){
-
-    document.getElementById("loadImgDiv").style.visibility = "visible";
-    document.getElementById("startSession").style.visibility = "hidden";
-    document.getElementById("playStop").style.visibility = "visible";
-    document.getElementById("saveSession").style.visibility = "hidden";
-    document.getElementById("loadSession").style.visibility = "hidden";
-    document.getElementById("onStop").style.visibility = "hidden";
-    document.getElementById("signOut").style.visibility = "hidden";
-    document.getElementById("beforeSS").style.visibility = "hidden";
-    document.getElementById("instructions").style.visibility = "hidden";
-    document.getElementById("original").style.display = "block";
-    
-    Play();
-  }
-  else if(newState==States.PL){
-
-    
-    document.getElementById("loadImgDiv").style.visibility = "visible";
-    document.getElementById("signOut").style.visibility = "hidden";
-    document.getElementById("beforeSS").style.visibility = "hidden";
-    document.getElementById("newSession").style.visibility = "hidden";
-    document.getElementById("startSession").style.visibility = "hidden";
-    document.getElementById("saveSession").style.visibility = "hidden";
-    document.getElementById("onStop").style.visibility = "hidden";
-    document.getElementById("beforeSS").style.visibility = "hidden";
-    document.getElementById("instructions").style.visibility = "hidden";
-    document.getElementById("playStop").style.visibility = "visible";
-    document.getElementById("original").style.display = "block";
-  }
-  else if(newState==States.ST){
-    document.getElementById("loadImgDiv").style.visibility = "visible";
-    document.getElementById("beforeSS").style.visibility = "hidden";
-    document.getElementById("newSession").style.visibility = "visible";
-    document.getElementById("saveSession").style.visibility = "visible";
-    document.getElementById("onStop").style.visibility = "visible";
-    document.getElementById("signOut").style.visibility = "visible";
-    document.getElementById("beforeSS").style.visibility = "hidden";
-    document.getElementById("playStop").style.visibility = "visible";
-    document.getElementById("original").style.display = "block";
-    document.getElementById("instructions").style.visibility = "hidden";
-    document.getElementById("loadSession").style.visibility = "visible";
-  }
-  else if(newState==States.IN){
-    document.getElementById("original").style.display = "none";
-    document.getElementById("instructions").style.visibility = "visible";
-  }
+  hideDivsForState(newState);
 })
 
 function main() {
@@ -1001,7 +919,7 @@ function main() {
   window.getUser((user)=>{
     sessionState.user = user ;
     if(user){
-      emitStateChange(States.SI) ;
+      emitStateChange(States.CP) ;
     }
     else{
       emitStateChange(States.NS) ;
@@ -1037,7 +955,7 @@ function handleImageFileSelect(evt) {
     document.getElementById("sessionFileName").value = getImageFileName();
     sessionState.sessionFileName = document.getElementById("sessionFileName").value;
     GoToCanvas(ON_CANVAS_STRINGS);
-    emitStateChange(States.RD) ;
+    emitStateChange(States.CS) ;
   }
   reader.readAsDataURL(file);
 
@@ -1376,7 +1294,7 @@ function loader() {
     fixRec();
     handleNewServerImg();
     if(runTimeState.state==States.SI){
-      emitStateChange(States.RD);
+      emitStateChange(States.CS);
 
     }
 

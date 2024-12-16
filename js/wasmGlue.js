@@ -13,7 +13,7 @@ improveWorker.onmessage = function ({data :{type,args}}){
         window.updateDB(sessionState.user.uid,sessionState.sessionLock,(key) => {
             sessionState.sessionKey = key ;
             document.getElementById('key').textContent = sessionState.sessionKey.length > 0 ? "got key" : "..." ;;
-            emitStateChange(States.SS) ;
+            emitStateChange(States.SC) ;
             
             
         });
