@@ -36,11 +36,44 @@
   <script>
     runTimeState.onPublicDefaults = true;
   </script>
-  <!--  SESSION -->
-
+  <!--  SIGN IN -->
   <div id="signIn">
     <button id="signInButton">Sign In</button>
   </div>
+
+
+  <!--  CHOOSE PROJECT -->
+
+  <div id="loadSession">
+    <button type="button" onclick="document.getElementById('loadSessionFile').click()">New</button>
+    <button type="button">Continue ....</button>
+    <button type="button" onclick="document.getElementById('loadSessionFile').click()">Load Existing Session</button>
+    <input id="sessionFileName">
+    <input id="loadSessionFile" style="visibility:hidden;" type="file" name="imgFileLoader" accept="" />
+  </div>
+
+
+  <div id=newSession >
+    <br>
+    <label for="circle">circle</label>
+    <input type="radio" id="circle" name="circleSquare" onclick='handlePointsChange(true);'>
+    <label for="pointsH">C</label>
+    <input type="text" id="pointsC" value="" size="1" onchange="handlePointsChange(true);">
+    <br>
+    <label for="rectangle">rectangle</label>
+    <input type="radio" id="rectangle" name="circleSquare" checked onclick='handlePointsChange(true);'>
+    <label for="pointsW">W</label>
+    <input type="text" id="pointsW" value="" size="1" onchange="handlePointsChange(true);">
+    <label for="pointsH">H</label>
+    <input type="text" id="pointsH" value="" size="1" onchange="handlePointsChange(true);">
+    <br>
+  </div>
+
+
+  <!--  ON_PROJECT -->
+
+
+
   
   <div id=app display="none">
     <div id=signOut>
@@ -52,11 +85,7 @@
       </div>
       
     </div>
-    <div id="loadSession">
-      <button type="button" onclick="document.getElementById('loadSessionFile').click()">Load Existing Session</button>
-      <input id="sessionFileName">
-      <input id="loadSessionFile" style="visibility:hidden;" type="file" name="imgFileLoader" accept="" />
-    </div>
+
     
     <span class="slider"></span>
     <button id="newSession" type="button" onclick="newSession()">New Session</button>
@@ -69,19 +98,7 @@
       <input type="file" id="loadImgFile" />
     </div>
     <div id="beforeSS">
-      <br>
-      <label for="circle">circle</label>
-      <input type="radio" id="circle" name="circleSquare" onclick='handlePointsChange(true);'>
-      <label for="pointsH">C</label>
-      <input type="text" id="pointsC" value="" size="1" onchange="handlePointsChange(true);">
-      <br>
-      <label for="rectangle">rectangle</label>
-      <input type="radio" id="rectangle" name="circleSquare" checked onclick='handlePointsChange(true);'>
-      <label for="pointsW">W</label>
-      <input type="text" id="pointsW" value="" size="1" onchange="handlePointsChange(true);">
-      <label for="pointsH">H</label>
-      <input type="text" id="pointsH" value="" size="1" onchange="handlePointsChange(true);">
-      <br>
+      
 
     </div>
 

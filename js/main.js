@@ -49,10 +49,9 @@ let lastDistance = null;
 
 
 const States = {
-  NS :'NOT_SIGNED',
-  SI: 'SIGNED',
-  RD: 'READY',
-  SS: 'SESSION_STARTED',
+  NS :'SIGN_IN',
+  CP: 'CHOOSE_PROJECT',
+  CS: 'CREATE_SESSION',
   PL:"ON_PLAY",
   ST:"ON_STOP",
   IN:"INSTRUCTIONS",
@@ -867,7 +866,27 @@ function initRec() {
   }
 }
 
+
+
+
+const divsToHide = [] ;
+let allowedDivs = {
+  States.NS : [],
+  States.CP : [],
+  States.CS : [],
+  States.PL : [],
+  States.ST : [],
+  States.IN : [],
+
+
+}
+
+
+
 onStateChange((newState)=>{
+
+  
+
   if(newState==States.NS){
 
     document.getElementById("thumbnailMain").style.visibility = "hidden";
