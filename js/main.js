@@ -51,7 +51,7 @@ let lastDistance = null;
 const States = {
   NS :'SIGN_IN',
   CP: 'CHOOSE_PROJECT',
-  CS: 'CREATE_SESSION',
+  ES: 'EDDIT_SESSION',
   SC: 'SESSION_CREATED',
   PL:"ON_PLAY",
   ST:"ON_STOP",
@@ -870,15 +870,15 @@ function initRec() {
 
 
 
-const divsToHide = ["signIn","chooseProject","createSession","playStop","instructions"] ;
+const divsToHide = ["signIn","signOut","chooseProject","createSession","playStop","instructions","sessionCreated","play","stop","lock","container"] ;
 let allowedDivs = {
   [States.NS] : ["signIn"],
-  [States.CP] : ["chooseProject"],
-  [States.CS] : ["createSession"],
-  [States.SC] : ["sessionCreated"],
-  [States.PL] : ["playStop"],
-  [States.ST] : ["playStop"],
-  [States.IN] : ["instructions"],
+  [States.CP] : ["chooseProject","signOut"],
+  [States.ES] : ["editSession","signOut"],
+  [States.SC] : ["sessionCreated","signOut","container"],
+  [States.PL] : ["sessionCreated","playStop","play","container"],
+  [States.ST] : ["sessionCreated","playStop","stop","signOut","container"],
+  [States.IN] : ["instructions","signOut","container"]
 }
 
 function hideDivsForState(currentState) {
@@ -955,7 +955,7 @@ function handleImageFileSelect(evt) {
     document.getElementById("sessionFileName").value = getImageFileName();
     sessionState.sessionFileName = document.getElementById("sessionFileName").value;
     GoToCanvas(ON_CANVAS_STRINGS);
-    emitStateChange(States.CS) ;
+    emitStateChange(States.ES) ;
   }
   reader.readAsDataURL(file);
 
@@ -1294,7 +1294,7 @@ function loader() {
     fixRec();
     handleNewServerImg();
     if(runTimeState.state==States.SI){
-      emitStateChange(States.CS);
+      emitStateChange(States.ES);
 
     }
 

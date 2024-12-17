@@ -41,19 +41,36 @@
     <button id="signInButton">Sign In</button>
   </div>
 
+  <div id=signOut>
+    <span type="text" id="displayName" value="" size="32" readonly></span>
+    <button id=signOutButton type="button">Sign Out </button>
+  </div>
+
+
+  <div id="lock">
+    <span type="text" id="lock" texContent="Lock" size="10"></span>
+    <span type="text" id="key" texContent="key" size="10"></span>
+  </div>
+
 
   <!--  CHOOSE PROJECT -->
 
   <div id="chooseProject">
-    <button type="button" onclick="document.getElementById('loadSessionFile').click()">New</button>
+    <button id="newSession" type="button" onclick="newSession()">New Session</button>
     <button type="button">Continue ....</button>
     <button type="button" onclick="document.getElementById('loadSessionFile').click()">Load Existing Session</button>
-    <input id="sessionFileName">
     <input id="loadSessionFile" style="visibility:hidden;" type="file" name="imgFileLoader" accept="" />
   </div>
 
 
-  <div id=createSession >
+
+
+  <div id=editSession >
+    <input id="sessionFileName">
+    <div id="loadImgDiv">
+      <label for="loadImgFile">Choose image to stringify</label>
+      <input type="file" id="loadImgFile" />
+    </div>
     <br>
     <label for="circle">circle</label>
     <input type="radio" id="circle" name="circleSquare" onclick='handlePointsChange(true);'>
@@ -67,249 +84,210 @@
     <label for="pointsH">H</label>
     <input type="text" id="pointsH" value="" size="1" onchange="handlePointsChange(true);">
     <br>
+    <button id="startSession" type="button" onclick="startSession()">Start Session</button>
   </div>
 
 
+
+  <div id="sessionCreated">
+    <button id="saveSession" type="button" onclick="saveSession()">Save Session </button>
+  </div>
+
+
+  <div id="playStop">
+    <input type="button" id="playStop" type="button" value="Play" onclick="PlayStop()"></button>
+    <div id="play">
+
+    </div>
+
+    <div id="stop">
+      <button id="saveImage" type="button" onclick="SaveImage()">Save image</button>
+      <button type="button" onclick="initInstructions()">Instructions</button>
+    </div>
+
+
+  </div>
+
+  <div id="container">
+    <div>
+      <br>
+      <input type="text" id="lines" value="0" size="2">string used</input>
+      <input type="text" id="improvements" value="0" size="2">improvements</input>
+      <br>
+      <canvas id="main-canvas"></canvas>
+    </div>
+
+
+
+    <div id="controls">
+      <label for="zoom">Zoom</label>
+      <div id="zoom">
+        <button type="button" onclick="Zoom(true)">+</button>
+        <button type="button" onclick="Zoom(false)">-</button>
+      </div>g
+      <br>
+      <label for="contrastRange">C</label>
+      <input type="range" id="contrastRange" value="50" min='0' max='100' step='1'
+        oninput="updateContrast(this.value,false);" onchange="updateContrast(this.value,true);">
+      <input type="text" id="contrastRangeText" value="50" size="1"><br>
+
+      <label for="brightnessRange">B</label>
+      <input type="range" id="brightnessRange" value="50" min='0' max='100' step='1'
+        oninput="updateBrightness(this.value,false);" onchange="updateBrightness(this.value,true);">
+      <input type="text" id="brightnessRangeText" value="50" size="1"><br>
+      <label for="stringPixelRatio">T</label>
+      <input type="range" id="stringPixelRatio" value="" min='2' max='48' step='1'
+        oninput="updateStringPixelRatio(this.value,false);" onchange="updateStringPixelRatio(this.value,true);">
+      1/
+      <input type="text" id="stringPixelRatioText" value="" size="1">
+
+      <br>
+
+      <canvas id="original"></canvas>
+      <canvas id="thumbnailMain"></canvas>
+      <div id="instructions">
+        <div>
+          step
+          <input type="text" id="instruction" value="" size="3">
+          /
+          <input type="text" id="totalInstruction" value="" size="3">
+          steps
+          <button type="button" onclick="playInstructions()">>>></button>
+          <button type="button" onclick="stopInstructions()">[]</button>
+        </div>
+        <br>
+        <div>
+
+          <button type="button" onclick="nextInstruction()">+</button>
+          <button type="button" onclick="prevInstruction()">-</button>
+          <button type="button" onclick="nextInstructionBatch()">>></button>
+
+          <div>
+          </div>
+          <input type="text" id="step0" value="" size="3" style="font-size:2vw">
+          <br>
+          <input type="text" id="step1" value="" size="3" style="font-size:2vw">
+          <input type="text" id="step2" value="" size="3" style="font-size:2vw">
+          <input type="text" id="step3" value="" size="3" style="font-size:2vw">
+          <input type="text" id="step4" value="" size="3" style="font-size:2vw">
+          <br>
+          <br>
+          <br>
+
+          <input type="text" id="step5" value="" size="3" style="font-size:2vw">
+          <input type="text" id="step6" value="" size="3" style="font-size:2vw">
+          <input type="text" id="step7" value="" size="3" style="font-size:2vw">
+          <input type="text" id="step8" value="" size="3" style="font-size:2vw">
+
+
+
+          <button type="button" onclick="findInstruction()">find line</button>
+          <input type="text" id="findPointA" value="0" size="1">
+          <input type="text" id="findPointB" value="0" size="1">
+          pos
+          <input type="text" id="goToInstruction" value="-1" size="1">
+          <button type="button" onclick="goToInstruction()">go to</button>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <div id="instructions">
+
+  </div>
   <!--  ON_PROJECT -->
 
 
 
-  
-  <div id=app display="none">
-    <div id=signOut>
-      <span type="text" id="displayName" value="" size="32" readonly></span>
-      <button id=signOutButton type="button">Sign Out </button>
-      <div>
-        <span type="text" id="lock" texContent="Lock" size="10"></span>
-        <span type="text" id="key" texContent="key" size="10"></span>
-      </div>
-      
-    </div>
-
-    
-    <span class="slider"></span>
-    <button id="newSession" type="button" onclick="newSession()">New Session</button>
-    <button id="saveSession" type="button" onclick="saveSession()">Save Session </button>
-
-    <br>
-
-    <div id="loadImgDiv">
-      <label for="loadImgFile">Choose image to stringify</label>
-      <input type="file" id="loadImgFile" />
-    </div>
-    <div id="beforeSS">
-      
-
-    </div>
-
+  <div id="advanced" display="none">
     <div>
-      <button id="startSession" type="button" onclick="startSession()">Start Session</button>
-      <div id="afterSS">
-        <input type="button" id="playStop" type="button" value="Play" onclick="PlayStop()"></button>
+      <button type="button" onclick="OnPixelWeight()">Weight</button>
+      <button type="button" onclick="ApplyWeight()">Apply</button>
+      <label for="pixelWeightRange">Pixel weight</label>
+      <input type="range" id="pixelWeightRange" value="0x7x" min='0' max='255' step='1'
+        oninput="updatePixelWeight(this.value,false);" onchange="updatePixelWeight(this.value,true);">
+      <input id="pixelWeightColor" style="background-color:#7f7f7f;color:white;width:40px;height:40px;" value=""
+        size="2">
+    </div>
+
+    <div style="padding-top: 20px;padding-left: 20px;padding-bottom: 20px;">
+      <div>
+        Distance View Factor
+        <input type="range" id="distanceViewFactor" value="1" min='0.1' max='5' step='0.1'
+          oninput="updateDistanceViewFactor(this.value,false);" onchange="updateDistanceViewFactor(this.value,true);">
+        <input type="text" id="distanceViewFactorText" value="1" size="1">
       </div>
-      <div id="onStop">
-        <button id="saveImage" type="button" onclick="SaveImage()">Save image</button>
-        <button type="button" onclick="initInstructions()">Instructions</button>
+      <div>
+        Line thickness
+        <input type="range" id="lineThicknessMulltiply" value="1" min='0.1' max='4' step='0.1'
+          oninput="updateLineThickness(this.value,false);" onchange="updateLineThickness(this.value,true);">
+        <input type="text" id="lineThicknessMulltiplyText" value="" size="1">
+
       </div>
-      <div id="container">
-        <div>
-          <br>
-          <input type="text" id="lines" value="0" size="2">string used</input>
-          <input type="text" id="improvements" value="0" size="2">improvements</input>
-          <br>
-          <canvas id="main-canvas"></canvas>
-        </div>
-  
-  
-  
-        <div id="controls">
-          <label for="zoom">Zoom</label>
-          <div id="zoom">
-            <button type="button" onclick="Zoom(true)">+</button>
-            <button type="button" onclick="Zoom(false)">-</button>
-          </div>g
-          <br>
-          <label for="contrastRange">C</label>
-          <input type="range" id="contrastRange" value="50" min='0' max='100' step='1'
-            oninput="updateContrast(this.value,false);" onchange="updateContrast(this.value,true);">
-          <input type="text" id="contrastRangeText" value="50" size="1"><br>
-  
-          <label for="brightnessRange">B</label>
-          <input type="range" id="brightnessRange" value="50" min='0' max='100' step='1'
-            oninput="updateBrightness(this.value,false);" onchange="updateBrightness(this.value,true);">
-          <input type="text" id="brightnessRangeText" value="50" size="1"><br>
-          <label for="stringPixelRatio">T</label>
-          <input type="range" id="stringPixelRatio" value="" min='2' max='48' step='1'
-            oninput="updateStringPixelRatio(this.value,false);" onchange="updateStringPixelRatio(this.value,true);">
-          1/
-          <input type="text" id="stringPixelRatioText" value="" size="1">
-  
-          <br>
-  
-          <canvas id="original"></canvas>
-          <canvas id="thumbnailMain"></canvas>
-          <div id="instructions">
-            <div>
-              step
-              <input type="text" id="instruction" value="" size="3">
-              /
-              <input type="text" id="totalInstruction" value="" size="3">
-              steps
-              <button type="button" onclick="playInstructions()">>>></button>
-              <button type="button" onclick="stopInstructions()">[]</button>
-            </div>
-            <br>
-            <div>
-  
-              <button type="button" onclick="nextInstruction()">+</button>
-              <button type="button" onclick="prevInstruction()">-</button>
-              <button type="button" onclick="nextInstructionBatch()">>></button>
-  
-              <div>
-              </div>
-              <input type="text" id="step0" value="" size="3" style="font-size:2vw">
-              <br>
-              <input type="text" id="step1" value="" size="3" style="font-size:2vw">
-              <input type="text" id="step2" value="" size="3" style="font-size:2vw">
-              <input type="text" id="step3" value="" size="3" style="font-size:2vw">
-              <input type="text" id="step4" value="" size="3" style="font-size:2vw">
-              <br>
-              <br>
-              <br>
-  
-              <input type="text" id="step5" value="" size="3" style="font-size:2vw">
-              <input type="text" id="step6" value="" size="3" style="font-size:2vw">
-              <input type="text" id="step7" value="" size="3" style="font-size:2vw">
-              <input type="text" id="step8" value="" size="3" style="font-size:2vw">
-  
-  
-  
-              <button type="button" onclick="findInstruction()">find line</button>
-              <input type="text" id="findPointA" value="0" size="1">
-              <input type="text" id="findPointB" value="0" size="1">
-              pos
-              <input type="text" id="goToInstruction" value="-1" size="1">
-              <button type="button" onclick="goToInstruction()">go to</button>
-            </div>
-          </div>
-  
-        </div>
-  
+      <div>
+        Normal value
+        <input type="range" id="normalizeRange" value="" min='-0.5' max='2' step='0.1'
+          oninput="updateNormalize(this.value,false);" onchange="updateNormalize(this.value,true);">
+        <input type="text" id="normalizeRangeText" value="" size="1">
+
       </div>
-  
-  
-      <br>
-  
-      <br>
-      <div id="advanced">
-        <div>
-          <button type="button" onclick="OnPixelWeight()">Weight</button>
-          <button type="button" onclick="ApplyWeight()">Apply</button>
-          <label for="pixelWeightRange">Pixel weight</label>
-          <input type="range" id="pixelWeightRange" value="0x7x" min='0' max='255' step='1'
-            oninput="updatePixelWeight(this.value,false);" onchange="updatePixelWeight(this.value,true);">
-          <input id="pixelWeightColor" style="background-color:#7f7f7f;color:white;width:40px;height:40px;" value=""
-            size="2">
-        </div>
-  
-        <div style="padding-top: 20px;padding-left: 20px;padding-bottom: 20px;">
-          <div>
-            Distance View Factor
-            <input type="range" id="distanceViewFactor" value="1" min='0.1' max='5' step='0.1'
-              oninput="updateDistanceViewFactor(this.value,false);" onchange="updateDistanceViewFactor(this.value,true);">
-            <input type="text" id="distanceViewFactorText" value="1" size="1">
-          </div>
-          <div>
-            Line thickness
-            <input type="range" id="lineThicknessMulltiply" value="1" min='0.1' max='4' step='0.1'
-              oninput="updateLineThickness(this.value,false);" onchange="updateLineThickness(this.value,true);">
-            <input type="text" id="lineThicknessMulltiplyText" value="" size="1">
-  
-          </div>
-          <div>
-            Normal value
-            <input type="range" id="normalizeRange" value="" min='-0.5' max='2' step='0.1'
-              oninput="updateNormalize(this.value,false);" onchange="updateNormalize(this.value,true);">
-            <input type="text" id="normalizeRangeText" value="" size="1">
-  
-          </div>
-          <div>
-            Collisionl value
-            <input type="range" id="collisionRange" value="" min='0' max='3' step='0.01'
-              oninput="updateCollision(this.value,false);" onchange="updateCollision(this.value,true);">
-            <input type="text" id="collisionRangeText" value="" size="1">
-          </div>
-        </div>
+      <div>
+        Collisionl value
+        <input type="range" id="collisionRange" value="" min='0' max='3' step='0.01'
+          oninput="updateCollision(this.value,false);" onchange="updateCollision(this.value,true);">
+        <input type="text" id="collisionRangeText" value="" size="1">
       </div>
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-      <div id="webcamDiv" style="visibility:hidden; align-items:center;">
-        <div>
-          <video id="webcam" autoplay playsinline width="320" height="240"></video>
-        </div>
-        <div>
-  
-          <button type="button" onclick="StopWebcam()">Stop capture</button>
-        </div>
-        <div>
-          X
-          <input type="text" id="XPixelInfo" value="" size="1">
-          Y
-          <input type="text" id="YPixelInfo" value="" size="1">
-          Img
-          <input type="text" id="imgPixelInfo" value="" size="1">
-          Str
-          <input type="text" id="strPixelInfo" value="" size="1">
-          Dis
-          <input type="text" id="disPixelInfo" value="" size="1">
-        </div>
-  
-  
-        <div>
-  
-          <input id="bgColor0" style="background-color:#7f7f7f;color:white;width:40px;height:40px;" value="TL" size="2"
-            onclick="onBGColor(0)">
-          <input id="bgColor1" style="background-color:#7f7f7f;color:white;width:40px;height:40px;" value="TR" size="2"
-            onclick="onBGColor(1)">
-  
-        </div>
-        <div>
-          <input id="bgColor2" style="background-color:#7f7f7f;color:white;width:40px;height:40px;" value="BL" size="2"
-            onclick="onBGColor(2)">
-          <input id="bgColor3" style="background-color:#7f7f7f;color:white;width:40px;height:40px;" value="BR" size="2"
-            onclick="onBGColor(3)">
-        </div>
-  
-  
-  
+    </div>
+    <div id="webcamDiv" style="visibility:hidden; align-items:center;">
+      <div>
+        <video id="webcam" autoplay playsinline width="320" height="240"></video>
       </div>
-  
-      <br>
-  
-  
+      <div>
+
+        <button type="button" onclick="StopWebcam()">Stop capture</button>
+      </div>
+      <div>
+        X
+        <input type="text" id="XPixelInfo" value="" size="1">
+        Y
+        <input type="text" id="YPixelInfo" value="" size="1">
+        Img
+        <input type="text" id="imgPixelInfo" value="" size="1">
+        Str
+        <input type="text" id="strPixelInfo" value="" size="1">
+        Dis
+        <input type="text" id="disPixelInfo" value="" size="1">
+      </div>
+
+
+      <div>
+
+        <input id="bgColor0" style="background-color:#7f7f7f;color:white;width:40px;height:40px;" value="TL" size="2"
+          onclick="onBGColor(0)">
+        <input id="bgColor1" style="background-color:#7f7f7f;color:white;width:40px;height:40px;" value="TR" size="2"
+          onclick="onBGColor(1)">
+
+      </div>
+      <div>
+        <input id="bgColor2" style="background-color:#7f7f7f;color:white;width:40px;height:40px;" value="BL" size="2"
+          onclick="onBGColor(2)">
+        <input id="bgColor3" style="background-color:#7f7f7f;color:white;width:40px;height:40px;" value="BR" size="2"
+          onclick="onBGColor(3)">
+      </div>
+
+
+
     </div>
   </div>
  
+ 
 
 
 
  
-
-  <!--  STRINGS -->
-
   <!--  IMAGE -->
 
   <div id="image" style="padding-top: 20px;padding-left: 20px;padding-bottom: 20px;">
