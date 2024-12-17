@@ -184,7 +184,8 @@ function saveSession() {
 
 
   let filename = getSessionOutFileName()
-  sessionState.serverSnapshot = arrayBufferToBase64(sessionState.snapshotBuffer) ;
+ 
+  saveState(); 
   saveText(JSON.stringify(sessionState), filename)
   saveLinesImage(filename);
 }
@@ -388,6 +389,7 @@ function RestartState() {
 }
 function handleNewState(params) {
   sessionState = params
+  sessionState.snapshotBuffer =  base64ToArrayBuffer(sessionState.snapshotB64)  ;
   RestartState();
   GoToCanvas(ON_CANVAS_STRINGS);
 }
@@ -414,7 +416,7 @@ function LoadSession(evt) {
 
     params = JSON.parse(reader.result);
 
-    params.snapshotBuffer =  base64ToArrayBuffer(params.serverSnapshot)  ;
+ 
     if (params != null) {
 
       handleNewState(params);
@@ -581,7 +583,7 @@ function startSession() {
     collision: parseFloat(sessionState.collision),
     width: sessionState.sourceWidth,
     height: sessionState.sourceHeight,
-    serverSnapshot: sessionState.serverSnapshot,
+    serverSnapshot: sessionState.snapshotB64,
     bgColors: JSON.stringify(sessionState.bgColors),
     dots:[],
     brightness: parseFloat(sessionState.brightness),
@@ -872,17 +874,17 @@ function initRec() {
 
 
 // Separate arrays for handling different behaviors
-const divsToHide = ["signIn", "chooseProject", "createSession","container","editSession", "original"];
-const divsToInvisible = ["instructions", "sessionCreated", "playStopDiv","play"];
-const divsToDisable = ["stop", "lockNkey","signOut"];
+const divsToHide = ["signIn", "chooseProject", "createSession","container","editSession", "original","controls"];
+const divsToInvisible = ["instructions", "sessionCreated", "playStopDiv","play","stop"];
+const divsToDisable = [ "lockNkey","signOut"];
 
 let allowedDivs = {
   [States.NS] : ["signIn"],
   [States.CP] : ["chooseProject","signOut"],
   [States.ES] : ["editSession","signOut","original"],
-  [States.SC] : ["sessionCreated","signOut","container","original","playStopDiv"],
-  [States.PL] : ["sessionCreated","playStopDiv","play","container","original"],
-  [States.ST] : ["sessionCreated","playStopDiv","stop","signOut","container","original"],
+  [States.SC] : ["sessionCreated","signOut","container","original","playStopDiv","controls"],
+  [States.PL] : ["sessionCreated","playStopDiv","play","container","original","controls"],
+  [States.ST] : ["sessionCreated","playStopDiv","stop","signOut","container","original","controls"],
   [States.IN] : ["instructions","signOut","container"]
 }
 
@@ -952,7 +954,6 @@ function main() {
   document.getElementById("signOut").style.display = "none";
   updateOptionalValue("ip",sessionState.serverAddr);
   RestartState();
-  updateServerSnapshot(sessionState.serverSnapshot);
   GoToCanvas(ON_CANVAS_STRINGS);
   startMainCanvas();
 
@@ -1044,6 +1045,12 @@ function updateSessionParams(cb) {
 
 function saveState() {
   //localStorage.clear();
+  let tmp = arrayBufferToBase64(sessionState.snapshotBuffer) ; ;
+  if(tmp==sessionState.snapshotB64 ){
+
+    console.log("WTF") ;
+  }
+  sessionState.snapshotB64 = tmp ;
   localStorage.sessionState = JSON.stringify(sessionState);
 }
 function isLocalStorageStateValid(params) {
@@ -1364,6 +1371,7 @@ function PlayStop(){
   if(runTimeState.state==States.PL){
       Stop() ;
       document.getElementById("playStop").value = "Play" ;
+      saveState() ;
   }else {
     Play() ;
     document.getElementById("playStop").value = "Stop" ;
