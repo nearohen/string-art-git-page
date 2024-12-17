@@ -150,7 +150,7 @@ function OnSelect() {
 }
 
 function newSession() {
-  emitStateChange(States.CP);
+  emitStateChange(States.ES);
 }
 
 
@@ -606,7 +606,7 @@ function startSession() {
   }
   const initJson = JSON.stringify(params) ;
   PostWorkerMessage( {cmd: "init",args : initJson});
-  
+
   
   
 }
@@ -870,33 +870,66 @@ function initRec() {
 
 
 
-const divsToHide = ["signIn","signOut","chooseProject","createSession","playStop","instructions","sessionCreated","play","stop","lock","container"] ;
+
+// Separate arrays for handling different behaviors
+const divsToHide = ["signIn", "chooseProject", "createSession","container","editSession", "original"];
+const divsToInvisible = ["instructions", "sessionCreated", "playStopDiv","play"];
+const divsToDisable = ["stop", "lockNkey","signOut"];
+
 let allowedDivs = {
   [States.NS] : ["signIn"],
   [States.CP] : ["chooseProject","signOut"],
-  [States.ES] : ["editSession","signOut"],
-  [States.SC] : ["sessionCreated","signOut","container"],
-  [States.PL] : ["sessionCreated","playStop","play","container"],
-  [States.ST] : ["sessionCreated","playStop","stop","signOut","container"],
+  [States.ES] : ["editSession","signOut","original"],
+  [States.SC] : ["sessionCreated","signOut","container","original","playStopDiv"],
+  [States.PL] : ["sessionCreated","playStopDiv","play","container","original"],
+  [States.ST] : ["sessionCreated","playStopDiv","stop","signOut","container","original"],
   [States.IN] : ["instructions","signOut","container"]
 }
 
+
 function hideDivsForState(currentState) {
-  // Get allowed divs for the current state
   const allowed = allowedDivs[currentState] || [];
-  
-  // Iterate over all divs to hide
-  divsToHide.forEach(divId => {
+
+  // Utility function to process a list of divs
+  function processDivs(divList, action) {
+    divList.forEach(divId => {
       const div = document.getElementById(divId);
       if (div) {
-          // Hide div if it's not in the allowed list
-          if (!allowed.includes(divId)) {
-              div.style.display = "none";
-          } else {
-              div.style.display = ""; // Show it if it is in the allowed list
-          }
+        if (!allowed.includes(divId)) {
+          action(div); // Apply the action if the div is not in allowed
+        } else {
+          resetDiv(div); // Reset the div if it is allowed
+        }
       }
-  });
+    });
+  }
+
+  // Actions for hide, invisible, and disable
+  const hideAction = div => div.style.display = "none";
+  const invisibleAction = div => div.style.visibility = "hidden";
+  const disableAction = div => {
+    div.style.pointerEvents = "none";
+    div.style.opacity = "0.5";
+    div.querySelectorAll("button, input, select, textarea").forEach(element => {
+      element.disabled = true;
+    });
+  };
+
+  // Reset function to revert properties
+  function resetDiv(div) {
+    div.style.display = "";
+    div.style.visibility = "visible";
+    div.style.pointerEvents = "auto";
+    div.style.opacity = "1";
+    div.querySelectorAll("button, input, select, textarea").forEach(element => {
+      element.disabled = false;
+    });
+  }
+
+  // Process each group of divs
+  processDivs(divsToHide, hideAction);
+  processDivs(divsToInvisible, invisibleAction);
+  processDivs(divsToDisable, disableAction);
 }
 
 onStateChange((newState)=>{
@@ -906,7 +939,14 @@ onStateChange((newState)=>{
 function main() {
 
   canvasPixelScale = 4;
-  document.getElementById('loadImgFile').addEventListener('input', handleImageFileSelect, false);
+
+  const fileInput = document.getElementById("loadImgFile");
+  fileInput.addEventListener('input', handleImageFileSelect, false);
+  const button = document.getElementById("triggerFileInput");
+  button.addEventListener("click", () => {
+    fileInput.click(); // Trigger the hidden file input
+  });
+
   document.getElementById('loadSessionFile').addEventListener('input', LoadSession, false);
   document.getElementById("instructions").style.display = "none"
   document.getElementById("signOut").style.display = "none";
@@ -1326,8 +1366,9 @@ function PlayStop(){
       document.getElementById("playStop").value = "Play" ;
   }else {
     Play() ;
-    
-}
+    document.getElementById("playStop").value = "Stop" ;
+
+    }
 
 }
 function Play() {

@@ -44,10 +44,11 @@
   <div id=signOut>
     <span type="text" id="displayName" value="" size="32" readonly></span>
     <button id=signOutButton type="button">Sign Out </button>
+    <button id=home type="button"  onclick=' emitStateChange(States.CP);'>Home </button>
   </div>
 
 
-  <div id="lock">
+  <div id="lockNkey">
     <span type="text" id="lock" texContent="Lock" size="10"></span>
     <span type="text" id="key" texContent="key" size="10"></span>
   </div>
@@ -58,18 +59,19 @@
   <div id="chooseProject">
     <button id="newSession" type="button" onclick="newSession()">New Session</button>
     <button type="button">Continue ....</button>
-    <button type="button" onclick="document.getElementById('loadSessionFile').click()">Load Existing Session</button>
+    <button type="button" onclick="document.getElementById('loadSessionFile').click()">Load Saved Session</button>
     <input id="loadSessionFile" style="visibility:hidden;" type="file" name="imgFileLoader" accept="" />
   </div>
 
-
+ <canvas id="original"></canvas>
 
 
   <div id=editSession >
-    <input id="sessionFileName">
+    
     <div id="loadImgDiv">
-      <label for="loadImgFile">Choose image to stringify</label>
-      <input type="file" id="loadImgFile" />
+      <input type="file" id="loadImgFile" style="display: none;"/>
+      <button id="triggerFileInput" onclick='triggerFileInput();'>Upload Image</button>
+      <input id="sessionFileName">
     </div>
     <br>
     <label for="circle">circle</label>
@@ -87,19 +89,15 @@
     <button id="startSession" type="button" onclick="startSession()">Start Session</button>
   </div>
 
-
+ 
 
   <div id="sessionCreated">
     <button id="saveSession" type="button" onclick="saveSession()">Save Session </button>
   </div>
 
 
-  <div id="playStop">
+  <div id="playStopDiv">
     <input type="button" id="playStop" type="button" value="Play" onclick="PlayStop()"></button>
-    <div id="play">
-
-    </div>
-
     <div id="stop">
       <button id="saveImage" type="button" onclick="SaveImage()">Save image</button>
       <button type="button" onclick="initInstructions()">Instructions</button>
@@ -143,7 +141,7 @@
 
       <br>
 
-      <canvas id="original"></canvas>
+      
       <canvas id="thumbnailMain"></canvas>
       <div id="instructions">
         <div>
@@ -172,14 +170,14 @@
           <input type="text" id="step4" value="" size="3" style="font-size:2vw">
           <br>
           <br>
-          <br>
+    
 
           <input type="text" id="step5" value="" size="3" style="font-size:2vw">
           <input type="text" id="step6" value="" size="3" style="font-size:2vw">
           <input type="text" id="step7" value="" size="3" style="font-size:2vw">
           <input type="text" id="step8" value="" size="3" style="font-size:2vw">
 
-
+          <br>
 
           <button type="button" onclick="findInstruction()">find line</button>
           <input type="text" id="findPointA" value="0" size="1">

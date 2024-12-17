@@ -12,7 +12,8 @@ improveWorker.onmessage = function ({data :{type,args}}){
         document.getElementById('lock').textContent = sessionState.sessionLock.length > 0 ? "locked" : "..." ;
         window.updateDB(sessionState.user.uid,sessionState.sessionLock,(key) => {
             sessionState.sessionKey = key ;
-            document.getElementById('key').textContent = sessionState.sessionKey.length > 0 ? "got key" : "..." ;;
+            let ke = document.getElementById('key');
+            ke.textContent = sessionState.sessionKey.length > 0 ? "got key" : "..." ;;
             emitStateChange(States.SC) ;
             
             
