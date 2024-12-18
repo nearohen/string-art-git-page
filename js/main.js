@@ -205,8 +205,8 @@ function initMainCanvas() {
   mainCanvas.onwheel = canvasMouseWheel;
   mainCanvas.onmousedown = canvasMousedown;
   mainCanvas.onmouseup = canvasMouseup;
-  mainCanvas.ontouchstart = canvasMousedown ;
-  mainCanvas.ontouchend = canvasMouseup ;
+  //mainCanvas.ontouchstart = canvasMousedown ;
+ // mainCanvas.ontouchend = canvasMouseup ;
   mainCanvas.height = height + 1;//plus 1 cus most right circle dot out of bounds
   mainCanvas.width = width + 1;
   ctxMainCanvas = mainCanvas.getContext("2d")
@@ -1046,10 +1046,6 @@ function updateSessionParams(cb) {
 function saveState() {
   //localStorage.clear();
   let tmp = arrayBufferToBase64(sessionState.snapshotBuffer) ; ;
-  if(tmp==sessionState.snapshotB64 ){
-
-    console.log("WTF") ;
-  }
   sessionState.snapshotB64 = tmp ;
   localStorage.sessionState = JSON.stringify(sessionState);
 }
@@ -1226,8 +1222,12 @@ function MoveSrcImage(x, y) {
 }
 function canvasMousedown(event) {
 
-  runTimeState.mouseDownX = event.offsetX
-  runTimeState.mouseDownY = event.offsetY
+  if(event.offsetX && event.offsetY){
+    runTimeState.mouseDownX = event.offsetX
+    runTimeState.mouseDownY = event.offsetY
+
+  }
+
 }
 
 function fixRec() {
@@ -1248,28 +1248,32 @@ function fixRec() {
 }
 function canvasMouseup(event) {
 
-  runTimeState.mouseUpX = event.offsetX
-  runTimeState.mouseUpY = event.offsetY
-  if (runTimeState.imgManipulationMode == IMG_MANIPULATION_PIXELS_WEIGHT) {
-    UpdateNewServerImg();
+  if(event.offsetX && event.offsetY){
+    runTimeState.mouseUpX = event.offsetX
+    runTimeState.mouseUpY = event.offsetY
+    if (runTimeState.imgManipulationMode == IMG_MANIPULATION_PIXELS_WEIGHT) {
+      UpdateNewServerImg();
+    }
+    else if (runTimeState.imgManipulationMode == IMG_MANIPULATION_ZOOM_MOVE) {
+      const diffX = runTimeState.mouseUpX - runTimeState.mouseDownX;
+      const diffY = runTimeState.mouseUpY - runTimeState.mouseDownY;
+      let relativeMoveX = diffX / mainCanvas.width;
+      let relativeMoveY = diffY / mainCanvas.height;
+      let realDiffx = sessionState.recWidth * relativeMoveX;
+      let realDiffy = sessionState.recHeight * relativeMoveY;
+  
+      sessionState.recOffX -= realDiffx;
+      sessionState.recOffY -= realDiffy;
+      fixRec();
+  
+  
+      UpdateNewServerImg();
+  
+  
+    }
+
   }
-  else if (runTimeState.imgManipulationMode == IMG_MANIPULATION_ZOOM_MOVE) {
-    const diffX = runTimeState.mouseUpX - runTimeState.mouseDownX;
-    const diffY = runTimeState.mouseUpY - runTimeState.mouseDownY;
-    let relativeMoveX = diffX / mainCanvas.width;
-    let relativeMoveY = diffY / mainCanvas.height;
-    let realDiffx = sessionState.recWidth * relativeMoveX;
-    let realDiffy = sessionState.recHeight * relativeMoveY;
-
-    sessionState.recOffX -= realDiffx;
-    sessionState.recOffY -= realDiffy;
-    fixRec();
-
-
-    UpdateNewServerImg();
-
-
-  }
+ 
 
 
 
