@@ -64,15 +64,15 @@
   </div>
 
  <canvas id="originalSmall"></canvas>
-
+ <div id="loadImgDiv">
+  <input type="file" id="loadImgFile" style="display: none;"/>
+  <button id="triggerFileInput">Upload Image</button>
+  <input id="sessionFileName">
+</div>
 
   <div id=editSession >
     
-    <div id="loadImgDiv">
-      <input type="file" id="loadImgFile" style="display: none;"/>
-      <button id="triggerFileInput">Upload Image</button>
-      <input id="sessionFileName">
-    </div>
+
     <br>
     <label for="circle">circle</label>
     <input type="radio" id="circle" name="circleSquare" onclick='handlePointsChange(true);'>

@@ -1,4 +1,3 @@
-
 var Buffer = require('Buffer');
 const EventBus = new EventTarget();
 // Emit (dispatch) a global event
@@ -852,6 +851,7 @@ function handleNewServerImg() {
   can.original.ctx.rect(sessionState.recOffX, sessionState.recOffY, sessionState.recWidth, sessionState.recHeight);
   can.original.ctx.stroke();
   can.original.ctx.restore();
+  initOriginalSmall();
 }
 
 function fillCanvas(name, color) {
@@ -1554,5 +1554,29 @@ window.onload = loader;
 
 
 //inputs 
+
+function initOriginalSmall() {
+  const originalSmallCanvas = document.getElementById("originalSmall");
+  if (originalSmallCanvas && can.original.canvas) {
+    const MAX_WIDTH = 200; // Maximum width for the small preview
+    
+    // Calculate height that maintains aspect ratio
+    const aspectRatio = can.original.canvas.height / can.original.canvas.width;
+    const width = Math.min(MAX_WIDTH, can.original.canvas.width);
+    const height = width * aspectRatio;
+
+    // Set canvas dimensions
+    originalSmallCanvas.width = width;
+    originalSmallCanvas.height = height;
+
+    // Draw the entire original canvas scaled to fit
+    const ctx = originalSmallCanvas.getContext("2d");
+    ctx.drawImage(
+      can.original.canvas,
+      0, 0, can.original.canvas.width, can.original.canvas.height, // Source dimensions (entire image)
+      0, 0, width, height // Destination dimensions (scaled)
+    );
+  }
+}
 
 
