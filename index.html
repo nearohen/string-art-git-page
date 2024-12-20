@@ -14,6 +14,7 @@
 
   <link rel="stylesheet" href="css/styles.css">
   <link rel="stylesheet" href="css/pause.css">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 </head>
 
 <body oncontextmenu="return false;">
@@ -114,13 +115,12 @@
     <div id="controls">
       <label for="zoom">Zoom</label>
       <div id="zoom">
-        <button type="button" onclick="Zoom(false)">+</button>
-        <button type="button" onclick="Zoom(true)">-</button>
-        <button type="button" onclick="upDown(true)">Up</button>
-        <button type="button" onclick="upDown(false)">downn</button>
-        <button type="button" onclick="leftRight(true)">left</button>
-        <button type="button" onclick="leftRight(false)">right</button>
-
+        <button type="button" onclick="Zoom(false)"><span class="material-icons">add</span></button>
+        <button type="button" onclick="Zoom(true)"><span class="material-icons">remove</span></button>
+        <button type="button" onclick="upDown(true)"><span class="material-icons">keyboard_arrow_up</span></button>
+        <button type="button" onclick="upDown(false)"><span class="material-icons">keyboard_arrow_down</span></button>
+        <button type="button" onclick="leftRight(true)"><span class="material-icons">keyboard_arrow_left</span></button>
+        <button type="button" onclick="leftRight(false)"><span class="material-icons">keyboard_arrow_right</span></button>
       </div>
       <br>
       <label for="contrastRange">C</label>

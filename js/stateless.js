@@ -121,6 +121,11 @@ async function saveLinesImage(name) {
   canvas.width = mainCanvas.width;
   canvas.height = mainCanvas.height;
   var ctx = canvas.getContext("2d");
+  
+  // Fill with white background first
+  ctx.fillStyle = 'white';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  
   DrawLines(canvas, ctx, false, sessionState.snapshotBuffer);
 
   try {
