@@ -128,8 +128,8 @@ function InitState() {
 }
 InitState();
 
-const MAIN_CANVAS_WIDTH = 384;
-const IMG_TO_CANVAS_SCLAE = MAIN_CANVAS_WIDTH / sessionState.sourceWidth;
+
+const IMG_TO_CANVAS_SCLAE = 5;
 
 
 function ApplyWeight() {
@@ -444,6 +444,10 @@ function updateOptionalValue(name,value){
   
 
 }
+function setSessionFileName(){
+  document.getElementById("sessionFileName").value = sessionState.sessionFileName
+  adjustSessionFileNameWidth(); ;
+}
 function LoadStateValuesToUI() {
 
   document.getElementById("stringPixelRatio").value = sessionState.stringPixelRation;
@@ -467,8 +471,7 @@ function LoadStateValuesToUI() {
   document.getElementById("bgColor1").style.backgroundColor = bgValToColor(sessionState.bgColors[1]);
   document.getElementById("bgColor2").style.backgroundColor = bgValToColor(sessionState.bgColors[2]);
   document.getElementById("bgColor3").style.backgroundColor = bgValToColor(sessionState.bgColors[3]);
-  document.getElementById("sessionFileName").value = sessionState.sessionFileName
-
+  setSessionFileName() ;
 
 
 
@@ -881,10 +884,10 @@ const divsToDisable = [ "signOut","home"];
 let allowedDivs = {
   [States.NS] : ["signIn"],
   [States.CP] : ["chooseProject","signOut"],
-  [States.ES] : ["editSession","signOut","original","home"],
-  [States.SC] : ["sessionCreated","signOut","container","original","play","controls","stop","home"],
-  [States.PL] : ["sessionCreated","play","container","original","controls"],
-  [States.ST] : ["sessionCreated","play","stop","signOut","container","original","controls","home"],
+  [States.ES] : ["editSession","signOut","original","home","loadImgDiv"],
+  [States.SC] : ["sessionCreated","signOut","container","original","play","controls","stop","home","loadImgDiv"],
+  [States.PL] : ["sessionCreated","play","container","original","controls","loadImgDiv"],
+  [States.ST] : ["sessionCreated","play","stop","signOut","container","original","controls","home","loadImgDiv"],
   [States.IN] : ["instructions","signOut","container","home"]
 }
 
@@ -952,6 +955,7 @@ function main() {
   document.getElementById('loadSessionFile').addEventListener('input', LoadSession, false);
   document.getElementById("instructions").style.display = "none"
   document.getElementById("signOut").style.display = "none";
+  document.getElementById('sessionFileName').addEventListener('input', adjustSessionFileNameWidth);
   updateOptionalValue("ip",sessionState.serverAddr);
   RestartState();
   GoToCanvas(ON_CANVAS_STRINGS);
@@ -993,10 +997,11 @@ function handleImageFileSelect(evt) {
   var reader = new FileReader();
   reader.onloadend = function () {
     originalImg.src = reader.result;
-    document.getElementById("sessionFileName").value = getImageFileName();
-    sessionState.sessionFileName = document.getElementById("sessionFileName").value;
+    sessionState.sessionFileName =  getImageFileName();
+    setSessionFileName();
+      
     GoToCanvas(ON_CANVAS_STRINGS);
-    emitStateChange(States.ES) ;
+    //emitStateChange(States.ES) ;
   }
   reader.readAsDataURL(file);
 
@@ -1584,5 +1589,28 @@ function initOriginalSmall() {
     ctx.drawImage(can.original.canvas, 0, 0, can.original.canvas.width, can.original.canvas.height, 0, 0, width, TINY_HEIGHT);
   }
 }
+
+function adjustSessionFileNameWidth() {
+    const input = document.getElementById('sessionFileName');
+    if (input) {
+        // Create a temporary span to measure text width
+        const tmp = document.createElement('span');
+        tmp.style.visibility = 'hidden';
+        tmp.style.position = 'absolute';
+        tmp.style.whiteSpace = 'pre';
+        tmp.style.font = window.getComputedStyle(input).font;
+        tmp.textContent = input.value;
+        document.body.appendChild(tmp);
+        
+        // Set input width to match text (plus some padding)
+        const width = tmp.getBoundingClientRect().width;
+        input.style.width = (width + 20) + 'px';
+        
+        document.body.removeChild(tmp);
+    }
+}
+
+// Add event listener to adjust width when text changes
+
 
 

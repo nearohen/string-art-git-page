@@ -55,6 +55,12 @@ input[type="range"] {
 	width: 150px;
 }
 
+/* Session Filename Input */
+#sessionFileName {
+	min-width: 100px;
+	width: auto;
+}
+
 /* Container Layout */
 #container {
 	display: flex;
@@ -64,12 +70,7 @@ input[type="range"] {
 }
 
 /* Canvas Styles */
-#main-canvas {
-	border-radius: var(--border-radius);
-	box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-	background-color: white;
-	max-width: 100%;
-}
+
 
 /* Controls Section */
 #controls {
@@ -189,6 +190,13 @@ input[id^="bgColor"] {
 /* Hide Elements */
 .d-none {
 	display: none !important;
+}
+
+/* Display Name Styles */
+#displayName {
+	font-size: 1.2em;
+	font-weight: bold;
+	margin-right: 10px;
 }
 
 
