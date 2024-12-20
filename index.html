@@ -114,9 +114,14 @@
     <div id="controls">
       <label for="zoom">Zoom</label>
       <div id="zoom">
-        <button type="button" onclick="Zoom(true)">+</button>
-        <button type="button" onclick="Zoom(false)">-</button>
-      </div>g
+        <button type="button" onclick="Zoom(false)">+</button>
+        <button type="button" onclick="Zoom(true)">-</button>
+        <button type="button" onclick="upDown(true)">Up</button>
+        <button type="button" onclick="upDown(false)">downn</button>
+        <button type="button" onclick="leftRight(true)">left</button>
+        <button type="button" onclick="leftRight(false)">right</button>
+
+      </div>
       <br>
       <label for="contrastRange">C</label>
       <input type="range" id="contrastRange" value="50" min='0' max='100' step='1'

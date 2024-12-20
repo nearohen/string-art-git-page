@@ -247,6 +247,19 @@ function handleGrow(growth,relativePosX,relativePosY){
   }
   UpdateNewServerImg();
 }
+
+
+function upDown(down){
+  sessionState.recOffY += down ? 1 : -1;
+  fixRec();
+  UpdateNewServerImg();
+}
+
+function leftRight(left){
+  sessionState.recOffX += left ? 1 : -1;
+  fixRec();
+  UpdateNewServerImg();
+}
 function Zoom(positive){
   let growth = 1.02;
   if(positive) {
