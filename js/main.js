@@ -1316,7 +1316,7 @@ function loader() {
   addCanvasElement("thumbnailFocus", false);
 
 
-  addCanvasElement("original", false);
+  addCanvasElement("original", true);
   addCanvasElement("focus", false);
   addCanvasElement("weight", false);
 
