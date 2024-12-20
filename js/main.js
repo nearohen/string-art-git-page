@@ -874,18 +874,18 @@ function initRec() {
 
 
 // Separate arrays for handling different behaviors
-const divsToHide = ["signIn", "chooseProject", "createSession","container","editSession", "original","controls"];
+const divsToHide = ["signIn", "chooseProject", "createSession","container","editSession", "original","controls","lockNkey","loadImgDiv","advanced"];
 const divsToInvisible = ["instructions", "sessionCreated", "playStopDiv","play","stop"];
-const divsToDisable = [ "lockNkey","signOut"];
+const divsToDisable = [ "signOut","home"];
 
 let allowedDivs = {
   [States.NS] : ["signIn"],
   [States.CP] : ["chooseProject","signOut"],
-  [States.ES] : ["editSession","signOut","original"],
-  [States.SC] : ["sessionCreated","signOut","container","original","play","controls","stop"],
+  [States.ES] : ["editSession","signOut","original","home"],
+  [States.SC] : ["sessionCreated","signOut","container","original","play","controls","stop","home"],
   [States.PL] : ["sessionCreated","play","container","original","controls"],
-  [States.ST] : ["sessionCreated","play","stop","signOut","container","original","controls"],
-  [States.IN] : ["instructions","signOut","container"]
+  [States.ST] : ["sessionCreated","play","stop","signOut","container","original","controls","home"],
+  [States.IN] : ["instructions","signOut","container","home"]
 }
 
 
@@ -1557,25 +1557,31 @@ window.onload = loader;
 
 function initOriginalSmall() {
   const originalSmallCanvas = document.getElementById("originalSmall");
+  const originalTinyCanvas = document.getElementById("originalTiny");
+  
   if (originalSmallCanvas && can.original.canvas) {
-    const MAX_WIDTH = 200; // Maximum width for the small preview
-    
-    // Calculate height that maintains aspect ratio
+    // Original small thumbnail (200px max)
+    const MAX_WIDTH = 200;
     const aspectRatio = can.original.canvas.height / can.original.canvas.width;
     const width = Math.min(MAX_WIDTH, can.original.canvas.width);
     const height = width * aspectRatio;
 
-    // Set canvas dimensions
     originalSmallCanvas.width = width;
     originalSmallCanvas.height = height;
-
-    // Draw the entire original canvas scaled to fit
     const ctx = originalSmallCanvas.getContext("2d");
-    ctx.drawImage(
-      can.original.canvas,
-      0, 0, can.original.canvas.width, can.original.canvas.height, // Source dimensions (entire image)
-      0, 0, width, height // Destination dimensions (scaled)
-    );
+    ctx.drawImage(can.original.canvas, 0, 0, can.original.canvas.width, can.original.canvas.height, 0, 0, width, height);
+  }
+
+  if (originalTinyCanvas && can.original.canvas) {
+    // Tiny thumbnail (fixed height 50px, width maintains aspect ratio)
+    const TINY_HEIGHT = 50;
+    const aspectRatio = can.original.canvas.width / can.original.canvas.height;
+    const width = Math.round(TINY_HEIGHT * aspectRatio);
+    
+    originalTinyCanvas.width = width;
+    originalTinyCanvas.height = TINY_HEIGHT;
+    const ctx = originalTinyCanvas.getContext("2d");
+    ctx.drawImage(can.original.canvas, 0, 0, can.original.canvas.width, can.original.canvas.height, 0, 0, width, TINY_HEIGHT);
   }
 }
 
