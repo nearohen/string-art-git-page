@@ -1070,7 +1070,7 @@ function saveState() {
   localStorage.sessionState = JSON.stringify(sessionState);
 }
 function isLocalStorageStateValid(params) {
-  return params != undefined && params.pointsH != undefined && params.version != STRINGS_STATE_VERSION ;
+  return params != undefined && params.pointsH != undefined && params.version == STRINGS_STATE_VERSION ;
 }
 function LoadStateFromLocalStorage() {
 
