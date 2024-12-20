@@ -78,6 +78,7 @@ input[type="range"] {
 	padding: var(--spacing);
 	border-radius: var(--border-radius);
 	box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+	flex-shrink: 0;
 }
 
 /* Header Sections */
@@ -103,12 +104,21 @@ canvas[id^="thumbnail"] {
 	border-radius: var(--border-radius);
 	box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 	margin-top: var(--spacing);
+	flex: 1;
+	min-width: 300px;
 }
 
 #instructions input[type="text"] {
 	font-size: 1.5em;
-	width: 60px;
+	width: 100px;
 	text-align: center;
+}
+
+/* Special case for step inputs */
+#instructions input[id^="step"] {
+	width: 120px;
+	margin: 5px;
+	font-size: 2em;
 }
 
 /* Edit Session Section */
@@ -171,6 +181,11 @@ input[id^="bgColor"] {
 		width: 100%;
 		height: auto;
 	}
+	
+	#instructions {
+		width: 100%;
+		min-width: unset;
+	}
 }
 
 /* Animation for Buttons */
@@ -197,6 +212,11 @@ input[id^="bgColor"] {
 	font-size: 1.2em;
 	font-weight: bold;
 	margin-right: 10px;
+}
+
+/* Canvas Container */
+#container > div:first-child {
+	flex-shrink: 0;
 }
 
 

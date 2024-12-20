@@ -419,6 +419,7 @@ function LoadSession(evt) {
     if (params != null) {
 
       handleNewState(params);
+      startSession();
     }
   }
   reader.readAsText(file)
@@ -878,16 +879,16 @@ function initRec() {
 
 // Separate arrays for handling different behaviors
 const divsToHide = ["signIn", "chooseProject", "createSession","container","editSession", "original","controls","lockNkey","loadImgDiv","advanced"];
-const divsToInvisible = ["instructions", "sessionCreated", "playStopDiv","play","stop"];
+const divsToInvisible = ["instructions", "sessionCreated","playStop","stop"];
 const divsToDisable = [ "signOut","home"];
 
 let allowedDivs = {
   [States.NS] : ["signIn"],
   [States.CP] : ["chooseProject","signOut"],
   [States.ES] : ["editSession","signOut","original","home","loadImgDiv"],
-  [States.SC] : ["sessionCreated","signOut","container","original","play","controls","stop","home","loadImgDiv"],
-  [States.PL] : ["sessionCreated","play","container","original","controls","loadImgDiv"],
-  [States.ST] : ["sessionCreated","play","stop","signOut","container","original","controls","home","loadImgDiv"],
+  [States.SC] : ["sessionCreated","signOut","container","original","playStop","controls","stop","home","loadImgDiv"],
+  [States.PL] : ["sessionCreated","playStop","container","original","controls","loadImgDiv"],
+  [States.ST] : ["sessionCreated","playStop","stop","signOut","container","original","controls","home","loadImgDiv"],
   [States.IN] : ["instructions","signOut","container","home"]
 }
 

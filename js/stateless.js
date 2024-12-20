@@ -115,8 +115,7 @@ function OffX(x) {
   }
   //return 7*(-0.5+Math.random())  ;
 }
-function saveLinesImage(name) {
-
+async function saveLinesImage(name) {
   var canvas = document.createElement('canvas');
   canvas.id = "CursorLayer";
   canvas.width = mainCanvas.width;
@@ -124,19 +123,68 @@ function saveLinesImage(name) {
   var ctx = canvas.getContext("2d");
   DrawLines(canvas, ctx, false, sessionState.snapshotBuffer);
 
-  var a = document.createElement('a');
-  var dataUrl = canvas.toDataURL("image/png");
-  a.setAttribute('href', dataUrl);
-  a.setAttribute('download', name);
-  a.click()
-
+  try {
+    const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+    
+    // Show the file picker
+    const handle = await window.showSaveFilePicker({
+      suggestedName: name,
+      types: [{
+        description: 'PNG image',
+        accept: {
+          'image/png': ['.png']
+        }
+      }]
+    });
+    
+    // Create a writable stream
+    const writable = await handle.createWritable();
+    
+    // Write the content
+    await writable.write(blob);
+    
+    // Close the stream
+    await writable.close();
+  } catch (err) {
+    // Fallback for browsers that don't support the File System API
+    const dataUrl = canvas.toDataURL("image/png");
+    const link = document.createElement('a');
+    link.href = dataUrl;
+    link.download = name;
+    link.click();
+  }
 }
-function saveText(text, filename) {
-
-  var a = document.createElement('a');
-  a.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
-  a.setAttribute('download', filename);
-  a.click()
+async function saveText(text, filename) {
+  try {
+    // Show the file picker
+    const handle = await window.showSaveFilePicker({
+      suggestedName: filename,
+      types: [{
+        description: 'Text file',
+        accept: {
+          'text/plain': ['.txt']
+        }
+      }]
+    });
+    
+    // Create a writable stream
+    const writable = await handle.createWritable();
+    
+    // Write the content
+    await writable.write(text);
+    
+    // Close the stream
+    await writable.close();
+  } catch (err) {
+    // Fallback for browsers that don't support the File System API
+    const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    link.click();
+    URL.revokeObjectURL(url);
+  }
 }
 
 
