@@ -63,7 +63,7 @@
     <input id="loadSessionFile" style="visibility:hidden;" type="file" name="imgFileLoader" accept="" />
   </div>
 
- <canvas id="originalSmall"></canvas>
+
  <div id="loadImgDiv">
   <input type="file" id="loadImgFile" style="display: none;"/>
   <button id="triggerFileInput">Upload Image</button>
@@ -96,17 +96,14 @@
   </div>
 
 
-  <div id="playStopDiv">
-    <input type="button" id="playStop" type="button" value="Play" onclick="PlayStop()"></button>
-    <div id="stop">
-      <button id="saveImage" type="button" onclick="SaveImage()">Save image</button>
-      <button type="button" onclick="initInstructions()">Instructions</button>
-    </div>
-  </div>
+
 
   <div id="container">
     <div>
       <br>
+      
+      <input type="button" id="playStop" type="button" value="Play" onclick="PlayStop()"></button>
+      
       <input type="text" id="lines" value="0" size="2">string used</input>
       <input type="text" id="improvements" value="0" size="2">improvements</input>
       <br>
@@ -140,58 +137,61 @@
       <br>
 
       
-      <canvas id="thumbnailMain"></canvas>
-
-
-    </div>
-
-  </div>
-
-
-  <div id="instructions">
-    <div>
-      step
-      <input type="text" id="instruction" value="" size="3">
-      /
-      <input type="text" id="totalInstruction" value="" size="3">
-      steps
-      <button type="button" onclick="playInstructions()">>>></button>
-      <button type="button" onclick="stopInstructions()">[]</button>
-    </div>
-    <br>
-    <div>
-
-      <button type="button" onclick="nextInstruction()">+</button>
-      <button type="button" onclick="prevInstruction()">-</button>
-      <button type="button" onclick="nextInstructionBatch()">>></button>
-
-      <div>
+      <canvas id="originalSmall"></canvas>
+      <div id="stop">
+        <button id="saveImage" type="button" onclick="SaveImage()">Save image</button>
+        <button type="button" onclick="initInstructions()">Instructions</button>
       </div>
-      <input type="text" id="step0" value="" size="3" style="font-size:2vw">
-      <br>
-      <input type="text" id="step1" value="" size="3" style="font-size:2vw">
-      <input type="text" id="step2" value="" size="3" style="font-size:2vw">
-      <input type="text" id="step3" value="" size="3" style="font-size:2vw">
-      <input type="text" id="step4" value="" size="3" style="font-size:2vw">
-      <br>
-      <br>
 
+    </div>
 
-      <input type="text" id="step5" value="" size="3" style="font-size:2vw">
-      <input type="text" id="step6" value="" size="3" style="font-size:2vw">
-      <input type="text" id="step7" value="" size="3" style="font-size:2vw">
-      <input type="text" id="step8" value="" size="3" style="font-size:2vw">
-
+    <div id="instructions">
+      <div>
+        step
+        <input type="text" id="instruction" value="" size="3">
+        /
+        <input type="text" id="totalInstruction" value="" size="3">
+        steps
+        <button type="button" onclick="playInstructions()">>>></button>
+        <button type="button" onclick="stopInstructions()">[]</button>
+      </div>
       <br>
-
-      <button type="button" onclick="findInstruction()">find line</button>
-      <input type="text" id="findPointA" value="0" size="1">
-      <input type="text" id="findPointB" value="0" size="1">
-      pos
-      <input type="text" id="goToInstruction" value="-1" size="1">
-      <button type="button" onclick="goToInstruction()">go to</button>
+      <div>
+  
+        <button type="button" onclick="nextInstruction()">+</button>
+        <button type="button" onclick="prevInstruction()">-</button>
+        <button type="button" onclick="nextInstructionBatch()">>></button>
+  
+        <div>
+        </div>
+        <input type="text" id="step0" value="" size="3" style="font-size:2vw">
+        <br>
+        <input type="text" id="step1" value="" size="3" style="font-size:2vw">
+        <input type="text" id="step2" value="" size="3" style="font-size:2vw">
+        <input type="text" id="step3" value="" size="3" style="font-size:2vw">
+        <input type="text" id="step4" value="" size="3" style="font-size:2vw">
+        <br>
+        <br>
+  
+  
+        <input type="text" id="step5" value="" size="3" style="font-size:2vw">
+        <input type="text" id="step6" value="" size="3" style="font-size:2vw">
+        <input type="text" id="step7" value="" size="3" style="font-size:2vw">
+        <input type="text" id="step8" value="" size="3" style="font-size:2vw">
+  
+        <br>
+  
+        <button type="button" onclick="findInstruction()">find line</button>
+        <input type="text" id="findPointA" value="0" size="1">
+        <input type="text" id="findPointB" value="0" size="1">
+        pos
+        <input type="text" id="goToInstruction" value="-1" size="1">
+        <button type="button" onclick="goToInstruction()">go to</button>
+      </div>
     </div>
   </div>
+
+
   <!--  ON_PROJECT -->
 
 

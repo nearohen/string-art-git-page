@@ -882,9 +882,9 @@ let allowedDivs = {
   [States.NS] : ["signIn"],
   [States.CP] : ["chooseProject","signOut"],
   [States.ES] : ["editSession","signOut","original"],
-  [States.SC] : ["sessionCreated","signOut","container","original","playStopDiv","controls"],
-  [States.PL] : ["sessionCreated","playStopDiv","play","container","original","controls"],
-  [States.ST] : ["sessionCreated","playStopDiv","stop","signOut","container","original","controls"],
+  [States.SC] : ["sessionCreated","signOut","container","original","play","controls","stop"],
+  [States.PL] : ["sessionCreated","play","container","original","controls"],
+  [States.ST] : ["sessionCreated","play","stop","signOut","container","original","controls"],
   [States.IN] : ["instructions","signOut","container"]
 }
 
@@ -1310,7 +1310,7 @@ function addCanvasElement(name, create) {
 
 function loader() {
   addCanvasElement("animation", true);
-  addCanvasElement("thumbnailMain", false);
+  addCanvasElement("thumbnailMain", true);
   addCanvasElement("thumbnailStrings", false);
   addCanvasElement("thumbnailWeight", false);
   addCanvasElement("thumbnailFocus", false);
