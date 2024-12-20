@@ -42,7 +42,7 @@ const ON_CANVAS_DISTANCE = 2;
 const ON_CANVAS_STRING_COLOR = 3;
 const ON_CANVAS_INSTRUCTION = 4;
 const ON_CANVAS_PIXEL_WEIGHT = 5;
-
+const STRINGS_STATE_VERSION = 1 ;
 let lastStringColor = null
 let lastDistance = null;
 
@@ -90,6 +90,7 @@ runTimeState = {
 let sessionState = {};
 function InitState() {
   sessionState = {
+    version : STRINGS_STATE_VERSION,
     pointsW:86,
     pointsH: 106,
     pointsC: 256,
@@ -1069,7 +1070,7 @@ function saveState() {
   localStorage.sessionState = JSON.stringify(sessionState);
 }
 function isLocalStorageStateValid(params) {
-  return params != undefined && params.pointsH != undefined;
+  return params != undefined && params.pointsH != undefined && params.version != STRINGS_STATE_VERSION ;
 }
 function LoadStateFromLocalStorage() {
 
