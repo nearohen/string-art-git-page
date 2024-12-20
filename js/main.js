@@ -891,8 +891,8 @@ function initRec() {
 
 
 // Separate arrays for handling different behaviors
-const divsToHide = ["signIn", "chooseProject", "createSession","container","editSession", "original","controls","lockNkey","loadImgDiv","advanced"];
-const divsToInvisible = ["instructions", "sessionCreated","playStop","stop"];
+const divsToHide = ["signIn", "chooseProject", "createSession","container","editSession", "original","controls","lockNkey","loadImgDiv","advanced","playStop"];
+const divsToInvisible = ["instructions", "sessionCreated","stop"];
 const divsToDisable = [ "signOut","home"];
 
 let allowedDivs = {

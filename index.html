@@ -113,16 +113,22 @@
 
 
     <div id="controls">
-      <label for="zoom">Zoom</label>
+      <label for="zoom">Move</label>
       <div id="zoom">
-        <button type="button" onclick="Zoom(false)"><span class="material-icons">add</span></button>
-        <button type="button" onclick="Zoom(true)"><span class="material-icons">remove</span></button>
-        <button type="button" onclick="upDown(true)"><span class="material-icons">keyboard_arrow_up</span></button>
-        <button type="button" onclick="upDown(false)"><span class="material-icons">keyboard_arrow_down</span></button>
-        <button type="button" onclick="leftRight(true)"><span class="material-icons">keyboard_arrow_left</span></button>
-        <button type="button" onclick="leftRight(false)"><span class="material-icons">keyboard_arrow_right</span></button>
+        <div>
+          <button type="button" onclick="Zoom(false)"><span class="material-icons">add</span></button>
+          <button type="button" onclick="Zoom(true)"><span class="material-icons">remove</span></button>
+        </div>
+        <div>
+          <button type="button" onclick="upDown(true)"><span class="material-icons">keyboard_arrow_up</span></button>
+          <button type="button" onclick="upDown(false)"><span class="material-icons">keyboard_arrow_down</span></button>
+        </div>
+        <div>
+          <button type="button" onclick="leftRight(true)"><span class="material-icons">keyboard_arrow_left</span></button>
+          <button type="button" onclick="leftRight(false)"><span class="material-icons">keyboard_arrow_right</span></button>
+        </div>
       </div>
-      <br>
+      <div id="range">
       <label for="contrastRange">C</label>
       <input type="range" id="contrastRange" value="50" min='0' max='100' step='1'
         oninput="updateContrast(this.value,false);" onchange="updateContrast(this.value,true);">
@@ -138,7 +144,7 @@
       1/
       <input type="text" id="stringPixelRatioText" value="" size="1">
 
-      <br>
+      </div>
 
       
       <canvas id="originalSmall"></canvas>
