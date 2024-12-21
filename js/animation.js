@@ -368,13 +368,74 @@ function LoadAnimationFile(evt){
 
 }
 
-function animateSaveFrame(snapshot){
+function animateSaveFrame(snapshot,duration){
   animatedGidData.frames.push({
     snapshot:snapshot,
     stringPixelRation:sessionState.stringPixelRation,
+    duration:duration,
   });
 
+
 }
+async function AnimateSnapshotToSnapshot(fromSnapshot,toSnapshot){
+
+  let sprints = getSprints(fromSnapshot,toSnapshot) ;
+  let sprintsSize = 20 ;
+  for(let i = 0;i<sprintsSize;i++){
+    animateSaveFrame(sprintsToSnapshot(sprints, i, sprintsSize),100)
+  }
+  animateSaveFrame(sprintsToSnapshot(sprints, sprintsSize, sprintsSize),1000)
+
+
+}
+
+
+function Animate(){
+
+  fetch('./js/output.json') // Adjust the path to your file
+  .then(response => {
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return response.json(); // For JSON files, use .json(); for text, use .text()
+  })
+  .then(data => {
+
+
+    for(let i = 0;i<data.sessions.length;i++){
+      AnimateSnapshotToSnapshot(data.sessions[i].snapshotB64,data.sessions[(i+1)%data.sessions.length].snapshotB64) ;
+    }
+    
+
+    let nextFrameDuration = 100 ;
+    let showNextFrame = (frame) => {
+     
+      let snapshotBuffer =  base64ToArrayBuffer(frame.snapshot)  ;
+      sessionState.snapshotBuffer = snapshotBuffer ;
+      animatedGidData.currentFrame = (animatedGidData.currentFrame+1)%animatedGidData.frames.length ;
+      if(animatedGidData.currentFrame>=animatedGidData.frames.length){
+        animatedGidData.currentFrame = 0 ;
+      }
+    }
+
+    let timeOutFrame = () => {
+      let frame = animatedGidData.frames[animatedGidData.currentFrame] ;
+      nextFrameDuration = frame.duration ;
+      showNextFrame(frame) ;
+      runTimeState.intervals.animationInterval = setTimeout(timeOutFrame,nextFrameDuration) ;
+    }
+    timeOutFrame();
+   
+
+    console.log('File content:', data);
+  })
+  .catch(error => {
+    console.error('Error loading the file:', error);
+  });
+
+ 
+}
+
 
 async function AnimateGif(){
   

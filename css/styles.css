@@ -67,6 +67,7 @@ input[type="range"] {
 	gap: var(--spacing);
 	flex-wrap: wrap;
 	margin-top: var(--spacing);
+	justify-content: flex-start;
 }
 
 /* Canvas Styles */
@@ -78,8 +79,9 @@ input[type="range"] {
 	padding: var(--spacing);
 	border-radius: var(--border-radius);
 	box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-	flex: 1;
+	flex: 0 0 auto;
 	min-width: 300px;
+	max-width: 500px;
 }
 
 /* Controls Section Layout */
@@ -182,8 +184,8 @@ input[id^="bgColor"] {
 
 /* Canvas Container */
 #container > div:first-child {
-	flex-shrink: 0;
-	flex-grow: 0;
+	flex: 0 1 auto;
+	min-width: 0;
 }
 
 #zoom button {

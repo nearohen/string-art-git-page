@@ -75,6 +75,7 @@ runTimeState = {
     timeoutNewServerImg: 0,
     timeoutNewThumbnails: 0,
     intervalSprints: 0,
+    animationInterval: 0,
 
   },
   linesArr: [],
@@ -130,7 +131,7 @@ function InitState() {
 InitState();
 
 
-const IMG_TO_CANVAS_SCLAE = 5;
+const IMG_TO_CANVAS_SCLAE = 3;
 
 
 function ApplyWeight() {
@@ -892,12 +893,12 @@ function initRec() {
 
 
 // Separate arrays for handling different behaviors
-const divsToHide = ["signIn", "chooseProject", "createSession","container","editSession", "original","controls","lockNkey","loadImgDiv","advanced","playStop"];
+const divsToHide = ["signIn", "chooseProject", "createSession","container","editSession", "original","controls","lockNkey","loadImgDiv","advanced","playStop","animation"];
 const divsToInvisible = ["instructions", "sessionCreated","stop"];
 const divsToDisable = [ "signOut","home"];
 
 let allowedDivs = {
-  [States.NS] : ["signIn"],
+  [States.NS] : ["signIn","animation","container"],
   [States.CP] : ["chooseProject","signOut"],
   [States.ES] : ["editSession","signOut","original","home","loadImgDiv"],
   [States.SC] : ["sessionCreated","signOut","container","original","playStop","controls","stop","home","loadImgDiv"],
@@ -979,6 +980,7 @@ function main() {
   window.getUser((user)=>{
     sessionState.user = user ;
     if(user){
+      clearTimeout(runTimeState.intervals.animationInterval) ;
       emitStateChange(States.CP) ;
     }
     else{
@@ -986,6 +988,7 @@ function main() {
     }
   })
   emitStateChange(States.NS);
+  runTimeState.intervals.animationInterval = setTimeout(Animate,2000);
 }
 
 
@@ -1107,8 +1110,8 @@ function initDots() {
     }
     sessionState.dots = pointsAr
 
-    sessionState.sourceWidth = 64
-    sessionState.sourceHeight = 64
+    sessionState.sourceWidth = 128
+    sessionState.sourceHeight = 128
 
   }
   else {
@@ -1370,12 +1373,15 @@ function loader() {
     }
 
   }
-  LoadStateFromLocalStorage()
+  //LoadStateFromLocalStorage()
   main()
 
 
 }
-
+function Continue(){
+  LoadStateFromLocalStorage()
+  startSession();
+}
 function inputControler(name, unit, callback) {
   let input = document.getElementById(name + "-in")
   let label = document.getElementById(name + "-span")
