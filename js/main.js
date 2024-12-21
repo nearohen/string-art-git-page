@@ -989,7 +989,7 @@ function main() {
     }
   })
   emitStateChange(States.NS);
-  runTimeState.intervals.animationInterval = setTimeout(Animate,2000);
+  runTimeState.intervals.animationInterval = setTimeout(Animate,1000);
 }
 
 
@@ -1069,9 +1069,11 @@ function updateSessionParams(cb) {
 
 function saveState() {
   //localStorage.clear();
-  let tmp = arrayBufferToBase64(sessionState.snapshotBuffer) ; ;
-  sessionState.snapshotB64 = tmp ;
-  localStorage.sessionState = JSON.stringify(sessionState);
+  if(runTimeState.state!=States.NS){
+    let tmp = arrayBufferToBase64(sessionState.snapshotBuffer) ; ;
+    sessionState.snapshotB64 = tmp ;
+    localStorage.sessionState = JSON.stringify(sessionState);
+  }
 }
 function isLocalStorageStateValid(params) {
   return params != undefined && params.pointsH != undefined && params.version == STRINGS_STATE_VERSION ;
