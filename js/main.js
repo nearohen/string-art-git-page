@@ -893,7 +893,7 @@ function initRec() {
 
 
 // Separate arrays for handling different behaviors
-const divsToHide = ["signIn", "chooseProject", "createSession","container","editSession", "original","controls","lockNkey","loadImgDiv","advanced","playStop","animation"];
+const divsToHide = ["signIn", "chooseProject", "createSession","container","editSession", "original","controls","lockNkey","loadImgDiv","advanced","playStop","animation","improvementsInfo"];
 const divsToInvisible = ["instructions", "sessionCreated","stop"];
 const divsToDisable = [ "signOut","home"];
 
@@ -901,9 +901,9 @@ let allowedDivs = {
   [States.NS] : ["signIn","animation","container"],
   [States.CP] : ["chooseProject","signOut"],
   [States.ES] : ["editSession","signOut","original","home","loadImgDiv"],
-  [States.SC] : ["sessionCreated","signOut","container","original","playStop","controls","stop","home","loadImgDiv"],
-  [States.PL] : ["sessionCreated","playStop","container","original","controls","loadImgDiv"],
-  [States.ST] : ["sessionCreated","playStop","stop","signOut","container","original","controls","home","loadImgDiv"],
+  [States.SC] : ["sessionCreated","signOut","container","improvementsInfo","original","playStop","controls","stop","home","loadImgDiv"],
+  [States.PL] : ["sessionCreated","playStop","container","improvementsInfo","original","controls","loadImgDiv"],
+  [States.ST] : ["sessionCreated","playStop","stop","signOut","container","improvementsInfo","original","controls","home","loadImgDiv"],
   [States.IN] : ["instructions","signOut","container","home"]
 }
 
@@ -985,6 +985,7 @@ function main() {
     }
     else{
       emitStateChange(States.NS) ;
+      runTimeState.intervals.animationInterval = setTimeout(Animate,100);
     }
   })
   emitStateChange(States.NS);

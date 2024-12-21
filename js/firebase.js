@@ -70,6 +70,7 @@ function handleUser(userE){
       document.getElementById("signInButton").style.display = "block";
       console.log("User signed out successfully");
       emitStateChange(States.NS) ;
+      runTimeState.intervals.animationInterval = setTimeout(Animate,100);
     } catch (error) {
       console.error("Error signing out:", error);
     }

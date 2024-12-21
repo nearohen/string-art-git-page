@@ -401,6 +401,10 @@ function Animate(){
   })
   .then(data => {
 
+    sessionState.pointsH = data.sessions[0].pointsH ;
+    sessionState.pointsV = data.sessions[0].pointsV ;
+    sessionState.circle = data.sessions[0].circle ;
+    RestartState();
 
     for(let i = 0;i<data.sessions.length;i++){
       AnimateSnapshotToSnapshot(data.sessions[i].snapshotB64,data.sessions[(i+1)%data.sessions.length].snapshotB64) ;
