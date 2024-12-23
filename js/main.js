@@ -42,7 +42,7 @@ const ON_CANVAS_DISTANCE = 2;
 const ON_CANVAS_STRING_COLOR = 3;
 const ON_CANVAS_INSTRUCTION = 4;
 const ON_CANVAS_PIXEL_WEIGHT = 5;
-const STRINGS_STATE_VERSION = 1 ;
+const STRINGS_STATE_VERSION = 2 ;
 let lastStringColor = null
 let lastDistance = null;
 
@@ -98,7 +98,7 @@ function InitState() {
     sourceWidth: 128,
     sourceHeight: 128,
     radius: 64,
-    circle: false,
+    pointsType: "R",
     brightness: 50,
     contrast: 50,
     normalize: 1.5,
@@ -109,6 +109,7 @@ function InitState() {
     sendRawSourceImg: "",
     pixelWeight: [],
     pointsArr: [],
+    customPoints: [],
     snapshot: "",
     onCanvas: ON_CANVAS_IMG,
     
@@ -346,7 +347,13 @@ function updateNewThumbnails() {
   }, 100);
 }
 
-
+function editCustomPoints(){
+  emitStateChange(States.ES);
+}
+function clearCustomPoints(){
+  sessionState.customPoints = [];
+  handlePointsChange(true);
+}
 function handlePointsChange(initRec) {
 
   initDots();
@@ -374,7 +381,9 @@ function handlePointsChange(initRec) {
   if(sessionState.originalImgSrc){
     originalImg.src = sessionState.originalImgSrc;//to trigger onLoad
   }
-
+  else{
+    initOriginalSmall();
+  }
   loadSavedToCanvas("weight", sessionState.weightImg);
   loadSavedToCanvas("focus", sessionState.focusImg);
 
@@ -499,8 +508,11 @@ function LoadStateValuesToUI() {
   updateOptionalValue("bgStrength",sessionState.bgStrength);
   
   
-
-  if (sessionState.circle) {
+  if (sessionState.pointsType=="M") {
+    document.getElementById("customPoints").checked = true
+  }
+  else 
+  if (sessionState.pointsType=="C") {
     document.getElementById("circle").checked = true
   }
   else {
@@ -900,7 +912,7 @@ const divsToDisable = [ "signOut","home"];
 let allowedDivs = {
   [States.NS] : ["signIn","animation","container"],
   [States.CP] : ["chooseProject","signOut"],
-  [States.ES] : ["editSession","signOut","original","home","loadImgDiv"],
+  [States.ES] : ["editSession","signOut","original","home","loadImgDiv","container"],
   [States.SC] : ["sessionCreated","signOut","container","improvementsInfo","original","playStop","controls","stop","home","loadImgDiv"],
   [States.PL] : ["sessionCreated","playStop","container","improvementsInfo","original","controls","loadImgDiv"],
   [States.ST] : ["sessionCreated","playStop","stop","signOut","container","improvementsInfo","original","controls","home","loadImgDiv"],
@@ -1096,10 +1108,18 @@ function initDots() {
   sessionState.pointsW = document.getElementById("pointsW").value;
   sessionState.pointsH = document.getElementById("pointsH").value;
   sessionState.pointsC = document.getElementById("pointsC").value;
-  sessionState.circle = document.getElementById("circle").checked;
+  if(document.getElementById("circle").checked){
+    sessionState.pointsType = "C";
+  }
+  else if(document.getElementById("rectangle").checked){
+    sessionState.pointsType = "R";
+  }
+  else if(document.getElementById("customPoints").checked){
+    sessionState.pointsType = "M";
+  }
 
 
-  if (sessionState.circle) {
+  if (sessionState.pointsType=="C") {
     cx = 1 / 2
     cy = 1 / 2
     r = cy
@@ -1117,7 +1137,7 @@ function initDots() {
     sessionState.sourceHeight = 128
 
   }
-  else {
+  else  if (sessionState.pointsType=="R")  {
     let pointsAr = []
     moveX = 1 / sessionState.pointsW
     moveY = 1 / sessionState.pointsH
@@ -1146,6 +1166,11 @@ function initDots() {
     height = Math.ceil(sessionState.pointsH * sessionState.sourceWidth / sessionState.pointsW)
     sessionState.sourceHeight = height
 
+  }
+  else if (sessionState.pointsType=="M") {
+    sessionState.sourceWidth = 128
+    sessionState.sourceHeight = 128
+    sessionState.dots = sessionState.customPoints ;
   }
   if (dChange) {
     initRelevantPixels()

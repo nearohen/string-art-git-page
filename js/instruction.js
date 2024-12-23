@@ -311,7 +311,7 @@ function drawInstruction(canvas, ctxCanvas, instructionIndex) {
 
 }
 function DotIndexToLRTBIndex(index) {
-  if (sessionState.circle) {
+  if (sessionState.pointsType=="C") {
     return "" + index;
   }
 

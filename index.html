@@ -66,28 +66,40 @@
 
 
  <div id="loadImgDiv">
-  <canvas id="originalTiny"></canvas>
   <input type="file" id="loadImgFile" style="display: none;"/>
   <button id="triggerFileInput">Upload Image</button>
+  <canvas id="originalTiny"></canvas>
   <input id="sessionFileName">
 </div>
 
   <div id=editSession >
     
 
-    <br>
+  
+    <div id="circleInfo">
     <label for="circle">circle</label>
     <input type="radio" id="circle" name="circleSquare" onclick='handlePointsChange(true);'>
     <label for="pointsH">C</label>
     <input type="text" id="pointsC" value="" size="1" onchange="handlePointsChange(true);">
-    <br>
+    </div>
+ 
+    <div id="rectangleInfo">
     <label for="rectangle">rectangle</label>
     <input type="radio" id="rectangle" name="circleSquare" checked onclick='handlePointsChange(true);'>
     <label for="pointsW">W</label>
     <input type="text" id="pointsW" value="" size="1" onchange="handlePointsChange(true);">
     <label for="pointsH">H</label>
     <input type="text" id="pointsH" value="" size="1" onchange="handlePointsChange(true);">
-    <br>
+    </div>
+
+    <div id="customPointsInfo">
+      <label for="customPoints">custom dots</label>
+      <input type="radio" id="customPoints" name="circleSquare" onclick='handlePointsChange(true);'>
+      <label for="pointsCustom">N</label>
+      <input type="text" id="pointsCustom" value="" size="1" onchange="handlePointsChange(true);">
+      <button type="button" id="clearCustomPoints" onclick="clearCustomPoints()">Clear</button>
+    </div>
+
     <button id="startSession" type="button" onclick="startSession()">Start Session</button>
   </div>
 
