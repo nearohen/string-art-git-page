@@ -97,7 +97,18 @@
       <input type="radio" id="customPoints" name="circleSquare" onclick='handlePointsChange(true);'>
       <label for="pointsCustom">N</label>
       <input type="text" id="pointsCustom" value="" size="1" onchange="handlePointsChange(true);">
+      <label for="customPointSpacing">Spacing %</label>
+      <input type="text" id="customPointSpacing" value="0.01" size="3" onchange="updateCustomPointSpacing(this.value);">
+      <button type="button" id="clearCustomPoints" onclick="editCustomPoints()">Edit</button>
       <button type="button" id="clearCustomPoints" onclick="clearCustomPoints()">Clear</button>
+      
+    </div>
+
+    <div id="editPointsDiv" >
+      <button type="button" onclick="clearPoints()">Clear All</button>
+      <button type="button" onclick="movePoint()">Move Point</button>
+      <button type="button" onclick="deletePoint()">Delete Point</button>
+      <button type="button" onclick="applyCustomPoints()">Apply</button>
     </div>
 
     <button id="startSession" type="button" onclick="startSession()">Start Session</button>

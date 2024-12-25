@@ -15,6 +15,8 @@ function drawPoint(x, y) {
 }
 
 function drawPoints() {
+  ctxMainCanvas.fillStyle = "#FFFFFF";
+  ctxMainCanvas.fillRect(0, 0, mainCanvas.width, mainCanvas.height);
   for ([x, y] of sessionState.dots)
     drawPoint(x, y)
 

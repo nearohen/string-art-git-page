@@ -403,7 +403,7 @@ function Animate(){
 
     sessionState.pointsH = data.sessions[0].pointsH ;
     sessionState.pointsV = data.sessions[0].pointsV ;
-    sessionState.circle = data.sessions[0].circle ;
+    sessionState.pointsType = data.sessions[0].pointsType ;
     RestartState();
 
     for(let i = 0;i<data.sessions.length;i++){

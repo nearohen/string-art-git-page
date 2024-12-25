@@ -126,6 +126,7 @@ function InitState() {
 
     sessionFileName: "",
     serverAddr: `${window.location.protocol}//${window.location.hostname}`,
+    customPointSpacingPercent: 0.01,
   }
   initRelevantPixels();
 }
@@ -201,7 +202,7 @@ function initMainCanvas() {
 
   mainCanvas = getMainCanvas()
   mainCanvas.onmousemove = canvasMouseMove
-  mainCanvas.touchmove = canvasMouseMove
+  //mainCanvas.touchmove = canvasMouseMove
   mainCanvas.onmouseenter = () => { runTimeState.mouseOnCanvas = true };
   mainCanvas.onmouseleave = () => { runTimeState.mouseOnCanvas = false };
   mainCanvas.onwheel = canvasMouseWheel;
@@ -212,6 +213,7 @@ function initMainCanvas() {
   mainCanvas.height = height + 1;//plus 1 cus most right circle dot out of bounds
   mainCanvas.width = width + 1;
   ctxMainCanvas = mainCanvas.getContext("2d")
+
 
 
   mainCanvas.addEventListener('touchstart', function(event) {
@@ -349,6 +351,7 @@ function updateNewThumbnails() {
 
 function editCustomPoints(){
   emitStateChange(States.ES);
+  runTimeState.onEditCustomPoints = true;
 }
 function clearCustomPoints(){
   sessionState.customPoints = [];
@@ -519,6 +522,8 @@ function LoadStateValuesToUI() {
     document.getElementById("circle").checked = false
   }
   document.getElementById('totalInstruction').value = sessionState.instructions.instructionsArray.length;
+
+  document.getElementById("customPointSpacing").value = sessionState.customPointSpacingPercent;
 
 }
 
@@ -702,31 +707,35 @@ function canvasMouseMove(event) {
 
     if (runTimeState.mouseDown) {
       //mouse is down
-
-      for (x = X - R; x < X + R; x++) {
-        for (y = Y - R; y < Y + R; y++) {
-          xD = (x - X) ** 2;
-          yD = (y - Y) ** 2;
-          if (xD + yD < R * R) {
-            if (runTimeState.imgManipulationMode == IMG_MANIPULATION_SELECT_PIXELS) {
-              can.focus.ctx.fillStyle = runTimeState.mouseButton == 0 ? 'rgb(255,255,255)' : 'rgb(0,0,0)';
-              can.focus.ctx.fillRect(xToOriginal(x), yToOriginal(y), pixelWidthToOriginal(), pixelWidthToOriginal())
-            }
-            else if (runTimeState.imgManipulationMode == IMG_MANIPULATION_PIXELS_WEIGHT) {
-              let color = 0x7f;
-              if (runTimeState.mouseButton == 0) {
-                color = 255 - runTimeState.pixelWeightColor
+    
+      if(runTimeState.imgManipulationMode != IMG_MANIPULATION_ZOOM_MOVE)  {
+        for (x = X - R; x < X + R; x++) {
+          for (y = Y - R; y < Y + R; y++) {
+            xD = (x - X) ** 2;
+            yD = (y - Y) ** 2;
+            if (xD + yD < R * R) {
+              if (runTimeState.imgManipulationMode == IMG_MANIPULATION_SELECT_PIXELS) {
+                can.focus.ctx.fillStyle = runTimeState.mouseButton == 0 ? 'rgb(255,255,255)' : 'rgb(0,0,0)';
+                can.focus.ctx.fillRect(xToOriginal(x), yToOriginal(y), pixelWidthToOriginal(), pixelWidthToOriginal())
               }
-              can.weight.ctx.fillStyle = 'rgb(' + color + ',' + color + ',' + color + ')'
-              can.weight.ctx.fillRect(xToOriginal(x), yToOriginal(y), pixelWidthToOriginal(), pixelWidthToOriginal())
+              else if (runTimeState.imgManipulationMode == IMG_MANIPULATION_PIXELS_WEIGHT) {
+                let color = 0x7f;
+                if (runTimeState.mouseButton == 0) {
+                  color = 255 - runTimeState.pixelWeightColor
+                }
+                can.weight.ctx.fillStyle = 'rgb(' + color + ',' + color + ',' + color + ')'
+                can.weight.ctx.fillRect(xToOriginal(x), yToOriginal(y), pixelWidthToOriginal(), pixelWidthToOriginal())
+              }
+  
+  
             }
-
-
+  
           }
-
+  
         }
 
       }
+
       updateNewThumbnails();
     }
 
@@ -1273,7 +1282,14 @@ function MoveSrcImage(x, y) {
 }
 function canvasMousedown(event) {
 
-  if(event.offsetX && event.offsetY){
+  if(runTimeState.onEditCustomPoints){
+    let x = event.offsetX / mainCanvas.width;
+    let y = event.offsetY / mainCanvas.height;
+    sessionState.customPoints.push([x, y, sessionState.customPoints.length]);
+    handlePointsChange(true);
+    return;
+  }
+  else if(event.offsetX && event.offsetY){
     runTimeState.mouseDownX = event.offsetX
     runTimeState.mouseDownY = event.offsetY
 
@@ -1660,6 +1676,13 @@ function adjustSessionFileNameWidth() {
 }
 
 // Add event listener to adjust width when text changes
+
+function updateCustomPointSpacing(value) {
+  const spacing = parseFloat(value);
+  if (!isNaN(spacing) && spacing > 0) {
+    sessionState.customPointSpacingPercent = spacing;
+  }
+}
 
 
 
