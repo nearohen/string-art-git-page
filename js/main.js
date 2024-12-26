@@ -42,7 +42,7 @@ const ON_CANVAS_DISTANCE = 2;
 const ON_CANVAS_STRING_COLOR = 3;
 const ON_CANVAS_INSTRUCTION = 4;
 const ON_CANVAS_PIXEL_WEIGHT = 5;
-const STRINGS_STATE_VERSION = 2 ;
+const STRINGS_STATE_VERSION = 3 ;
 let lastStringColor = null
 let lastDistance = null;
 
