@@ -352,7 +352,70 @@ function updateNewThumbnails() {
 function editCustomPoints(){
   emitStateChange(States.ES);
   runTimeState.onEditCustomPoints = true;
+  showEditPoints(); // Show the edit points div when entering edit mode
 }
+
+function applyCustomPoints() {
+  runTimeState.onEditCustomPoints = false;
+  hideEditPoints();
+  
+  // Create a closed polygon by adding the first point at the end if needed
+  const points = sessionState.customPoints;
+  const closedPolygon = [...points];
+  if (points.length > 0 && (points[0][0] !== points[points.length-1][0] || points[0][1] !== points[points.length-1][1])) {
+    closedPolygon.push(points[0]);
+  }
+
+  // Calculate total polygon perimeter
+  let totalLength = 0;
+  for (let i = 0; i < closedPolygon.length - 1; i++) {
+    const dx = closedPolygon[i+1][0] - closedPolygon[i][0];
+    const dy = closedPolygon[i+1][1] - closedPolygon[i][1];
+    totalLength += Math.sqrt(dx*dx + dy*dy);
+  }
+
+  // Calculate number of points based on spacing percentage
+  const spacing = sessionState.customPointSpacingPercent / 100; // Convert from percentage to decimal
+  const numPoints = Math.max(3, Math.floor(totalLength / spacing));
+  
+  // Create evenly spaced points
+  const spacedPoints = [];
+  let currentDist = 0;
+  let currentSegment = 0;
+  let segmentProgress = 0;
+  
+  for (let i = 0; i < numPoints; i++) {
+    const targetDist = (i * totalLength) / numPoints;
+    
+    // Find the correct segment
+    while (currentDist < targetDist && currentSegment < closedPolygon.length - 1) {
+      const dx = closedPolygon[currentSegment+1][0] - closedPolygon[currentSegment][0];
+      const dy = closedPolygon[currentSegment+1][1] - closedPolygon[currentSegment][1];
+      const segmentLength = Math.sqrt(dx*dx + dy*dy);
+      
+      if (currentDist + segmentLength >= targetDist) {
+        segmentProgress = (targetDist - currentDist) / segmentLength;
+        break;
+      }
+      
+      currentDist += segmentLength;
+      currentSegment++;
+    }
+    
+    // Interpolate point position
+    const p1 = closedPolygon[currentSegment];
+    const p2 = closedPolygon[currentSegment + 1];
+    const x = p1[0] + (p2[0] - p1[0]) * segmentProgress;
+    const y = p1[1] + (p2[1] - p1[1]) * segmentProgress;
+    
+    spacedPoints.push([x, y, i]);
+  }
+
+  // Update session state
+  sessionState.dots = spacedPoints;
+  handlePointsChange(true);
+}
+
 function clearCustomPoints(){
   sessionState.customPoints = [];
   handlePointsChange(true);
@@ -1176,7 +1239,7 @@ function initDots() {
     sessionState.sourceHeight = height
 
   }
-  else if (sessionState.pointsType=="M") {
+  else if (sessionState.pointsType=="M" && runTimeState.onEditCustomPoints) {
     sessionState.sourceWidth = 128
     sessionState.sourceHeight = 128
     sessionState.dots = sessionState.customPoints ;
@@ -1682,6 +1745,14 @@ function updateCustomPointSpacing(value) {
   if (!isNaN(spacing) && spacing > 0) {
     sessionState.customPointSpacingPercent = spacing;
   }
+}
+
+function showEditPoints() {
+    document.getElementById('editPointsDiv').style.display = 'block';
+}
+
+function hideEditPoints() {
+    document.getElementById('editPointsDiv').style.display = 'none';
 }
 
 
