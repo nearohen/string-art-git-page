@@ -370,6 +370,7 @@ function onPointsCustom(){
 }
 function applyCustomPoints() {
   runTimeState.onEditCustomPoints = false;
+  
   hideEditPoints();
   
   // Create a closed polygon by adding the first point at the end if needed
@@ -694,8 +695,10 @@ function updateRaw(name, binary) {
 
 function startSession() {
 
+  if(runTimeState.onEditCustomPoints){
+    applyCustomPoints();
+  }
   sessionState.normalize = document.getElementById("normalizeRangeText").value;
-
   sessionState.stringPixelRation = document.getElementById("stringPixelRatioText").value
 
 
@@ -1273,6 +1276,11 @@ function initDots() {
   else if (sessionState.pointsType=="M" && runTimeState.onEditCustomPoints) {
     sessionState.sourceWidth = 128
     sessionState.sourceHeight = 128
+    if (can.original && can.original.canvas) {
+      let ratio = can.original.canvas.height / can.original.canvas.width;
+      sessionState.sourceHeight = Math.ceil(sessionState.sourceWidth * ratio);
+    }
+
     sessionState.dots = sessionState.customPoints ;
   }
   if (dChange) {
