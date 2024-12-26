@@ -350,6 +350,7 @@ function updateNewThumbnails() {
 }
 
 function editCustomPoints(){
+  sessionState.dots = [];
   emitStateChange(States.ES);
   runTimeState.onEditCustomPoints = true;
   showEditPoints(); // Show the edit points div when entering edit mode
@@ -361,7 +362,7 @@ function onPointsCustom(){
     applyCustomPoints();
   }
   else{
-    sessionState.dots = [];
+    
     handlePointsChange(true);
     editCustomPoints();
   }
@@ -465,6 +466,15 @@ function handlePointsChange(initImgRec) {
     originalImg.src = sessionState.originalImgSrc;//to trigger onLoad
   }
   else{
+    
+    let esArray = allowedDivs[States.ES];
+    let editSessionIndex = esArray.indexOf("editSession");
+    if (editSessionIndex > -1) {
+      esArray.splice(editSessionIndex, 1);
+    }
+    
+
+
     initOriginalSmall();
   }
   loadSavedToCanvas("weight", sessionState.weightImg);
@@ -1483,6 +1493,14 @@ function loader() {
 
   initRelevantPixels();
   originalImg.onload = function () {
+    
+    if (!allowedDivs[States.ES].includes("editSession")) {
+      allowedDivs[States.ES].push("editSession");
+    }
+    if(runTimeState.state==States.ES){
+      emitStateChange(States.ES);
+    }
+
     sessionState.originalImgSrc = originalImg.src;
     can.weight.canvas.width = originalImg.width / IMG_TO_CANVAS_SCLAE;
     can.weight.canvas.height = originalImg.height / IMG_TO_CANVAS_SCLAE;
