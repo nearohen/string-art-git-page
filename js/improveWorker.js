@@ -97,7 +97,11 @@ onmessage = function (msg){
     } 
     else if(cmd === "init")
     {
-        const sessionLock = SAInit(args);
+
+        const p = JSON.parse(args);
+        //p.serverSnapshot = "";
+        console.log("p:"+p);
+        const sessionLock = SAInit(JSON.stringify(p));
         this.postMessage({type :"sessionLock" , args :{sessionLock : sessionLock}});
         const bufferPtr = SAGetBuffer(BUFF_SNAPSHOT);
         const bufferLength = SAGetBufferLength(BUFF_SNAPSHOT);

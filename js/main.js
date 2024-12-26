@@ -126,7 +126,7 @@ function InitState() {
 
     sessionFileName: "",
     serverAddr: `${window.location.protocol}//${window.location.hostname}`,
-    customPointSpacingPercent: 0.01,
+    customPointSpacingPercent: 1,
   }
   initRelevantPixels();
 }
@@ -408,12 +408,14 @@ function applyCustomPoints() {
     const x = p1[0] + (p2[0] - p1[0]) * segmentProgress;
     const y = p1[1] + (p2[1] - p1[1]) * segmentProgress;
     
-    spacedPoints.push([x, y, i]);
+    spacedPoints.push([x.toFixed(4), y.toFixed(4), i]);
   }
 
   // Update session state
   sessionState.dots = spacedPoints;
+  sessionState.serverSnapshot = "";
   handlePointsChange(true);
+  
 }
 
 function clearCustomPoints(){
