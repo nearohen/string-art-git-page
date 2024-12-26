@@ -354,7 +354,19 @@ function editCustomPoints(){
   runTimeState.onEditCustomPoints = true;
   showEditPoints(); // Show the edit points div when entering edit mode
 }
+function onPointsCustom(){
 
+  if(sessionState.customPoints.length>=3){
+
+    applyCustomPoints();
+  }
+  else{
+    sessionState.dots = [];
+    handlePointsChange(true);
+    editCustomPoints();
+  }
+ 
+}
 function applyCustomPoints() {
   runTimeState.onEditCustomPoints = false;
   hideEditPoints();
@@ -413,20 +425,23 @@ function applyCustomPoints() {
 
   // Update session state
   sessionState.dots = spacedPoints;
-  sessionState.serverSnapshot = "";
+  ;
   handlePointsChange(true);
   
 }
 
-function clearCustomPoints(){
+function clearPoints(){
   sessionState.customPoints = [];
   handlePointsChange(true);
-}
-function handlePointsChange(initRec) {
 
+}
+
+function handlePointsChange(initImgRec) {
+
+  fixRec();
   initDots();
   initLines();
-
+  PostWorkerMessage({cmd : "initWorkerState" , args : {}});
   can.sourceStatus.canvas.width = sessionState.sourceWidth
   can.sourceStatus.canvas.height = sessionState.sourceHeight
 
@@ -442,8 +457,8 @@ function handlePointsChange(initRec) {
   can.thumbnailStrings.canvas.width = sessionState.sourceWidth;
   can.thumbnailStrings.canvas.height = sessionState.sourceHeight;
 
-  if (initRec) {
-    sessionState.recWidth = 1;
+  if (initImgRec) {
+    initRec();
   }
   initMainCanvas();
   if(sessionState.originalImgSrc){
@@ -964,6 +979,8 @@ function fillCanvas(name, color) {
   can[name].ctx.fillRect(0, 0, can[name].canvas.width, can[name].canvas.height);
 }
 function initRec() {
+  sessionState.recOffX = 0;
+  sessionState.recOffY = 0;
   if (sessionState.sourceWidth / can.original.canvas.width > sessionState.sourceHeight / can.original.canvas.height) {
     sessionState.recWidth = can.original.canvas.width;
     sessionState.recHeight = sessionState.recWidth * sessionState.sourceHeight / sessionState.sourceWidth
@@ -1190,6 +1207,8 @@ function initDots() {
   }
   else if(document.getElementById("customPoints").checked){
     sessionState.pointsType = "M";
+
+
   }
 
 
@@ -1258,6 +1277,8 @@ function getLineIndex(aI, bI) {
 
 let rotate = 0
 function initLines() {
+  sessionState.serverSnapshot = "";
+  sessionState.snapshotBuffer = undefined;
   let linesArr = []
   let dotsToLine = [];
   let dotsLineIndexes = [];
@@ -1363,20 +1384,28 @@ function canvasMousedown(event) {
 }
 
 function fixRec() {
-  if (sessionState.recOffX < 0) {
-    sessionState.recOffX = 0;
-  }
-  if (sessionState.recOffX + sessionState.recWidth > can.original.canvas.width) {
-    sessionState.recOffX = can.original.canvas.width - sessionState.recWidth;
-  }
+    // Check if any of the rec variables are NaN
+    if (isNaN(sessionState.recOffX) || 
+        isNaN(sessionState.recOffY) || 
+        isNaN(sessionState.recWidth) || 
+        isNaN(sessionState.recHeight)) {
+        initRec();
+        return;
+    }
 
-  if (sessionState.recOffY < 0) {
-    sessionState.recOffY = 0;
-  }
-  if (sessionState.recOffY + sessionState.recHeight > can.original.canvas.height) {
-    sessionState.recOffY = can.original.canvas.height - sessionState.recHeight;
-  }
+    if (sessionState.recOffX < 0) {
+        sessionState.recOffX = 0;
+    }
+    if (sessionState.recOffX + sessionState.recWidth > can.original.canvas.width) {
+        sessionState.recOffX = can.original.canvas.width - sessionState.recWidth;
+    }
 
+    if (sessionState.recOffY < 0) {
+        sessionState.recOffY = 0;
+    }
+    if (sessionState.recOffY + sessionState.recHeight > can.original.canvas.height) {
+        sessionState.recOffY = can.original.canvas.height - sessionState.recHeight;
+    }
 }
 function canvasMouseup(event) {
 

@@ -241,7 +241,13 @@ function DrawCanvas() {
   else if (sessionState.onCanvas == ON_CANVAS_STRINGS) {
     if (sessionState.onCanvas == ON_CANVAS_STRINGS) {
       clearMainCanvas();
-      DrawLinesMainCanvas();
+      if(runTimeState.onEditCustomPoints){
+        drawPoints();
+      }
+      else{
+        DrawLinesMainCanvas();
+      }
+      
       runTimeState.lastMouseImage = null
       DrawMouse(false)
     }
