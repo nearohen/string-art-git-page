@@ -1389,7 +1389,32 @@ function canvasMousedown(event) {
   if(runTimeState.onEditCustomPoints){
     let x = event.offsetX / mainCanvas.width;
     let y = event.offsetY / mainCanvas.height;
-    sessionState.customPoints.push([x, y, sessionState.customPoints.length]);
+    // Find optimal insertion point that minimizes total distance between adjacent points
+    let bestIndex = sessionState.customPoints.length; // Default to appending
+    let minDistance = Infinity;
+    
+    // Only check between points if we have at least 2 points
+    if (sessionState.customPoints.length >= 2) {
+      for (let i = 0; i < sessionState.customPoints.length; i++) {
+        // Get prev and next points (wrapping around for closed polygon)
+        const prev = sessionState.customPoints[i];
+        const next = sessionState.customPoints[(i + 1) % sessionState.customPoints.length];
+        
+        // Calculate distance if we insert between these points
+        const d1 = Math.hypot(x - prev[0], y - prev[1]); // Distance to prev
+        const d2 = Math.hypot(next[0] - x, next[1] - y); // Distance to next
+        const totalDist = d1 + d2;
+        
+        if (totalDist < minDistance) {
+          minDistance = totalDist;
+          bestIndex = i + 1;
+        }
+      }
+    }
+    
+    // Insert the new point at the optimal position
+    sessionState.customPoints.splice(bestIndex, 0, [x, y, sessionState.customPoints.length]);
+
     handlePointsChange(true);
     return;
   }

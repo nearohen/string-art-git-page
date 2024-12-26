@@ -20,6 +20,28 @@ function drawPoints() {
   for ([x, y] of sessionState.dots)
     drawPoint(x, y)
 
+  if(runTimeState.onEditCustomPoints && sessionState.dots.length > 1){
+    // Draw lines connecting the points
+    ctxMainCanvas.strokeStyle = "blue";
+    ctxMainCanvas.lineWidth = 1;
+    ctxMainCanvas.beginPath();
+    
+    // Start from first point
+    let firstPoint = sessionState.dots[0];
+    ctxMainCanvas.moveTo(firstPoint[0] * mainCanvas.width, firstPoint[1] * mainCanvas.height);
+    
+    // Connect to each subsequent point
+    for(let i = 1; i < sessionState.dots.length; i++) {
+      let point = sessionState.dots[i];
+      ctxMainCanvas.lineTo(point[0] * mainCanvas.width, point[1] * mainCanvas.height);
+    }
+    
+    // Close the shape by connecting back to first point
+    ctxMainCanvas.lineTo(firstPoint[0] * mainCanvas.width, firstPoint[1] * mainCanvas.height);
+    
+    ctxMainCanvas.stroke();
+  }
+
 }
 function scaleToFit(img, canvas, ctxCanvas) {
   // get the scale
