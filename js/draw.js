@@ -15,8 +15,7 @@ function drawPoint(x, y) {
 }
 
 function drawPoints() {
-  ctxMainCanvas.fillStyle = "#FFFFFF";
-  ctxMainCanvas.fillRect(0, 0, mainCanvas.width, mainCanvas.height);
+
   for ([x, y] of sessionState.dots)
     drawPoint(x, y)
 
@@ -248,22 +247,28 @@ function DrawCanvas() {
   // initLines()
 
   ;
-  if (sessionState.onCanvas == ON_CANVAS_IMG) {
+  if(sessionState.onCanvas != ON_CANVAS_INSTRUCTION){
     clearMainCanvas();
+  }
+ 
+  if (sessionState.onCanvas == ON_CANVAS_IMG) {
+    
     DrawImg();
+    if(runTimeState.onEditCustomPoints){
+      drawPoints();
+    }
     runTimeState.lastMouseImage = null
     DrawMouse(false)
   }
   else if (sessionState.onCanvas == ON_CANVAS_STRING_COLOR || sessionState.onCanvas == ON_CANVAS_DISTANCE) {
-    clearMainCanvas();
+
     DrawStatus();
     runTimeState.lastMouseImage = null
     DrawMouse(false)
   }
   else if (sessionState.onCanvas == ON_CANVAS_STRINGS) {
-    if (sessionState.onCanvas == ON_CANVAS_STRINGS) {
-      clearMainCanvas();
       if(runTimeState.onEditCustomPoints){
+        DrawImg();
         drawPoints();
       }
       else{
@@ -272,10 +277,9 @@ function DrawCanvas() {
       
       runTimeState.lastMouseImage = null
       DrawMouse(false)
-    }
+    
   }
   else if (sessionState.onCanvas == ON_CANVAS_PIXEL_WEIGHT) {
-    clearMainCanvas();
     DrawImg();
     runTimeState.lastMouseImage = null
     DrawMouse(false)
@@ -352,7 +356,9 @@ function DrawImg() {
 
         }
       }
-
+      if(runTimeState.onEditCustomPoints){
+        alpha = 0.32 ;
+      }
       colorStr = 'rgba(' + color + ', ' + color + ', ' + color + ', ' + alpha + ')';
       ctxMainCanvas.fillStyle = colorStr
       ctxMainCanvas.fillRect(i * IMG_TO_CANVAS_SCLAE, j * IMG_TO_CANVAS_SCLAE, IMG_TO_CANVAS_SCLAE, IMG_TO_CANVAS_SCLAE)

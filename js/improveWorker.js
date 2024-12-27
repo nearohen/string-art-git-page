@@ -108,7 +108,7 @@ onmessage = function (msg){
             workerStae.srcFocusBuffer.set(args.thumbnailFocusRaw); 
         }
     }
-    else if(cmd === "snapshotBuffer")
+    else if(cmd === "snapshotBuffer") 
     {
         workerStae.transalatebaleSnapshot = args.buffer ;
     } 

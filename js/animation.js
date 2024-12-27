@@ -426,7 +426,9 @@ function Animate(){
       let frame = animatedGidData.frames[animatedGidData.currentFrame] ;
       nextFrameDuration = frame.duration ;
       showNextFrame(frame) ;
-      runTimeState.intervals.animationInterval = setTimeout(timeOutFrame,nextFrameDuration) ;
+      if(runTimeState.state==States.NS){
+        runTimeState.intervals.animationInterval = setTimeout(timeOutFrame,nextFrameDuration) ;
+      }
     }
     timeOutFrame();
    

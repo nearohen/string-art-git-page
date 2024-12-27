@@ -39,6 +39,10 @@ function UpdatThumbnailMainRaw(){
     PostWorkerMessage({cmd: "updateThumbnailMainRaw",args : { thumbnailMainRaw : sessionState.thumbnailMainRaw }},[sessionState.thumbnailMainRaw]);
 }
 
+function UpdatThumbnailFocusRaw(){
+    PostWorkerMessage({cmd: "updateThumbnailFocusRaw",args : { thumbnailFocusRaw : sessionState.thumbnailFocusRaw }},[sessionState.thumbnailFocusRaw]);
+}
+
 function StartCapturing()
 {
     if(sessionState.thumbnailMainRaw){

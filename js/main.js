@@ -352,8 +352,11 @@ function updateNewThumbnails() {
 function editCustomPoints(){
   sessionState.dots = [];
   emitStateChange(States.ES);
+
   runTimeState.onEditCustomPoints = true;
+  runTimeState.onEditCustomPointsFirstTime = sessionState.customPoints.length<3;
   showEditPoints(); // Show the edit points div when entering edit mode
+  
 }
 function onPointsCustom(){
 
@@ -950,6 +953,7 @@ function updateThumbnails() {
   updateThumbnail("Weight", "#7F7F7F", can.weight.canvas, 1, false);
   updateThumbnail("Focus", "#FFFFFF", can.focus.canvas, 1, true);
   UpdatThumbnailMainRaw();
+  UpdatThumbnailFocusRaw();
   if (serverConnected()) {
     updateSessionParams();
   }
@@ -1381,6 +1385,12 @@ function canvasMousedown(event) {
     let minDistance = Infinity;
     
     // Only check between points if we have at least 2 points
+
+    if(runTimeState.onEditCustomPointsFirstTime){
+      sessionState.customPoints.push([x,y,sessionState.customPoints.length]);
+      handlePointsChange(true);
+      return;
+    }
     if (sessionState.customPoints.length >= 2) {
       for (let i = 0; i < sessionState.customPoints.length; i++) {
         // Get prev and next points (wrapping around for closed polygon)
