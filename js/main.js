@@ -686,7 +686,9 @@ function updateRaw(name, binary) {
     }
 
   }
-  sessionState[name + "Raw"] = buf;
+  runTimeState[name + "Buf"] = buf;
+  sessionState[name + "Raw"] = buf ;
+
 
 }
 
@@ -931,21 +933,6 @@ function UpdateStatus() {
 function GoToCanvas(type) {
 
   sessionState.onCanvas = type;
-  if (sessionState.onCanvas == ON_CANVAS_IMG) {
-    document.getElementById('image').checked = true;
-  }
-  if (sessionState.onCanvas == ON_CANVAS_STRINGS) {
-    if(document.getElementById('strings')){
-      document.getElementById('strings').checked = true;
-    }
-    
-  }
-  if (sessionState.onCanvas == ON_CANVAS_DISTANCE) {
-    document.getElementById('distance').checked = true;
-  }
-  if (sessionState.onCanvas == ON_CANVAS_STRING_COLOR) {
-    document.getElementById('stringColor').checked = true;
-  }
 }
 
 function updateThumbnail(name, defaultColor, source, scale, binray) {
@@ -1835,6 +1822,28 @@ function showEditPoints() {
 
 function hideEditPoints() {
     document.getElementById('editPointsDiv').style.display = 'none';
+}
+
+function toggleView() {
+    const button = document.getElementById('viewToggle');
+    if (button.value === 'image') {
+        button.value = 'strings';
+        GoToCanvas(ON_CANVAS_STRINGS);
+    } else {
+        button.value = 'image';
+        GoToCanvas(ON_CANVAS_IMG);
+    }
+}
+
+function toggleMode() {
+    const button = document.getElementById('modeToggle');
+    if (button.value === 'zoom+move') {
+        button.value = 'edit bg';
+        OnSelect(); // This switches to pixel selection mode
+    } else {
+        button.value = 'zoom+move';
+        OnZoomMove(); // This switches back to zoom+move mode
+    }
 }
 
 

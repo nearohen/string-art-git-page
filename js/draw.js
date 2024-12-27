@@ -289,6 +289,11 @@ function thPos(x, y) {
   let pos = y * sessionState.sourceWidth + x;
   return pos;
 }
+
+
+
+
+
 function DrawImg() {
 
   if (runTimeState.thumbnailMainBuf == undefined) {

@@ -120,13 +120,18 @@
 
   <div id="container">
     <div >
-      <br>
+
       <div id="improvementsInfo">
       <input type="button" id="playStop" type="button" value="Play" onclick="PlayStop()"></button>
       <input type="text" id="lines" value="0" size="2">string used</input>
       <input type="text" id="improvements" value="0" size="2">improvements</input>
       </div>
-      <br>
+      
+      <div id="toggleControls">
+        <input type="button" id="viewToggle" value="image" onclick="toggleView()">
+        <input type="button" id="modeToggle" value="zoom+move" onclick="toggleMode()">
+      </div>
+
       <canvas id="main-canvas"></canvas>
     </div>
 
