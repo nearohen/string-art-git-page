@@ -15,6 +15,8 @@ var SAInit = Module.cwrap(
 
 const BUFF_SNAPSHOT = 1;
 const BUFF_SRC_RAW = 2;
+const BUFF_SRC_FOCUS = 3;
+
 var SAGetBuffer = Module.cwrap(
     "SA_GetBuffer",
     "number",
@@ -53,12 +55,14 @@ const workerStae = {
     snapshotBuffer: undefined,
     transalatebaleSnapshot: undefined,
     srcRawBuffer: undefined,
+    srcFocusBuffer: undefined,
 }
 function initWorkerState() {
   workerStae.improveInterval = 0;
   workerStae.snapshotBuffer = undefined;
   workerStae.transalatebaleSnapshot = undefined;
   workerStae.srcRawBuffer = undefined;
+  workerStae.srcFocusBuffer = undefined;
 }
 
 function typedArrayToBuffer(array) {
@@ -97,6 +101,13 @@ onmessage = function (msg){
         }
         
     }
+    else if(cmd === "updateThumbnailFocusRaw")
+    {
+        if(workerStae.srcFocusBuffer)
+        {
+            workerStae.srcFocusBuffer.set(args.thumbnailFocusRaw); 
+        }
+    }
     else if(cmd === "snapshotBuffer")
     {
         workerStae.transalatebaleSnapshot = args.buffer ;
@@ -113,9 +124,17 @@ onmessage = function (msg){
         const bufferLength = SAGetBufferLength(BUFF_SNAPSHOT);
         workerStae.snapshotBuffer = new Int8Array(Module.HEAP8.buffer, bufferPtr,bufferLength);
         workerStae.transalatebaleSnapshot = typedArrayToBuffer(workerStae.snapshotBuffer);
+
+
         const SRbufferPtr = SAGetBuffer(BUFF_SRC_RAW);
         const SRbufferLength = SAGetBufferLength(BUFF_SRC_RAW);
         workerStae.srcRawBuffer = new Int8Array(Module.HEAP8.buffer, SRbufferPtr,SRbufferLength);
+
+        const SFbufferPtr = SAGetBuffer(BUFF_SRC_FOCUS);
+        const SFbufferLength = SAGetBufferLength(BUFF_SRC_FOCUS);
+        workerStae.srcFocusBuffer = new Int8Array(Module.HEAP8.buffer, SFbufferPtr,SFbufferLength);
+
+
     }
     else if(cmd === "initWorkerState")
     {
