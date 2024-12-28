@@ -1597,6 +1597,7 @@ function PlayStop(){
 }
 function Play() {
 
+  updateThumbnails();
   GoToCanvas(ON_CANVAS_STRINGS);
   StartCapturing();
   document.getElementById("playStop").value = "Stop" ;
