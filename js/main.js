@@ -1780,32 +1780,40 @@ window.onload = loader;
 //inputs 
 
 function initOriginalSmall() {
-  const originalSmallCanvas = document.getElementById("originalSmall");
   const originalTinyCanvas = document.getElementById("originalTiny");
-  
-  if (originalSmallCanvas && can.original.canvas) {
-    // Original small thumbnail (200px max)
-    const MAX_WIDTH = 200;
-    const aspectRatio = can.original.canvas.height / can.original.canvas.width;
-    const width = Math.min(MAX_WIDTH, can.original.canvas.width);
-    const height = width * aspectRatio;
 
-    originalSmallCanvas.width = width;
-    originalSmallCanvas.height = height;
-    const ctx = originalSmallCanvas.getContext("2d");
-    ctx.drawImage(can.original.canvas, 0, 0, can.original.canvas.width, can.original.canvas.height, 0, 0, width, height);
-  }
-
-  if (originalTinyCanvas && can.original.canvas) {
-    // Tiny thumbnail (fixed height 50px, width maintains aspect ratio)
-    const TINY_HEIGHT = 50;
-    const aspectRatio = can.original.canvas.width / can.original.canvas.height;
-    const width = Math.round(TINY_HEIGHT * aspectRatio);
+  if (!sessionState.originalImgSrc) {
+   
+    originalTinyCanvas.style.display = 'none';
+  } else {
+    // Hide the default icon and show the canvas
+    originalTinyCanvas.style.display = 'inline';
     
-    originalTinyCanvas.width = width;
-    originalTinyCanvas.height = TINY_HEIGHT;
-    const ctx = originalTinyCanvas.getContext("2d");
-    ctx.drawImage(can.original.canvas, 0, 0, can.original.canvas.width, can.original.canvas.height, 0, 0, width, TINY_HEIGHT);
+    // Regular thumbnail logic for when image is loaded
+    const originalSmallCanvas = document.getElementById("originalSmall");
+  
+    if (originalSmallCanvas && can.original.canvas) {
+      const MAX_WIDTH = 200;
+      const aspectRatio = can.original.canvas.height / can.original.canvas.width;
+      const width = Math.min(MAX_WIDTH, can.original.canvas.width);
+      const height = width * aspectRatio;
+  
+      originalSmallCanvas.width = width;
+      originalSmallCanvas.height = height;
+      const ctx = originalSmallCanvas.getContext("2d");
+      ctx.drawImage(can.original.canvas, 0, 0, can.original.canvas.width, can.original.canvas.height, 0, 0, width, height);
+    }
+  
+    if (originalTinyCanvas && can.original.canvas) {
+      const TINY_HEIGHT = 50;
+      const aspectRatio = can.original.canvas.width / can.original.canvas.height;
+      const width = Math.round(TINY_HEIGHT * aspectRatio);
+      
+      originalTinyCanvas.width = width;
+      originalTinyCanvas.height = TINY_HEIGHT;
+      const ctx = originalTinyCanvas.getContext("2d");
+      ctx.drawImage(can.original.canvas, 0, 0, can.original.canvas.width, can.original.canvas.height, 0, 0, width, TINY_HEIGHT);
+    }
   }
 }
 

@@ -115,7 +115,16 @@ input[type="range"] {
 
 /* Load Image Section */
 #loadImgDiv {
-	margin: var(--spacing) 0;
+	display: flex;
+	align-items: flex-end;
+	gap: var(--spacing);
+	margin-bottom: var(--spacing);
+	min-height: 120px;
+}
+
+#loadImgDiv button,
+#loadImgDiv input {
+	margin-bottom: 10px;
 }
 
 /* Advanced Controls */
@@ -251,6 +260,15 @@ input[id^="bgColor"] {
 	box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 	flex: 0 1 auto;
 	min-width: 0;
+}
+
+#originalTiny {
+	width: 100px;
+	height: 100px;
+	object-fit: contain;
+	border: 1px solid #ccc;
+	border-radius: var(--border-radius);
+	margin-bottom: 10px;
 }
 
 
