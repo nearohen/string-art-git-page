@@ -82,7 +82,7 @@ onmessage = function (msg){
         workerStae.improveInterval = setInterval(()=>{
             const okOrFail = SAImprove(1000,args.sessionKey);
            // console.log("startImprove:"+okOrFail);
-            if(workerStae.transalatebaleSnapshot)
+            if(workerStae.transalatebaleSnapshot && workerStae.snapshotBuffer)
             {
                 const destinationInt8Array = new Int8Array(workerStae.transalatebaleSnapshot);
                 destinationInt8Array.set(workerStae.snapshotBuffer);

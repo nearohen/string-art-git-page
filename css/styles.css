@@ -57,8 +57,18 @@ input[type="range"] {
 
 /* Session Filename Input */
 #sessionFileName {
-	min-width: 100px;
-	width: auto;
+	min-width: 200px;
+	font-size: 16px;
+	padding: 8px 12px;
+	border: 2px solid var(--secondary-color);
+	border-radius: var(--border-radius);
+	margin: 4px 0;
+}
+
+#sessionFileName:focus {
+	outline: none;
+	border-color: #2980b9;
+	box-shadow: 0 0 0 2px rgba(41, 128, 185, 0.2);
 }
 
 /* Container Layout */
@@ -269,6 +279,81 @@ input[id^="bgColor"] {
 	border: 1px solid #ccc;
 	border-radius: var(--border-radius);
 	margin-bottom: 10px;
+}
+
+#shapeControls {
+	margin: var(--spacing) 0;
+}
+
+.shape-buttons {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+
+.shape-button {
+	background-color: #e0e0e0;
+	border: 1px solid #d0d0d0;
+	color: #666;
+}
+
+.shape-button .material-icons {
+	color: #666;
+}
+
+.shape-button:hover {
+	background-color: #d0d0d0;
+	border-color: #c0c0c0;
+}
+
+.shape-button.selected {
+	background-color: var(--secondary-color);
+	color: white;
+	border-color: var(--secondary-color);
+}
+
+.shape-button.selected .material-icons {
+	color: white;
+}
+
+.shape-input,
+#editPointsDiv {
+	display: none;
+}
+
+.shape-input.visible {
+	display: inline-block;
+}
+
+#editPointsDiv.visible {
+	display: block !important;
+}
+
+
+
+.edit-points-buttons {
+	display: flex;
+	gap: 8px;
+	justify-content: flex-start;
+}
+
+#editPointsDiv .icon-button {
+	background-color: #e0e0e0;
+	border: 1px solid #d0d0d0;
+	transition: all 0.2s ease;
+}
+
+#editPointsDiv .icon-button .material-icons {
+	color: #666;
+}
+
+#editPointsDiv .icon-button:hover {
+	background-color: var(--secondary-color);
+	border-color: var(--secondary-color);
+}
+
+#editPointsDiv .icon-button:hover .material-icons {
+	color: white;
 }
 
 

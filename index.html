@@ -80,45 +80,28 @@
   <input type="file" id="loadImgFile" style="display: none;"/>
   <canvas id="originalTiny"></canvas>
   <button id="triggerFileInput">Upload Image</button>
-  <input id="sessionFileName">
 </div>
 
-  <div id=editSession >
-    
+  <div id=editSession>
+    <div id="shapeControls">
+      <div class="shape-buttons">
+        <button type="button" class="icon-button shape-button" onclick="selectShape('circle')" id="circleButton">
+          <span class="material-icons">circle</span>
+        </button>
+        <input type="text" id="pointsC" value="" size="1" onchange="handlePointsChange(true);" class="shape-input circle-input">
 
-  
-    <div id="circleInfo">
-    <label for="circle">circle</label>
-    <input type="radio" id="circle" name="circleSquare" onclick='handlePointsChange(true);'>
-    <label for="pointsH">C</label>
-    <input type="text" id="pointsC" value="" size="1" onchange="handlePointsChange(true);">
-    </div>
- 
-    <div id="rectangleInfo">
-    <label for="rectangle">rectangle</label>
-    <input type="radio" id="rectangle" name="circleSquare" checked onclick='handlePointsChange(true);'>
-    <label for="pointsW">W</label>
-    <input type="text" id="pointsW" value="" size="1" onchange="handlePointsChange(true);">
-    <label for="pointsH">H</label>
-    <input type="text" id="pointsH" value="" size="1" onchange="handlePointsChange(true);">
-    </div>
+        <button type="button" class="icon-button shape-button" onclick="selectShape('rectangle')" id="rectangleButton">
+          <span class="material-icons">rectangle</span>
+        </button>
+        <input type="text" id="pointsW" value="" size="1" onchange="handlePointsChange(true);" class="shape-input rectangle-input">
+        <input type="text" id="pointsH" value="" size="1" onchange="handlePointsChange(true);" class="shape-input rectangle-input">
 
-    <div id="customPointsInfo">
-      <label for="customPoints">custom dots</label>
-      <input type="radio" id="customPoints" name="circleSquare" onclick='onPointsCustom(true);'>
-      <label for="pointsCustom">N</label>
-      <input type="text" id="pointsCustom" value="" size="1" onchange="handlePointsChange(true);">
-      <label for="customPointSpacing">Spacing %</label>
-      <input type="text" id="customPointSpacing" value="1" size="3" onchange="updateCustomPointSpacing(this.value);">
-      <button type="button" id="clearCustomPoints" onclick="editCustomPoints()">Edit</button>
+        <button type="button" class="icon-button shape-button" onclick="selectShape('polygon')" id="polygonButton">
+          <span class="material-icons">hexagon</span>
+        </button>
+       </div>
     </div>
 
-    <div id="editPointsDiv" style="display: none;">
-      <button type="button" onclick="clearPoints()">Clear All</button>
-      <button type="button" onclick="movePoint()">Move Point</button>
-      <button type="button" onclick="deletePoint()">Delete Point</button>
-      <button type="button" onclick="applyCustomPoints()">Apply</button>
-    </div>
 
     <button id="startSession" type="button" onclick="startSession()">Start Session</button>
   </div>
@@ -137,7 +120,26 @@
       <input type="text" id="lines" value="0" size="2">string used</input>
       <input type="text" id="improvements" value="0" size="2">improvements</input>
       </div>
-      
+      <div id="editPointsDiv" style="display: none;" class="shape-input polygon-input">
+        <div class="edit-points-buttons">
+          <button type="button" class="icon-button" onclick="editCustomPoints()">
+            <span class="material-icons">add</span>
+          </button>
+          <button type="button" class="icon-button" onclick="clearPoints()">
+            <span class="material-icons">delete_sweep</span>
+          </button>
+          <button type="button" class="icon-button" onclick="movePoint()">
+            <span class="material-icons">open_with</span>
+          </button>
+          <button type="button" class="icon-button" onclick="deletePoint()">
+            <span class="material-icons">delete</span>
+          </button>
+          <button type="button" class="icon-button" onclick="applyCustomPoints()">
+            <span class="material-icons">check</span>
+          </button>
+        </div>
+      </div>
+  
       <div id="toggleControls">
         <button type="button" class="icon-button" onclick="toggleView()"><span class="material-icons">timeline</span></button>
         <button type="button" class="icon-button" onclick="OnSelect()"><span class="material-icons">edit</span></button>
@@ -150,6 +152,10 @@
 
 
     <div id="controls">
+      
+      <label for="sessionFileName">Title</label>
+      <input type="text" id="sessionFileName">
+      <br>
       <label for="zoom">Move</label>
       <div id="zoom">
         <div>

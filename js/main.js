@@ -354,6 +354,7 @@ function editCustomPoints(){
   emitStateChange(States.ES);
 
   runTimeState.onEditCustomPoints = true;
+  
   runTimeState.onEditCustomPointsFirstTime = sessionState.customPoints.length<3;
   showEditPoints(); // Show the edit points div when entering edit mode
   
@@ -372,10 +373,11 @@ function onPointsCustom(){
  
 }
 function applyCustomPoints() {
+
   runTimeState.onEditCustomPoints = false;
-  
-  hideEditPoints();
-  
+  if(sessionState.customPoints.length<4){
+    return;
+  }
   // Create a closed polygon by adding the first point at the end if needed
   const points = sessionState.customPoints;
   const closedPolygon = [...points];
@@ -442,7 +444,6 @@ function clearPoints(){
 }
 
 function handlePointsChange(initImgRec) {
-
   fixRec();
   initDots();
   initLines();
@@ -462,6 +463,13 @@ function handlePointsChange(initImgRec) {
   can.thumbnailStrings.canvas.width = sessionState.sourceWidth;
   can.thumbnailStrings.canvas.height = sessionState.sourceHeight;
 
+  // Disable start session button if there are fewer than 4 dots
+  const startSessionButton = document.getElementById('startSession');
+  if (startSessionButton) {
+    startSessionButton.disabled = sessionState.dots.length < 4;
+    startSessionButton.title = sessionState.dots.length < 4 ? 'Need at least 4 dots to start' : '';
+  }
+
   if (initImgRec) {
     initRec();
   }
@@ -470,21 +478,15 @@ function handlePointsChange(initImgRec) {
     originalImg.src = sessionState.originalImgSrc;//to trigger onLoad
   }
   else{
-    
     let esArray = allowedDivs[States.ES];
     let editSessionIndex = esArray.indexOf("editSession");
     if (editSessionIndex > -1) {
       esArray.splice(editSessionIndex, 1);
     }
-    
-
-
     initOriginalSmall();
   }
   loadSavedToCanvas("weight", sessionState.weightImg);
   loadSavedToCanvas("focus", sessionState.focusImg);
-
-
 }
 
 function loadSavedToCanvas(canvasName, data) {
@@ -601,21 +603,10 @@ function LoadStateValuesToUI() {
   updateOptionalValue("brightnessRange",sessionState.brightness);
   updateOptionalValue("bgStrength",sessionState.bgStrength);
   
-  
-  if (sessionState.pointsType=="M") {
-    document.getElementById("customPoints").checked = true
-  }
-  else 
-  if (sessionState.pointsType=="C") {
-    document.getElementById("circle").checked = true
-  }
-  else {
-    document.getElementById("circle").checked = false
-  }
+
   document.getElementById('totalInstruction').value = sessionState.instructions.instructionsArray.length;
 
-  document.getElementById("customPointSpacing").value = sessionState.customPointSpacingPercent;
-
+  
     // Update the toggle view icon to match the current state
     const button = document.querySelector('#toggleControls .icon-button');
     if (button) {
@@ -705,8 +696,16 @@ function updateRaw(name, binary) {
 
 function startSession() {
 
+  
   if(runTimeState.onEditCustomPoints){
     applyCustomPoints();
+  }
+   // Hide all inputs first
+   document.querySelectorAll('.shape-input').forEach(input => {
+    input.classList.remove('visible');
+  });
+  if(sessionState.dots.length<4){
+    return;
   }
   sessionState.normalize = document.getElementById("normalizeRangeText").value;
   sessionState.stringPixelRation = document.getElementById("stringPixelRatioText").value
@@ -1004,18 +1003,20 @@ function initRec() {
 
 
 // Separate arrays for handling different behaviors
-const divsToHide = ["signIn", "chooseProject", "createSession","container","editSession", "original","controls","lockNkey","loadImgDiv","advanced","playStop","animation","improvementsInfo"];
+const divsToHide = ["signIn", "chooseProject", "createSession","container","editSession", 
+  "original","controls","lockNkey","loadImgDiv","advanced","playStop","animation",
+  "improvementsInfo","toggleControls","editPointsDiv"] ;
 const divsToInvisible = ["instructions", "sessionCreated","stop"];
 const divsToDisable = [ "signOut","home"];
 
 let allowedDivs = {
   [States.NS] : ["signIn","animation","container"],
   [States.CP] : ["chooseProject","signOut"],
-  [States.ES] : ["editSession","signOut","original","home","loadImgDiv","container"],
-  [States.SC] : ["sessionCreated","signOut","container","improvementsInfo","original","playStop","controls","stop","home","loadImgDiv"],
-  [States.PL] : ["sessionCreated","playStop","container","improvementsInfo","original","controls","loadImgDiv"],
-  [States.ST] : ["sessionCreated","playStop","stop","signOut","container","improvementsInfo","original","controls","home","loadImgDiv"],
-  [States.IN] : ["instructions","signOut","container","home"]
+  [States.ES] : ["editSession","signOut","original","home","loadImgDiv","container","editPointsDiv"],
+  [States.SC] : ["sessionCreated","signOut","container","improvementsInfo","original","playStop","controls","stop","home","loadImgDiv","toggleControls"],
+  [States.PL] : ["sessionCreated","playStop","container","improvementsInfo","original","controls","loadImgDiv","toggleControls"],
+  [States.ST] : ["sessionCreated","playStop","stop","signOut","container","improvementsInfo","original","controls","home","loadImgDiv","toggleControls"],
+  [States.IN] : ["instructions","signOut","container","home","toggleControls"]
 }
 
 
@@ -1122,23 +1123,23 @@ function handleGifFileSelect(evt) {
 
 function handleImageFileSelect(evt) {
   const fileList = this.files;
-  var file = this.files[0];//e.originalEvent.srcElement.files[i];
+  var file = this.files[0];
+
+  // Update button text to show filename
+  const button = document.getElementById("triggerFileInput");
+  button.textContent = file.name;
 
   var reader = new FileReader();
   reader.onloadend = function () {
     originalImg.src = reader.result;
-    sessionState.sessionFileName =  getImageFileName();
+    sessionState.sessionFileName = getImageFileName();
     setSessionFileName();
       
     GoToCanvas(ON_CANVAS_STRINGS);
-    //emitStateChange(States.ES) ;
   }
   reader.readAsDataURL(file);
 
-
   return true;
-
-
 }
 
 function SetAddr(add) {
@@ -1203,22 +1204,9 @@ function LoadStateFromLocalStorage() {
 }
 function initDots() {
 
-  let dChange = sessionState.pointsW != document.getElementById("pointsW").value || sessionState.pointsH != document.getElementById("pointsH").value || sessionState.circle != document.getElementById("circle").checked;
   sessionState.pointsW = document.getElementById("pointsW").value;
   sessionState.pointsH = document.getElementById("pointsH").value;
   sessionState.pointsC = document.getElementById("pointsC").value;
-  if(document.getElementById("circle").checked){
-    sessionState.pointsType = "C";
-  }
-  else if(document.getElementById("rectangle").checked){
-    sessionState.pointsType = "R";
-  }
-  else if(document.getElementById("customPoints").checked){
-    sessionState.pointsType = "M";
-
-
-  }
-
 
   if (sessionState.pointsType=="C") {
     cx = 1 / 2
@@ -1278,7 +1266,7 @@ function initDots() {
 
     sessionState.dots = sessionState.customPoints ;
   }
-  if (dChange) {
+  if (true) {
     initRelevantPixels()
   }
 
@@ -1533,8 +1521,9 @@ function loader() {
   addCanvasElement("weight", false);
 
   initRelevantPixels();
+  initUploadButton();  // Initialize upload button text
+
   originalImg.onload = function () {
-    
     if (!allowedDivs[States.ES].includes("editSession")) {
       allowedDivs[States.ES].push("editSession");
     }
@@ -1550,14 +1539,13 @@ function loader() {
     can.focus.canvas.width = originalImg.width / IMG_TO_CANVAS_SCLAE;
     can.focus.canvas.height = originalImg.height / IMG_TO_CANVAS_SCLAE;
     fillCanvas("focus", "#FFFFFF");
-    let oldW = can.original.canvas.width ;
-    let oldH = can.original.canvas.height ;
+    let oldW = can.original.canvas.width;
+    let oldH = can.original.canvas.height;
     
     can.original.canvas.width = originalImg.width / IMG_TO_CANVAS_SCLAE;
     can.original.canvas.height = originalImg.height / IMG_TO_CANVAS_SCLAE;
     if(can.original.canvas.width!=oldW || can.original.canvas.height){
       initRec();
-
     }
     else if (sessionState.recWidth == 1 || sessionState.recWidth == -1) {
       initRec();
@@ -1566,15 +1554,18 @@ function loader() {
     handleNewServerImg();
     if(runTimeState.state==States.SI){
       emitStateChange(States.ES);
-
     }
-
   }
-  //LoadStateFromLocalStorage()
   main()
-
-
 }
+
+function initUploadButton() {
+  const button = document.getElementById("triggerFileInput");
+  if (!sessionState.originalImgSrc) {
+    button.textContent = "Upload Image";
+  }
+}
+
 function Continue(){
   LoadStateFromLocalStorage()
   startSession();
@@ -1848,10 +1839,12 @@ function updateCustomPointSpacing(value) {
 
 function showEditPoints() {
     document.getElementById('editPointsDiv').style.display = 'block';
+    document.getElementById('toggleControls').style.display = 'none';
 }
 
 function hideEditPoints() {
     document.getElementById('editPointsDiv').style.display = 'none';
+    document.getElementById('toggleControls').style.display = 'block';
 }
 
 function toggleView() {
@@ -1865,6 +1858,51 @@ function toggleView() {
         icon.textContent = 'image';
         GoToCanvas(ON_CANVAS_STRINGS);
     }
+}
+
+function selectShape(shape) {
+  // Remove selected class from all buttons
+  document.querySelectorAll('.shape-button').forEach(btn => {
+    btn.classList.remove('selected');
+  });
+  
+  // Hide all inputs first
+  document.querySelectorAll('.shape-input').forEach(input => {
+    input.classList.remove('visible');
+  });
+  
+  // Add selected class to clicked button
+  document.getElementById(shape + 'Button').classList.add('selected');
+  
+  // Show relevant inputs for the selected shape
+  document.querySelectorAll('.' + shape + '-input').forEach(input => {
+    input.classList.add('visible');
+  });
+  
+  // Show/hide edit points div based on shape selection
+  if (shape === 'polygon') {
+    showEditPoints();
+  } else {
+    hideEditPoints();
+  }
+  
+  // Update the shape type
+  if (shape === 'circle') {
+    if(runTimeState.onEditCustomPoints){
+      applyCustomPoints();
+    }
+    sessionState.pointsType = "C";
+  } else if (shape === 'rectangle') {
+    if(runTimeState.onEditCustomPoints){
+      applyCustomPoints();
+    }
+    sessionState.pointsType = "R";
+  } else if (shape === 'polygon') {
+    sessionState.pointsType = "M";
+    onPointsCustom();
+  }
+  
+  handlePointsChange(true);
 }
 
 
