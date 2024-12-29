@@ -38,6 +38,17 @@
     runTimeState.onPublicDefaults = true;
   </script>
   <!--  SIGN IN -->
+
+  <div id="secretControls" style="display: none;">
+    <h3>Secret Controls</h3>
+    <div style="padding: var(--spacing);">
+      <button type="button" onclick="localStorage.clear(); console.log('Local storage cleared');">Clear Local Storage</button>
+      <button type="button" onclick="LoadStateValuesToUI(); console.log('UI reloaded from session state');">Reload UI from State</button>
+    </div>
+  </div>
+
+
+
   <div id="signIn">
     <button id="signInButton">Sign In</button>
   </div>
@@ -119,7 +130,7 @@
 
 
   <div id="container">
-    <div >
+    <div id="simulation">
 
       <div id="improvementsInfo">
       <input type="button" id="playStop" type="button" value="Play" onclick="PlayStop()"></button>
@@ -128,8 +139,9 @@
       </div>
       
       <div id="toggleControls">
-        <input type="button" id="viewToggle" value="image" onclick="toggleView()">
-        <input type="button" id="modeToggle" value="zoom+move" onclick="toggleMode()">
+        <button type="button" class="icon-button" onclick="toggleView()"><span class="material-icons">timeline</span></button>
+        <button type="button" class="icon-button" onclick="OnSelect()"><span class="material-icons">edit</span></button>
+        <button type="button" class="icon-button" onclick="OnZoomMove()"><span class="material-icons">open_with</span></button>
       </div>
 
       <canvas id="main-canvas"></canvas>
@@ -233,6 +245,7 @@
       <input id="pixelWeightColor" style="background-color:#7f7f7f;color:white;width:40px;height:40px;" value=""
         size="2">
     </div>
+
 
     <div style="padding-top: 20px;padding-left: 20px;padding-bottom: 20px;">
       <div>

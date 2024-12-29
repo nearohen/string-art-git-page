@@ -111,7 +111,7 @@ function InitState() {
     pointsArr: [],
     customPoints: [],
     snapshot: "",
-    onCanvas: ON_CANVAS_IMG,
+    onCanvas: ON_CANVAS_STRINGS,
     
     stateId: "",
     bgColors: [0x7f, 0x7f, 0x7f, 0x7f],
@@ -594,9 +594,6 @@ function LoadStateValuesToUI() {
   document.getElementById("bgColor2").style.backgroundColor = bgValToColor(sessionState.bgColors[2]);
   document.getElementById("bgColor3").style.backgroundColor = bgValToColor(sessionState.bgColors[3]);
   setSessionFileName() ;
-
-
-
   updateOptionalValue("contrastRangeText",sessionState.contrast);
   updateOptionalValue("contrastRange",sessionState.contrast);
 
@@ -618,6 +615,14 @@ function LoadStateValuesToUI() {
   document.getElementById('totalInstruction').value = sessionState.instructions.instructionsArray.length;
 
   document.getElementById("customPointSpacing").value = sessionState.customPointSpacingPercent;
+
+    // Update the toggle view icon to match the current state
+    const button = document.querySelector('#toggleControls .icon-button');
+    if (button) {
+      const icon = button.querySelector('.material-icons');
+      icon.textContent = sessionState.onCanvas === ON_CANVAS_IMG ? 'timeline' : 'image';
+    }
+  
 
 }
 
@@ -934,7 +939,6 @@ function UpdateStatus() {
 
 
 function GoToCanvas(type) {
-
   sessionState.onCanvas = type;
 }
 
@@ -1516,6 +1520,13 @@ function loader() {
   addCanvasElement("thumbnailWeight", false);
   addCanvasElement("thumbnailFocus", false);
 
+  // Check if we're on localhost and show secret controls if we are
+  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+    const secretControls = document.getElementById('secretControls');
+    if (secretControls) {
+      secretControls.style.display = 'block';
+    }
+  }
 
   addCanvasElement("original", true);
   addCanvasElement("focus", false);
@@ -1836,24 +1847,15 @@ function hideEditPoints() {
 }
 
 function toggleView() {
-    const button = document.getElementById('viewToggle');
-    if (button.value === 'image') {
-        button.value = 'strings';
-        GoToCanvas(ON_CANVAS_STRINGS);
-    } else {
-        button.value = 'image';
+    const button = document.querySelector('#toggleControls .icon-button');
+    const icon = button.querySelector('.material-icons');
+    if (icon.textContent === 'image') {
+        icon.textContent = 'timeline';
         GoToCanvas(ON_CANVAS_IMG);
-    }
-}
-
-function toggleMode() {
-    const button = document.getElementById('modeToggle');
-    if (button.value === 'zoom+move') {
-        button.value = 'edit bg';
-        OnSelect(); // This switches to pixel selection mode
+        
     } else {
-        button.value = 'zoom+move';
-        OnZoomMove(); // This switches back to zoom+move mode
+        icon.textContent = 'image';
+        GoToCanvas(ON_CANVAS_STRINGS);
     }
 }
 

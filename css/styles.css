@@ -222,4 +222,35 @@ input[id^="bgColor"] {
 	background-color: #f0f0f0;
 }
 
+.icon-button {
+	width: 32px;
+	height: 32px;
+	padding: 0;
+	border-radius: 4px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	vertical-align: middle;
+}
+
+.icon-button .material-icons {
+	font-size: 20px;
+}
+
+#toggleControls {
+	margin: 5px 0;
+	display: flex;
+	gap: 5px;
+	align-items: center;
+}
+
+#simulation {
+	background-color: white;
+	padding: var(--spacing);
+	border-radius: var(--border-radius);
+	box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+	flex: 0 1 auto;
+	min-width: 0;
+}
+
 
