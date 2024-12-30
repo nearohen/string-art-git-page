@@ -25,7 +25,7 @@ function listenToEvent(eventName, callback) {
 
 function onStateChange(cb){
   listenToEvent("stateChange",({state})=>{
-    runTimeState.state = state ;
+    
     cb(state) ;
   }) ;
 }
@@ -190,7 +190,7 @@ function saveSession() {
  
   saveState(); 
   saveText(JSON.stringify(sessionState), filename)
-  saveLinesImage(filename);
+  //saveLinesImage(filename);
 }
 function getMainCanvas() {
   return document.getElementById("main-canvas")
@@ -474,7 +474,7 @@ function handlePointsChange(initImgRec) {
     initRec();
   }
   initMainCanvas();
-  if(sessionState.originalImgSrc){
+  if(imageLoaded()){
     originalImg.src = sessionState.originalImgSrc;//to trigger onLoad
   }
   else{
@@ -569,7 +569,7 @@ function updateOptionalValue(name,value){
 
 }
 function setSessionFileName(){
-  document.getElementById("sessionFileName").value = sessionState.sessionFileName
+  document.getElementById("sessionFileName").textContent = sessionState.sessionFileName
   adjustSessionFileNameWidth(); ;
 }
 function LoadStateValuesToUI() {
@@ -1013,9 +1013,9 @@ let allowedDivs = {
   [States.NS] : ["signIn","animation","container"],
   [States.CP] : ["chooseProject","signOut"],
   [States.ES] : ["editSession","signOut","original","home","loadImgDiv","container","editPointsDiv"],
-  [States.SC] : ["sessionCreated","signOut","container","improvementsInfo","original","playStop","controls","stop","home","loadImgDiv","toggleControls"],
-  [States.PL] : ["sessionCreated","playStop","container","improvementsInfo","original","controls","loadImgDiv","toggleControls"],
-  [States.ST] : ["sessionCreated","playStop","stop","signOut","container","improvementsInfo","original","controls","home","loadImgDiv","toggleControls"],
+  [States.SC] : ["sessionCreated","signOut","container","improvementsInfo","original","playStop","controls","stop","home","toggleControls"],
+  [States.PL] : ["sessionCreated","playStop","container","improvementsInfo","original","controls","toggleControls"],
+  [States.ST] : ["sessionCreated","playStop","stop","signOut","container","improvementsInfo","original","controls","home","toggleControls"],
   [States.IN] : ["instructions","signOut","container","home","toggleControls"]
 }
 
@@ -1066,7 +1066,35 @@ function hideDivsForState(currentState) {
 }
 
 onStateChange((newState)=>{
+  let stateChanged = runTimeState.state!=newState ;
+
+  runTimeState.state = newState ;
   hideDivsForState(newState);
+
+  // Disable Continue button if no saved session exists or no image was loaded
+  const continueButton = document.getElementById('continue');
+  let lss = isLocalStorageStateValid();
+  if(!lss || !lss.originalImgSrc.length){
+    continueButton.disabled = true;
+    continueButton.title = 'No temporary session available' ;
+  }
+  else{
+    continueButton.disabled = false;
+    continueButton.title = '' ;
+  }
+
+
+  if(stateChanged && newState==States.ES){
+    if(sessionState.pointsType=="C"){
+      selectShape("circle");
+    }
+    else if(sessionState.pointsType=="R"){
+      selectShape("rectangle");
+    }
+    else if(sessionState.pointsType=="P"){
+      selectShape("polygon");
+    }
+  }
 })
 
 function main() {
@@ -1187,15 +1215,18 @@ function saveState() {
     localStorage.sessionState = JSON.stringify(sessionState);
   }
 }
-function isLocalStorageStateValid(params) {
-  return params != undefined && params.pointsH != undefined && params.version == STRINGS_STATE_VERSION ;
+function isLocalStorageStateValid() {
+  let params = localStorage.sessionState != undefined ? JSON.parse(localStorage.sessionState) : undefined;
+  if(params && params.pointsH != undefined && params.version == STRINGS_STATE_VERSION ){
+    return params;
+  }
+  return false;
 }
 function LoadStateFromLocalStorage() {
 
   if (localStorage.sessionState != undefined) {
-    let params = JSON.parse(localStorage.sessionState);
-    if (isLocalStorageStateValid(params)) {
-
+    let params = isLocalStorageStateValid();
+    if (params) {
       handleNewState(params)
     }
   }
@@ -1256,7 +1287,7 @@ function initDots() {
     sessionState.sourceHeight = height
 
   }
-  else if (sessionState.pointsType=="M" && runTimeState.onEditCustomPoints) {
+  else if (sessionState.pointsType=="P" && runTimeState.onEditCustomPoints) {
     sessionState.sourceWidth = 128
     sessionState.sourceHeight = 128
     if (can.original && can.original.canvas) {
@@ -1585,25 +1616,27 @@ function inputControler(name, unit, callback) {
 
 
 function PlayStop(){
+  const button = document.getElementById("playStop");
+  const icon = button.querySelector('.material-icons');
 
   if(runTimeState.state==States.PL){
-      Stop() ;
-      document.getElementById("playStop").value = "Play" ;
-      saveState() ;
-  }else {
-    Play() ;
-    document.getElementById("playStop").value = "Stop" ;
-
-    }
-
+      Stop();
+      icon.textContent = 'play_arrow';
+      saveState();
+  } else {
+      Play();
+      icon.textContent = 'stop';
+  }
 }
-function Play() {
 
+function Play() {
   updateThumbnails();
   GoToCanvas(ON_CANVAS_STRINGS);
   StartCapturing();
-  document.getElementById("playStop").value = "Stop" ;
+  const icon = document.getElementById("playStop").querySelector('.material-icons');
+  icon.textContent = 'stop';
 }
+
 function Stop(cb) {
   pauseSender();
   PostWorkerMessage({cmd : "stopImprove" ,args : { }});
@@ -1767,13 +1800,15 @@ function updateBGColor(val) {
 window.onload = loader;
 
 
-
+function imageLoaded(){
+  return sessionState.originalImgSrc != null;
+}
 //inputs 
 
 function initOriginalSmall() {
   const originalTinyCanvas = document.getElementById("originalTiny");
 
-  if (!sessionState.originalImgSrc) {
+  if (!imageLoaded()) {
    
     originalTinyCanvas.style.display = 'none';
   } else {
@@ -1832,8 +1867,15 @@ function adjustSessionFileNameWidth() {
 
 function updateCustomPointSpacing(value) {
   const spacing = parseFloat(value);
-  if (!isNaN(spacing) && spacing > 0) {
-    sessionState.customPointSpacingPercent = spacing;
+  if (!isNaN(spacing) && spacing >= 0.5 && spacing <= 3) {
+    sessionState.customPointSpacingPercent = spacing; // Convert to percentage
+    // Update both range and text inputs
+    document.getElementById('polygonSpacing').value = spacing;
+    document.getElementById('polygonSpacingText').value = spacing;
+    
+    if (sessionState.customPoints.length >= 3) {
+      applyCustomPoints();
+    }
   }
 }
 
@@ -1866,9 +1908,12 @@ function selectShape(shape) {
     btn.classList.remove('selected');
   });
   
-  // Hide all inputs first
+  // Hide all shape inputs first
   document.querySelectorAll('.shape-input').forEach(input => {
     input.classList.remove('visible');
+    if (input.classList.contains('polygon-input')) {
+      input.style.display = 'none';
+    }
   });
   
   // Add selected class to clicked button
@@ -1877,6 +1922,9 @@ function selectShape(shape) {
   // Show relevant inputs for the selected shape
   document.querySelectorAll('.' + shape + '-input').forEach(input => {
     input.classList.add('visible');
+    if (input.classList.contains('polygon-input')) {
+      input.style.display = 'flex';
+    }
   });
   
   // Show/hide edit points div based on shape selection
@@ -1898,7 +1946,7 @@ function selectShape(shape) {
     }
     sessionState.pointsType = "R";
   } else if (shape === 'polygon') {
-    sessionState.pointsType = "M";
+    sessionState.pointsType = "P";
     onPointsCustom();
   }
   

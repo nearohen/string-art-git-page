@@ -39,39 +39,38 @@
   </script>
   <!--  SIGN IN -->
 
-  <div id="secretControls" style="display: none;">
-    <h3>Secret Controls</h3>
-    <div style="padding: var(--spacing);">
-      <button type="button" onclick="localStorage.clear(); console.log('Local storage cleared');">Clear Local Storage</button>
-      <button type="button" onclick="LoadStateValuesToUI(); console.log('UI reloaded from session state');">Reload UI from State</button>
+  <div id="topToolbar">
+    <div class="toolbar-left">
+      <button id="home" type="button" onclick="emitStateChange(States.CP);">
+        <span class="material-icons">home</span>
+      </button>
+      <div id="secretControls">
+        <button type="button" onclick="localStorage.clear(); console.log('Local storage cleared');"><span class="material-icons">delete_forever</span></button>
+        <button type="button" onclick="window.location.reload();"><span class="material-icons">refresh</span></button>
+      </div>
+    </div>
+    <div class="toolbar-right">
+      <div id="signIn">
+        <button id="signInButton">Sign In</button>
+      </div>
+      <div id="signOut">
+        <span type="text" id="displayName" value="" size="32" readonly></span>
+        <button id="signOutButton" type="button">Sign Out</button>
+      </div>
     </div>
   </div>
-
-
-
-  <div id="signIn">
-    <button id="signInButton">Sign In</button>
-  </div>
-  <div id=signOut>
-    <span type="text" id="displayName" value="" size="32" readonly></span>
-    <button id=signOutButton type="button">Sign Out </button>
-    
-    <button id=home type="button"  onclick=' emitStateChange(States.CP);'>Home </button>
-  </div>
-
 
   <div id="lockNkey">
     <span type="text" id="lock" texContent="Lock" size="10"></span>
     <span type="text" id="key" texContent="key" size="10"></span>
   </div>
 
-
   <!--  CHOOSE PROJECT -->
 
   <div id="chooseProject">
-    <button id="newSession" type="button" onclick="newSession()">New Session</button>
-    <button type="button" onclick="Continue()">Continue ....</button>
-    <button type="button" onclick="document.getElementById('loadSessionFile').click()">Load Saved Session</button>
+    <button id="newSession" type="button" onclick="newSession()">New Project</button>
+    <button id="continue" type="button" onclick="Continue()">Continue ....</button>
+    <button type="button" onclick="document.getElementById('loadSessionFile').click()">Load Saved Project</button>
     <input id="loadSessionFile" style="visibility:hidden;" type="file" name="imgFileLoader" accept="" />
   </div>
 
@@ -85,10 +84,6 @@
   <div id=editSession>
     <div id="shapeControls">
       <div class="shape-buttons">
-        <button type="button" class="icon-button shape-button" onclick="selectShape('circle')" id="circleButton">
-          <span class="material-icons">circle</span>
-        </button>
-        <input type="text" id="pointsC" value="" size="1" onchange="handlePointsChange(true);" class="shape-input circle-input">
 
         <button type="button" class="icon-button shape-button" onclick="selectShape('rectangle')" id="rectangleButton">
           <span class="material-icons">rectangle</span>
@@ -96,14 +91,37 @@
         <input type="text" id="pointsW" value="" size="1" onchange="handlePointsChange(true);" class="shape-input rectangle-input">
         <input type="text" id="pointsH" value="" size="1" onchange="handlePointsChange(true);" class="shape-input rectangle-input">
 
+
+        
+        <button type="button" class="icon-button shape-button" onclick="selectShape('circle')" id="circleButton">
+          <span class="material-icons">circle</span>
+        </button>
+        <input type="text" id="pointsC" value="" size="1" onchange="handlePointsChange(true);" class="shape-input circle-input">
+
+        
         <button type="button" class="icon-button shape-button" onclick="selectShape('polygon')" id="polygonButton">
           <span class="material-icons">hexagon</span>
         </button>
+        <div class="shape-input polygon-input">
+          <input type="range" 
+                 id="polygonSpacing" 
+                 value="1" 
+                 min="0.5" 
+                 max="3" 
+                 step="0.1"
+                 oninput="updateCustomPointSpacing(this.value);"
+                 onchange="applyCustomPoints();">
+          <input type="text" 
+                 id="polygonSpacingText" 
+                 value="1" 
+                 size="3" 
+                 onchange="updateCustomPointSpacing(this.value); applyCustomPoints();">
+        </div>
        </div>
     </div>
 
 
-    <button id="startSession" type="button" onclick="startSession()">Start Session</button>
+    <button id="startSession" type="button" onclick="startSession()">Create Project</button>
   </div>
 
  
@@ -116,7 +134,9 @@
     <div id="simulation">
 
       <div id="improvementsInfo">
-      <input type="button" id="playStop" type="button" value="Play" onclick="PlayStop()"></button>
+      <button type="button" class="icon-button" id="playStop" onclick="PlayStop()">
+        <span class="material-icons">play_arrow</span>
+      </button>
       <input type="text" id="lines" value="0" size="2">string used</input>
       <input type="text" id="improvements" value="0" size="2">improvements</input>
       </div>
@@ -152,48 +172,40 @@
 
 
     <div id="controls">
-      
-      <label for="sessionFileName">Title</label>
-      <input type="text" id="sessionFileName">
-      <br>
-      <label for="zoom">Move</label>
-      <div id="zoom">
-        <div>
-          <button type="button" onclick="Zoom(false)"><span class="material-icons">add</span></button>
-          <button type="button" onclick="Zoom(true)"><span class="material-icons">remove</span></button>
-        </div>
-        <div>
-          <button type="button" onclick="upDown(true)"><span class="material-icons">keyboard_arrow_up</span></button>
-          <button type="button" onclick="upDown(false)"><span class="material-icons">keyboard_arrow_down</span></button>
-        </div>
-        <div>
-          <button type="button" onclick="leftRight(true)"><span class="material-icons">keyboard_arrow_left</span></button>
-          <button type="button" onclick="leftRight(false)"><span class="material-icons">keyboard_arrow_right</span></button>
-        </div>
+      <div class="controls-header">
+        <button type="button" class="icon-button" onclick="document.getElementById('loadImgFile').click();">
+          <span class="material-icons">upload</span>
+        </button>
+        <span id="sessionFileName" class="filename-display"></span>
       </div>
+      
       <div id="range">
-      <label for="contrastRange">C</label>
-      <input type="range" id="contrastRange" value="50" min='0' max='100' step='1'
-        oninput="updateContrast(this.value,false);" onchange="updateContrast(this.value,true);">
-      <input type="text" id="contrastRangeText" value="50" size="1"><br>
+        <label for="contrastRange">Contrast</label>
+        <input type="range" id="contrastRange" value="50" min='0' max='100' step='1'
+            oninput="updateContrast(this.value,false);" onchange="updateContrast(this.value,true);">
+        <input type="text" id="contrastRangeText" value="50" size="1"><br>
 
-      <label for="brightnessRange">B</label>
-      <input type="range" id="brightnessRange" value="50" min='0' max='100' step='1'
-        oninput="updateBrightness(this.value,false);" onchange="updateBrightness(this.value,true);">
-      <input type="text" id="brightnessRangeText" value="50" size="1"><br>
-      <label for="stringPixelRatio">T</label>
-      <input type="range" id="stringPixelRatio" value="" min='2' max='48' step='1'
-        oninput="updateStringPixelRatio(this.value,false);" onchange="updateStringPixelRatio(this.value,true);">
-      1/
-      <input type="text" id="stringPixelRatioText" value="" size="1">
+        <label for="brightnessRange">Brightness</label>
+        <input type="range" id="brightnessRange" value="50" min='0' max='100' step='1'
+            oninput="updateBrightness(this.value,false);" onchange="updateBrightness(this.value,true);">
+        <input type="text" id="brightnessRangeText" value="50" size="1"><br>
 
+        <label for="stringPixelRatio">Thickness</label>
+        <input type="range" id="stringPixelRatio" value="" min='2' max='48' step='1'
+            oninput="updateStringPixelRatio(this.value,false);" onchange="updateStringPixelRatio(this.value,true);">
+        1/
+        <input type="text" id="stringPixelRatioText" value="" size="1">
       </div>
 
       
       <canvas id="originalSmall"></canvas>
       <div id="stop">
-        <button id="saveSession" type="button" onclick="saveSession()">Save Session </button>
-        <button id="editSession" type="button" onclick="emitStateChange(States.ES)">Edit Session</button>
+        <button id="saveSession" type="button" onclick="saveSession()">
+            <span class="material-icons">save</span>
+        </button>
+        <button id="editSession" type="button" onclick="emitStateChange(States.ES)">
+            <span class="material-icons">edit</span>
+        </button>
         <button type="button" onclick="initInstructions()">Instructions</button>
       </div>
 
