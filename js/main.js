@@ -1401,20 +1401,20 @@ function MoveSrcImage(x, y) {
 
 
 }
-function canvasMousedown(event) {
 
-  if(runTimeState.onEditCustomPoints){
-    let x = event.offsetX / mainCanvas.width;
-    let y = event.offsetY / mainCanvas.height;
-    // Find optimal insertion point that minimizes total distance between adjacent points
-    let bestIndex = sessionState.customPoints.length; // Default to appending
+function addCustomPoint(offsetX,offsetY){
+
+  let x = offsetX / mainCanvas.width;
+   let y = offsetY / mainCanvas.height;
+
+  let bestIndex = sessionState.customPoints.length; // Default to appending
     let minDistance = Infinity;
     
     // Only check between points if we have at least 2 points
 
     if(runTimeState.onEditCustomPointsFirstTime){
       sessionState.customPoints.push([x,y,sessionState.customPoints.length]);
-      handlePointsChange(true);
+      handlePointsChange(false);
       return;
     }
     if (sessionState.customPoints.length >= 2) {
@@ -1438,10 +1438,12 @@ function canvasMousedown(event) {
     // Insert the new point at the optimal position
     sessionState.customPoints.splice(bestIndex, 0, [x, y, sessionState.customPoints.length]);
 
-    handlePointsChange(true);
-    return;
-  }
-  else if(event.offsetX && event.offsetY){
+}
+
+
+function canvasMousedown(event) {
+
+  if(event.offsetX && event.offsetY){
     runTimeState.mouseDownX = event.offsetX
     runTimeState.mouseDownY = event.offsetY
 
@@ -1478,6 +1480,19 @@ function canvasMouseup(event) {
   if(event.offsetX && event.offsetY){
     runTimeState.mouseUpX = event.offsetX
     runTimeState.mouseUpY = event.offsetY
+
+    if(runTimeState.onEditCustomPoints){
+      if(runTimeState.mouseUpX==runTimeState.mouseDownX && runTimeState.mouseUpY==runTimeState.mouseDownY){
+
+        // Find optimal insertion point that minimizes total distance between adjacent points
+        addCustomPoint(runTimeState.mouseUpX,runTimeState.mouseUpY);
+        handlePointsChange(true);
+      }
+
+    }
+
+
+
     if (runTimeState.imgManipulationMode == IMG_MANIPULATION_PIXELS_WEIGHT) {
       UpdateNewServerImg();
     }
@@ -1578,7 +1593,7 @@ function loader() {
     
     can.original.canvas.width = originalImg.width / IMG_TO_CANVAS_SCLAE;
     can.original.canvas.height = originalImg.height / IMG_TO_CANVAS_SCLAE;
-    if(can.original.canvas.width!=oldW || can.original.canvas.height){
+    if(can.original.canvas.width!=oldW || can.original.canvas.height!=oldH){
       initRec();
     }
     else if (sessionState.recWidth == 1 || sessionState.recWidth == -1) {

@@ -41,6 +41,9 @@
 
   <div id="topToolbar">
     <div class="toolbar-left">
+      <div id="signIn">
+        <button id="signInButton">Sign In</button>
+      </div>
       <button id="home" type="button" onclick="emitStateChange(States.CP);">
         <span class="material-icons">home</span>
       </button>
@@ -50,9 +53,7 @@
       </div>
     </div>
     <div class="toolbar-right">
-      <div id="signIn">
-        <button id="signInButton">Sign In</button>
-      </div>
+
       <div id="signOut">
         <span type="text" id="displayName" value="" size="32" readonly></span>
         <button id="signOutButton" type="button">Sign Out</button>
