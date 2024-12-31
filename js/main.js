@@ -1,3 +1,4 @@
+
 var Buffer = require('Buffer');
 const EventBus = new EventTarget();
 // Emit (dispatch) a global event
@@ -42,7 +43,7 @@ const ON_CANVAS_DISTANCE = 2;
 const ON_CANVAS_STRING_COLOR = 3;
 const ON_CANVAS_INSTRUCTION = 4;
 const ON_CANVAS_PIXEL_WEIGHT = 5;
-const STRINGS_STATE_VERSION = 2 ;
+
 let lastStringColor = null
 let lastDistance = null;
 
@@ -75,7 +76,6 @@ runTimeState = {
     timeoutNewServerImg: 0,
     timeoutNewThumbnails: 0,
     intervalSprints: 0,
-    animationInterval: 0,
 
   },
   linesArr: [],
@@ -91,14 +91,13 @@ runTimeState = {
 let sessionState = {};
 function InitState() {
   sessionState = {
-    version : STRINGS_STATE_VERSION,
     pointsW:86,
     pointsH: 106,
     pointsC: 256,
     sourceWidth: 128,
     sourceHeight: 128,
     radius: 64,
-    pointsType: "R",
+    circle: false,
     brightness: 50,
     contrast: 50,
     normalize: 1.5,
@@ -109,7 +108,6 @@ function InitState() {
     sendRawSourceImg: "",
     pixelWeight: [],
     pointsArr: [],
-    customPoints: [],
     snapshot: "",
     onCanvas: ON_CANVAS_IMG,
     
@@ -126,14 +124,13 @@ function InitState() {
 
     sessionFileName: "",
     serverAddr: `${window.location.protocol}//${window.location.hostname}`,
-    customPointSpacingPercent: 1,
   }
   initRelevantPixels();
 }
 InitState();
 
-
-const IMG_TO_CANVAS_SCLAE = 3;
+const MAIN_CANVAS_WIDTH = 384;
+const IMG_TO_CANVAS_SCLAE = MAIN_CANVAS_WIDTH / sessionState.sourceWidth;
 
 
 function ApplyWeight() {
@@ -202,7 +199,7 @@ function initMainCanvas() {
 
   mainCanvas = getMainCanvas()
   mainCanvas.onmousemove = canvasMouseMove
-  //mainCanvas.touchmove = canvasMouseMove
+  mainCanvas.touchmove = canvasMouseMove
   mainCanvas.onmouseenter = () => { runTimeState.mouseOnCanvas = true };
   mainCanvas.onmouseleave = () => { runTimeState.mouseOnCanvas = false };
   mainCanvas.onwheel = canvasMouseWheel;
@@ -213,7 +210,6 @@ function initMainCanvas() {
   mainCanvas.height = height + 1;//plus 1 cus most right circle dot out of bounds
   mainCanvas.width = width + 1;
   ctxMainCanvas = mainCanvas.getContext("2d")
-
 
 
   mainCanvas.addEventListener('touchstart', function(event) {
@@ -250,19 +246,6 @@ function handleGrow(growth,relativePosX,relativePosY){
 
 
   }
-  UpdateNewServerImg();
-}
-
-
-function upDown(down){
-  sessionState.recOffY += down ? 1 : -1;
-  fixRec();
-  UpdateNewServerImg();
-}
-
-function leftRight(left){
-  sessionState.recOffX += left ? 1 : -1;
-  fixRec();
   UpdateNewServerImg();
 }
 function Zoom(positive){
@@ -349,79 +332,7 @@ function updateNewThumbnails() {
   }, 100);
 }
 
-function editCustomPoints(){
-  emitStateChange(States.ES);
-  runTimeState.onEditCustomPoints = true;
-  showEditPoints(); // Show the edit points div when entering edit mode
-}
 
-function applyCustomPoints() {
-  runTimeState.onEditCustomPoints = false;
-  hideEditPoints();
-  
-  // Create a closed polygon by adding the first point at the end if needed
-  const points = sessionState.customPoints;
-  const closedPolygon = [...points];
-  if (points.length > 0 && (points[0][0] !== points[points.length-1][0] || points[0][1] !== points[points.length-1][1])) {
-    closedPolygon.push(points[0]);
-  }
-
-  // Calculate total polygon perimeter
-  let totalLength = 0;
-  for (let i = 0; i < closedPolygon.length - 1; i++) {
-    const dx = closedPolygon[i+1][0] - closedPolygon[i][0];
-    const dy = closedPolygon[i+1][1] - closedPolygon[i][1];
-    totalLength += Math.sqrt(dx*dx + dy*dy);
-  }
-
-  // Calculate number of points based on spacing percentage
-  const spacing = sessionState.customPointSpacingPercent / 100; // Convert from percentage to decimal
-  const numPoints = Math.max(3, Math.floor(totalLength / spacing));
-  
-  // Create evenly spaced points
-  const spacedPoints = [];
-  let currentDist = 0;
-  let currentSegment = 0;
-  let segmentProgress = 0;
-  
-  for (let i = 0; i < numPoints; i++) {
-    const targetDist = (i * totalLength) / numPoints;
-    
-    // Find the correct segment
-    while (currentDist < targetDist && currentSegment < closedPolygon.length - 1) {
-      const dx = closedPolygon[currentSegment+1][0] - closedPolygon[currentSegment][0];
-      const dy = closedPolygon[currentSegment+1][1] - closedPolygon[currentSegment][1];
-      const segmentLength = Math.sqrt(dx*dx + dy*dy);
-      
-      if (currentDist + segmentLength >= targetDist) {
-        segmentProgress = (targetDist - currentDist) / segmentLength;
-        break;
-      }
-      
-      currentDist += segmentLength;
-      currentSegment++;
-    }
-    
-    // Interpolate point position
-    const p1 = closedPolygon[currentSegment];
-    const p2 = closedPolygon[currentSegment + 1];
-    const x = p1[0] + (p2[0] - p1[0]) * segmentProgress;
-    const y = p1[1] + (p2[1] - p1[1]) * segmentProgress;
-    
-    spacedPoints.push([x.toFixed(4), y.toFixed(4), i]);
-  }
-
-  // Update session state
-  sessionState.dots = spacedPoints;
-  sessionState.serverSnapshot = "";
-  handlePointsChange(true);
-  
-}
-
-function clearCustomPoints(){
-  sessionState.customPoints = [];
-  handlePointsChange(true);
-}
 function handlePointsChange(initRec) {
 
   initDots();
@@ -449,9 +360,7 @@ function handlePointsChange(initRec) {
   if(sessionState.originalImgSrc){
     originalImg.src = sessionState.originalImgSrc;//to trigger onLoad
   }
-  else{
-    initOriginalSmall();
-  }
+
   loadSavedToCanvas("weight", sessionState.weightImg);
   loadSavedToCanvas("focus", sessionState.focusImg);
 
@@ -511,7 +420,6 @@ function LoadSession(evt) {
     if (params != null) {
 
       handleNewState(params);
-      startSession();
     }
   }
   reader.readAsText(file)
@@ -537,10 +445,6 @@ function updateOptionalValue(name,value){
   
 
 }
-function setSessionFileName(){
-  document.getElementById("sessionFileName").value = sessionState.sessionFileName
-  adjustSessionFileNameWidth(); ;
-}
 function LoadStateValuesToUI() {
 
   document.getElementById("stringPixelRatio").value = sessionState.stringPixelRation;
@@ -564,7 +468,8 @@ function LoadStateValuesToUI() {
   document.getElementById("bgColor1").style.backgroundColor = bgValToColor(sessionState.bgColors[1]);
   document.getElementById("bgColor2").style.backgroundColor = bgValToColor(sessionState.bgColors[2]);
   document.getElementById("bgColor3").style.backgroundColor = bgValToColor(sessionState.bgColors[3]);
-  setSessionFileName() ;
+  document.getElementById("sessionFileName").value = sessionState.sessionFileName
+
 
 
 
@@ -576,19 +481,14 @@ function LoadStateValuesToUI() {
   updateOptionalValue("bgStrength",sessionState.bgStrength);
   
   
-  if (sessionState.pointsType=="M") {
-    document.getElementById("customPoints").checked = true
-  }
-  else 
-  if (sessionState.pointsType=="C") {
+
+  if (sessionState.circle) {
     document.getElementById("circle").checked = true
   }
   else {
     document.getElementById("circle").checked = false
   }
   document.getElementById('totalInstruction').value = sessionState.instructions.instructionsArray.length;
-
-  document.getElementById("customPointSpacing").value = sessionState.customPointSpacingPercent;
 
 }
 
@@ -772,35 +672,31 @@ function canvasMouseMove(event) {
 
     if (runTimeState.mouseDown) {
       //mouse is down
-    
-      if(runTimeState.imgManipulationMode != IMG_MANIPULATION_ZOOM_MOVE)  {
-        for (x = X - R; x < X + R; x++) {
-          for (y = Y - R; y < Y + R; y++) {
-            xD = (x - X) ** 2;
-            yD = (y - Y) ** 2;
-            if (xD + yD < R * R) {
-              if (runTimeState.imgManipulationMode == IMG_MANIPULATION_SELECT_PIXELS) {
-                can.focus.ctx.fillStyle = runTimeState.mouseButton == 0 ? 'rgb(255,255,255)' : 'rgb(0,0,0)';
-                can.focus.ctx.fillRect(xToOriginal(x), yToOriginal(y), pixelWidthToOriginal(), pixelWidthToOriginal())
-              }
-              else if (runTimeState.imgManipulationMode == IMG_MANIPULATION_PIXELS_WEIGHT) {
-                let color = 0x7f;
-                if (runTimeState.mouseButton == 0) {
-                  color = 255 - runTimeState.pixelWeightColor
-                }
-                can.weight.ctx.fillStyle = 'rgb(' + color + ',' + color + ',' + color + ')'
-                can.weight.ctx.fillRect(xToOriginal(x), yToOriginal(y), pixelWidthToOriginal(), pixelWidthToOriginal())
-              }
-  
-  
+
+      for (x = X - R; x < X + R; x++) {
+        for (y = Y - R; y < Y + R; y++) {
+          xD = (x - X) ** 2;
+          yD = (y - Y) ** 2;
+          if (xD + yD < R * R) {
+            if (runTimeState.imgManipulationMode == IMG_MANIPULATION_SELECT_PIXELS) {
+              can.focus.ctx.fillStyle = runTimeState.mouseButton == 0 ? 'rgb(255,255,255)' : 'rgb(0,0,0)';
+              can.focus.ctx.fillRect(xToOriginal(x), yToOriginal(y), pixelWidthToOriginal(), pixelWidthToOriginal())
             }
-  
+            else if (runTimeState.imgManipulationMode == IMG_MANIPULATION_PIXELS_WEIGHT) {
+              let color = 0x7f;
+              if (runTimeState.mouseButton == 0) {
+                color = 255 - runTimeState.pixelWeightColor
+              }
+              can.weight.ctx.fillStyle = 'rgb(' + color + ',' + color + ',' + color + ')'
+              can.weight.ctx.fillRect(xToOriginal(x), yToOriginal(y), pixelWidthToOriginal(), pixelWidthToOriginal())
+            }
+
+
           }
-  
+
         }
 
       }
-
       updateNewThumbnails();
     }
 
@@ -956,7 +852,6 @@ function handleNewServerImg() {
   can.original.ctx.rect(sessionState.recOffX, sessionState.recOffY, sessionState.recWidth, sessionState.recHeight);
   can.original.ctx.stroke();
   can.original.ctx.restore();
-  initOriginalSmall();
 }
 
 function fillCanvas(name, color) {
@@ -979,18 +874,18 @@ function initRec() {
 
 
 // Separate arrays for handling different behaviors
-const divsToHide = ["signIn", "chooseProject", "createSession","container","editSession", "original","controls","lockNkey","loadImgDiv","advanced","playStop","animation","improvementsInfo"];
-const divsToInvisible = ["instructions", "sessionCreated","stop"];
-const divsToDisable = [ "signOut","home"];
+const divsToHide = ["signIn", "chooseProject", "createSession","container","editSession", "original","controls"];
+const divsToInvisible = ["instructions", "sessionCreated", "playStopDiv","play","stop"];
+const divsToDisable = [ "lockNkey","signOut"];
 
 let allowedDivs = {
-  [States.NS] : ["signIn","animation","container"],
+  [States.NS] : ["signIn"],
   [States.CP] : ["chooseProject","signOut"],
-  [States.ES] : ["editSession","signOut","original","home","loadImgDiv","container"],
-  [States.SC] : ["sessionCreated","signOut","container","improvementsInfo","original","playStop","controls","stop","home","loadImgDiv"],
-  [States.PL] : ["sessionCreated","playStop","container","improvementsInfo","original","controls","loadImgDiv"],
-  [States.ST] : ["sessionCreated","playStop","stop","signOut","container","improvementsInfo","original","controls","home","loadImgDiv"],
-  [States.IN] : ["instructions","signOut","container","home"]
+  [States.ES] : ["editSession","signOut","original"],
+  [States.SC] : ["sessionCreated","signOut","container","original","playStopDiv","controls"],
+  [States.PL] : ["sessionCreated","playStopDiv","play","container","original","controls"],
+  [States.ST] : ["sessionCreated","playStopDiv","stop","signOut","container","original","controls"],
+  [States.IN] : ["instructions","signOut","container"]
 }
 
 
@@ -1057,7 +952,6 @@ function main() {
   document.getElementById('loadSessionFile').addEventListener('input', LoadSession, false);
   document.getElementById("instructions").style.display = "none"
   document.getElementById("signOut").style.display = "none";
-  document.getElementById('sessionFileName').addEventListener('input', adjustSessionFileNameWidth);
   updateOptionalValue("ip",sessionState.serverAddr);
   RestartState();
   GoToCanvas(ON_CANVAS_STRINGS);
@@ -1066,16 +960,13 @@ function main() {
   window.getUser((user)=>{
     sessionState.user = user ;
     if(user){
-      clearTimeout(runTimeState.intervals.animationInterval) ;
       emitStateChange(States.CP) ;
     }
     else{
       emitStateChange(States.NS) ;
-      runTimeState.intervals.animationInterval = setTimeout(Animate,100);
     }
   })
   emitStateChange(States.NS);
-  runTimeState.intervals.animationInterval = setTimeout(Animate,1000);
 }
 
 
@@ -1102,11 +993,10 @@ function handleImageFileSelect(evt) {
   var reader = new FileReader();
   reader.onloadend = function () {
     originalImg.src = reader.result;
-    sessionState.sessionFileName =  getImageFileName();
-    setSessionFileName();
-      
+    document.getElementById("sessionFileName").value = getImageFileName();
+    sessionState.sessionFileName = document.getElementById("sessionFileName").value;
     GoToCanvas(ON_CANVAS_STRINGS);
-    //emitStateChange(States.ES) ;
+    emitStateChange(States.ES) ;
   }
   reader.readAsDataURL(file);
 
@@ -1155,14 +1045,12 @@ function updateSessionParams(cb) {
 
 function saveState() {
   //localStorage.clear();
-  if(runTimeState.state!=States.NS){
-    let tmp = arrayBufferToBase64(sessionState.snapshotBuffer) ; ;
-    sessionState.snapshotB64 = tmp ;
-    localStorage.sessionState = JSON.stringify(sessionState);
-  }
+  let tmp = arrayBufferToBase64(sessionState.snapshotBuffer) ; ;
+  sessionState.snapshotB64 = tmp ;
+  localStorage.sessionState = JSON.stringify(sessionState);
 }
 function isLocalStorageStateValid(params) {
-  return params != undefined && params.pointsH != undefined && params.version == STRINGS_STATE_VERSION ;
+  return params != undefined && params.pointsH != undefined;
 }
 function LoadStateFromLocalStorage() {
 
@@ -1182,18 +1070,10 @@ function initDots() {
   sessionState.pointsW = document.getElementById("pointsW").value;
   sessionState.pointsH = document.getElementById("pointsH").value;
   sessionState.pointsC = document.getElementById("pointsC").value;
-  if(document.getElementById("circle").checked){
-    sessionState.pointsType = "C";
-  }
-  else if(document.getElementById("rectangle").checked){
-    sessionState.pointsType = "R";
-  }
-  else if(document.getElementById("customPoints").checked){
-    sessionState.pointsType = "M";
-  }
+  sessionState.circle = document.getElementById("circle").checked;
 
 
-  if (sessionState.pointsType=="C") {
+  if (sessionState.circle) {
     cx = 1 / 2
     cy = 1 / 2
     r = cy
@@ -1207,11 +1087,11 @@ function initDots() {
     }
     sessionState.dots = pointsAr
 
-    sessionState.sourceWidth = 128
-    sessionState.sourceHeight = 128
+    sessionState.sourceWidth = 64
+    sessionState.sourceHeight = 64
 
   }
-  else  if (sessionState.pointsType=="R")  {
+  else {
     let pointsAr = []
     moveX = 1 / sessionState.pointsW
     moveY = 1 / sessionState.pointsH
@@ -1240,11 +1120,6 @@ function initDots() {
     height = Math.ceil(sessionState.pointsH * sessionState.sourceWidth / sessionState.pointsW)
     sessionState.sourceHeight = height
 
-  }
-  else if (sessionState.pointsType=="M" && runTimeState.onEditCustomPoints) {
-    sessionState.sourceWidth = 128
-    sessionState.sourceHeight = 128
-    sessionState.dots = sessionState.customPoints ;
   }
   if (dChange) {
     initRelevantPixels()
@@ -1347,14 +1222,7 @@ function MoveSrcImage(x, y) {
 }
 function canvasMousedown(event) {
 
-  if(runTimeState.onEditCustomPoints){
-    let x = event.offsetX / mainCanvas.width;
-    let y = event.offsetY / mainCanvas.height;
-    sessionState.customPoints.push([x, y, sessionState.customPoints.length]);
-    handlePointsChange(true);
-    return;
-  }
-  else if(event.offsetX && event.offsetY){
+  if(event.offsetX && event.offsetY){
     runTimeState.mouseDownX = event.offsetX
     runTimeState.mouseDownY = event.offsetY
 
@@ -1442,7 +1310,7 @@ function addCanvasElement(name, create) {
 
 function loader() {
   addCanvasElement("animation", true);
-  addCanvasElement("thumbnailMain", true);
+  addCanvasElement("thumbnailMain", false);
   addCanvasElement("thumbnailStrings", false);
   addCanvasElement("thumbnailWeight", false);
   addCanvasElement("thumbnailFocus", false);
@@ -1482,15 +1350,12 @@ function loader() {
     }
 
   }
-  //LoadStateFromLocalStorage()
+  LoadStateFromLocalStorage()
   main()
 
 
 }
-function Continue(){
-  LoadStateFromLocalStorage()
-  startSession();
-}
+
 function inputControler(name, unit, callback) {
   let input = document.getElementById(name + "-in")
   let label = document.getElementById(name + "-span")
@@ -1689,73 +1554,5 @@ window.onload = loader;
 
 
 //inputs 
-
-function initOriginalSmall() {
-  const originalSmallCanvas = document.getElementById("originalSmall");
-  const originalTinyCanvas = document.getElementById("originalTiny");
-  
-  if (originalSmallCanvas && can.original.canvas) {
-    // Original small thumbnail (200px max)
-    const MAX_WIDTH = 200;
-    const aspectRatio = can.original.canvas.height / can.original.canvas.width;
-    const width = Math.min(MAX_WIDTH, can.original.canvas.width);
-    const height = width * aspectRatio;
-
-    originalSmallCanvas.width = width;
-    originalSmallCanvas.height = height;
-    const ctx = originalSmallCanvas.getContext("2d");
-    ctx.drawImage(can.original.canvas, 0, 0, can.original.canvas.width, can.original.canvas.height, 0, 0, width, height);
-  }
-
-  if (originalTinyCanvas && can.original.canvas) {
-    // Tiny thumbnail (fixed height 50px, width maintains aspect ratio)
-    const TINY_HEIGHT = 50;
-    const aspectRatio = can.original.canvas.width / can.original.canvas.height;
-    const width = Math.round(TINY_HEIGHT * aspectRatio);
-    
-    originalTinyCanvas.width = width;
-    originalTinyCanvas.height = TINY_HEIGHT;
-    const ctx = originalTinyCanvas.getContext("2d");
-    ctx.drawImage(can.original.canvas, 0, 0, can.original.canvas.width, can.original.canvas.height, 0, 0, width, TINY_HEIGHT);
-  }
-}
-
-function adjustSessionFileNameWidth() {
-    const input = document.getElementById('sessionFileName');
-    if (input) {
-        // Create a temporary span to measure text width
-        const tmp = document.createElement('span');
-        tmp.style.visibility = 'hidden';
-        tmp.style.position = 'absolute';
-        tmp.style.whiteSpace = 'pre';
-        tmp.style.font = window.getComputedStyle(input).font;
-        tmp.textContent = input.value;
-        document.body.appendChild(tmp);
-        
-        // Set input width to match text (plus some padding)
-        const width = tmp.getBoundingClientRect().width;
-        input.style.width = (width + 20) + 'px';
-        
-        document.body.removeChild(tmp);
-    }
-}
-
-// Add event listener to adjust width when text changes
-
-function updateCustomPointSpacing(value) {
-  const spacing = parseFloat(value);
-  if (!isNaN(spacing) && spacing > 0) {
-    sessionState.customPointSpacingPercent = spacing;
-  }
-}
-
-function showEditPoints() {
-    document.getElementById('editPointsDiv').style.display = 'block';
-}
-
-function hideEditPoints() {
-    document.getElementById('editPointsDiv').style.display = 'none';
-}
-
 
 
