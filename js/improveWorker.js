@@ -54,6 +54,12 @@ const workerStae = {
     transalatebaleSnapshot: undefined,
     srcRawBuffer: undefined,
 }
+function initWorkerState() {
+  workerStae.improveInterval = 0;
+  workerStae.snapshotBuffer = undefined;
+  workerStae.transalatebaleSnapshot = undefined;
+  workerStae.srcRawBuffer = undefined;
+}
 
 function typedArrayToBuffer(array) {
     return array.buffer.slice(array.byteOffset, array.byteLength + array.byteOffset);
@@ -110,6 +116,10 @@ onmessage = function (msg){
         const SRbufferPtr = SAGetBuffer(BUFF_SRC_RAW);
         const SRbufferLength = SAGetBufferLength(BUFF_SRC_RAW);
         workerStae.srcRawBuffer = new Int8Array(Module.HEAP8.buffer, SRbufferPtr,SRbufferLength);
+    }
+    else if(cmd === "initWorkerState")
+    {
+        initWorkerState();
     }
     else if(cmd === "updateParam")
     {
