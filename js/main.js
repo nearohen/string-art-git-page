@@ -153,6 +153,7 @@ function OnSelect() {
 }
 
 function newSession() {
+  InitState();
   emitStateChange(States.ES);
 }
 
@@ -361,20 +362,13 @@ function editCustomPoints(){
 }
 function onPointsCustom(){
 
-  if(sessionState.customPoints.length>=3){
-
-    applyCustomPoints();
-  }
-  else{
-    
-    handlePointsChange(true);
     editCustomPoints();
-  }
- 
+  
 }
-function applyCustomPoints() {
 
-  runTimeState.onEditCustomPoints = false;
+function customPointsToDots(){
+
+
   if(sessionState.customPoints.length<4){
     return;
   }
@@ -433,6 +427,14 @@ function applyCustomPoints() {
   // Update session state
   sessionState.dots = spacedPoints;
   ;
+
+}
+
+
+function applyCustomPoints() {
+
+  customPointsToDots();
+  runTimeState.onEditCustomPoints = false;
   handlePointsChange(true);
   
 }
@@ -1119,6 +1121,7 @@ function main() {
 
   window.getUser((user)=>{
     sessionState.user = user ;
+    runTimeState.user = user ;
     if(user){
       clearTimeout(runTimeState.intervals.animationInterval) ;
       emitStateChange(States.CP) ;
@@ -1873,18 +1876,17 @@ function updateCustomPointSpacing(value) {
     document.getElementById('polygonSpacing').value = spacing;
     document.getElementById('polygonSpacingText').value = spacing;
     
-    if (sessionState.customPoints.length >= 3) {
-      applyCustomPoints();
-    }
   }
 }
 
 function showEditPoints() {
+  runTimeState.onEditCustomPoints = true;
     document.getElementById('editPointsDiv').style.display = 'block';
     document.getElementById('toggleControls').style.display = 'none';
 }
 
 function hideEditPoints() {
+  runTimeState.onEditCustomPoints = false;
     document.getElementById('editPointsDiv').style.display = 'none';
     document.getElementById('toggleControls').style.display = 'block';
 }

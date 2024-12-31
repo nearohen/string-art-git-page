@@ -269,6 +269,7 @@ function DrawCanvas() {
   else if (sessionState.onCanvas == ON_CANVAS_STRINGS) {
       if(runTimeState.onEditCustomPoints){
         DrawImg();
+        customPointsToDots();
         drawPoints();
       }
       else{
