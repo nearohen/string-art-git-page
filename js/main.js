@@ -203,27 +203,59 @@ function initMainCanvas() {
 
   mainCanvas = getMainCanvas()
   mainCanvas.onmousemove = canvasMouseMove
-  //mainCanvas.touchmove = canvasMouseMove
   mainCanvas.onmouseenter = () => { runTimeState.mouseOnCanvas = true };
   mainCanvas.onmouseleave = () => { runTimeState.mouseOnCanvas = false };
   mainCanvas.onwheel = canvasMouseWheel;
   mainCanvas.onmousedown = canvasMousedown;
   mainCanvas.onmouseup = canvasMouseup;
-  //mainCanvas.ontouchstart = canvasMousedown ;
- // mainCanvas.ontouchend = canvasMouseup ;
+
+  // Add touch event handlers
+  mainCanvas.addEventListener('touchstart', function(event) {
+    event.preventDefault();
+    const touch = event.touches[0];
+    const rect = mainCanvas.getBoundingClientRect();
+    const touchEvent = {
+      offsetX: touch.clientX - rect.left,
+      offsetY: touch.clientY - rect.top
+    };
+    canvasMousedown(touchEvent);
+  });
+
+  mainCanvas.addEventListener('touchend', function(event) {
+    event.preventDefault();
+    // For touchend, use the last known touch position
+    const touch = event.changedTouches[0];
+    const rect = mainCanvas.getBoundingClientRect();
+    const touchEvent = {
+      offsetX: touch.clientX - rect.left,
+      offsetY: touch.clientY - rect.top
+    };
+    canvasMouseup(touchEvent);
+  });
+
+  mainCanvas.addEventListener('touchmove', function(event) {
+    event.preventDefault();
+    const touch = event.touches[0];
+    const rect = mainCanvas.getBoundingClientRect();
+    const touchEvent = {
+      offsetX: touch.clientX - rect.left,
+      offsetY: touch.clientY - rect.top
+    };
+    canvasMouseMove(touchEvent);
+  });
+
   mainCanvas.height = height + 1;//plus 1 cus most right circle dot out of bounds
   mainCanvas.width = width + 1;
   ctxMainCanvas = mainCanvas.getContext("2d")
 
-
-
+  // Keep existing touch zoom functionality
   mainCanvas.addEventListener('touchstart', function(event) {
       if (event.touches.length === 2) {
           prevDistance = getTouchesDistance(event.touches);
       }
-    });
+  });
 
-    mainCanvas.addEventListener('touchmove', function(event) {
+  mainCanvas.addEventListener('touchmove', function(event) {
       event.preventDefault();
       if (event.touches.length === 2) {
           const currentDistance = getTouchesDistance(event.touches);
@@ -232,8 +264,6 @@ function initMainCanvas() {
           handleGrow(delta * 0.01); // You can adjust the sensitivity here
       }
   });
-
-
 }
 
 function handleGrow(growth,relativePosX,relativePosY){
