@@ -87,6 +87,7 @@ runTimeState = {
   updateCanvasRate: 50,
   maxSnapshots: 20,
   snapshots: [],
+  zoomMove: [],
 }
 let sessionState = {};
 function InitState() {
@@ -196,6 +197,45 @@ function saveSession() {
 function getMainCanvas() {
   return document.getElementById("main-canvas")
 }
+
+function canvasPinchZoom(zoomMove1,zoomMove2){
+  // Calculate distance between fingers in first touch position
+  const d1 = Math.hypot(
+    zoomMove1.f1.offsetX - zoomMove1.f2.offsetX,
+    zoomMove1.f1.offsetY - zoomMove1.f2.offsetY
+  );
+  const d2 = Math.hypot(
+    zoomMove2.f1.offsetX - zoomMove2.f2.offsetX,
+    zoomMove2.f1.offsetY - zoomMove2.f2.offsetY
+  );
+
+  let growth = 1.02;
+  if (event.deltaY < 0) {
+    growth = 0.98;
+  }
+
+  // Calculate the middle point between the two fingers
+  const relativePosX = (zoomMove2.f1.relativePosX + zoomMove2.f2.relativePosX) / 2;
+  const relativePosY = (zoomMove2.f1.relativePosY + zoomMove2.f2.relativePosY) / 2;
+
+  handleGrow(growth,relativePosX,relativePosY) ;
+  
+}
+function addZoomMove(finger1,finger2){
+  const rect = mainCanvas.getBoundingClientRect();
+  runTimeState.zoomMove.push({f1:{
+    offsetX: finger1.clientX - rect.left,
+    offsetY: finger1.clientY - rect.top,
+    relativePosX: (finger1.clientX - rect.left) / mainCanvas.width,
+    relativePosY: (finger1.clientY - rect.top) / mainCanvas.height
+  },f2:{
+    offsetX: finger2.clientX - rect.left,
+    offsetY: finger2.clientY - rect.top,
+    relativePosX: (finger2.clientX - rect.left) / mainCanvas.width,
+    relativePosY: (finger2.clientY - rect.top) / mainCanvas.height
+  }});
+}
+
 function initMainCanvas() {
 
   width = sessionState.sourceWidth * IMG_TO_CANVAS_SCLAE;
@@ -212,17 +252,64 @@ function initMainCanvas() {
   // Add touch event handlers
   mainCanvas.addEventListener('touchstart', function(event) {
     event.preventDefault();
-    const touch = event.touches[0];
-    const rect = mainCanvas.getBoundingClientRect();
-    const touchEvent = {
-      offsetX: touch.clientX - rect.left,
-      offsetY: touch.clientY - rect.top
-    };
-    canvasMousedown(touchEvent);
+    if (event.touches.length === 2) {
+      // Two finger touch - prepare for pinch zoom
+      runTimeState.zoomMove = [];
+     
+      let finger1 = event.touches[0];
+      let finger2 = event.touches[1];
+      addZoomMove(finger1,finger2);
+    
+
+
+      if (runTimeState.zoomMove.length === 2) {
+
+        canvasPinchZoom(runTimeState.zoomMove[0], runTimeState.zoomMove[1],);
+        runTimeState.zoomMove = [];
+      }
+    } else {
+      // Single finger touch - handle as mouse event
+      runTimeState.zoomMove = []; // Clear zoom points
+      const touch = event.touches[0];
+      const rect = mainCanvas.getBoundingClientRect();
+      const touchEvent = {
+        offsetX: touch.clientX - rect.left,
+        offsetY: touch.clientY - rect.top
+      };
+      canvasMousedown(touchEvent);
+    }
+  });
+
+  mainCanvas.addEventListener('touchmove', function(event) {
+    event.preventDefault();
+    if (event.touches.length === 2) {
+      // Update zoom points
+      
+      let finger1 = event.touches[0];
+      let finger2 = event.touches[1];
+      addZoomMove(finger1,finger2);
+    
+      if (runTimeState.zoomMove.length === 2) {
+
+        canvasPinchZoom(runTimeState.zoomMove[0], runTimeState.zoomMove[1],);
+        runTimeState.zoomMove = [];
+      }
+    } else {
+      // Single finger touch
+      runTimeState.zoomMove = []; // Clear zoom points
+      const touch = event.touches[0];
+      const rect = mainCanvas.getBoundingClientRect();
+      const touchEvent = {
+        offsetX: touch.clientX - rect.left,
+        offsetY: touch.clientY - rect.top
+      };
+      canvasMouseMove(touchEvent);
+    }
   });
 
   mainCanvas.addEventListener('touchend', function(event) {
     event.preventDefault();
+    runTimeState.zoomMove = []; // Clear zoom points
     // For touchend, use the last known touch position
     const touch = event.changedTouches[0];
     const rect = mainCanvas.getBoundingClientRect();
@@ -233,37 +320,10 @@ function initMainCanvas() {
     canvasMouseup(touchEvent);
   });
 
-  mainCanvas.addEventListener('touchmove', function(event) {
-    event.preventDefault();
-    const touch = event.touches[0];
-    const rect = mainCanvas.getBoundingClientRect();
-    const touchEvent = {
-      offsetX: touch.clientX - rect.left,
-      offsetY: touch.clientY - rect.top
-    };
-    canvasMouseMove(touchEvent);
-  });
-
   mainCanvas.height = height + 1;//plus 1 cus most right circle dot out of bounds
   mainCanvas.width = width + 1;
   ctxMainCanvas = mainCanvas.getContext("2d")
 
-  // Keep existing touch zoom functionality
-  mainCanvas.addEventListener('touchstart', function(event) {
-      if (event.touches.length === 2) {
-          prevDistance = getTouchesDistance(event.touches);
-      }
-  });
-
-  mainCanvas.addEventListener('touchmove', function(event) {
-      event.preventDefault();
-      if (event.touches.length === 2) {
-          const currentDistance = getTouchesDistance(event.touches);
-          const delta = currentDistance - prevDistance;
-          prevDistance = currentDistance;
-          handleGrow(delta * 0.01); // You can adjust the sensitivity here
-      }
-  });
 }
 
 function handleGrow(growth,relativePosX,relativePosY){
@@ -1038,6 +1098,7 @@ function initRec() {
 const divsToHide = ["signIn", "chooseProject", "createSession","container","editSession", 
   "original","controls","lockNkey","loadImgDiv","advanced","playStop","animation",
   "improvementsInfo","toggleControls","editPointsDiv"] ;
+
 const divsToInvisible = ["instructions", "sessionCreated","stop"];
 const divsToDisable = [ "signOut","home"];
 
@@ -1106,7 +1167,7 @@ onStateChange((newState)=>{
   // Disable Continue button if no saved session exists or no image was loaded
   const continueButton = document.getElementById('continue');
   let lss = isLocalStorageStateValid();
-  if(!lss || !lss.originalImgSrc.length){
+  if(!lss ||!lss.originalImgSrc|| !lss.originalImgSrc.length){
     continueButton.disabled = true;
     continueButton.title = 'No temporary session available' ;
   }
