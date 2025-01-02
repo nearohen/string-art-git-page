@@ -152,6 +152,10 @@ function DrawLine(lineIndex, ctxCanvas, canvas) {
 }
 
 function DrawLines(canvas, ctxCanvas, updateImprovements, snapshot) {
+
+  // Enable antialiasing for smoother lines
+  ctxCanvas.imageSmoothingEnabled = false;
+  ctxCanvas.imageSmoothingQuality = 'high';
   let firstTime = initLineUsed(runTimeState.linesArr.length);
   let changes = 0;
   let count = 0;

@@ -326,7 +326,7 @@ function initMainCanvas() {
 
   mainCanvas.height = height + 1;//plus 1 cus most right circle dot out of bounds
   mainCanvas.width = width + 1;
-  ctxMainCanvas = mainCanvas.getContext("2d")
+  ctxMainCanvas = mainCanvas.getContext('2d', { willReadFrequently: true });
 
 }
 
@@ -934,6 +934,9 @@ function canvasMouseMove(event) {
   
         }
 
+      }
+      if(runTimeState.imgManipulationMode == IMG_MANIPULATION_ZOOM_MOVE){
+        MoveSource(event.offsetX,event.offsetY);
       }
 
       updateNewThumbnails();
@@ -1543,7 +1546,10 @@ function canvasMousedown(event) {
   if(event.offsetX && event.offsetY){
     runTimeState.mouseDownX = event.offsetX
     runTimeState.mouseDownY = event.offsetY
-
+    const diffX = event.offsetX - runTimeState.mouseDownX;
+    const diffY = event.offsetY - runTimeState.mouseDownY;
+    sessionState.recDownOffX = sessionState.recOffX;
+    sessionState.recDownOffY = sessionState.recOffY;
   }
 
 }
@@ -1572,6 +1578,25 @@ function fixRec() {
         sessionState.recOffY = can.original.canvas.height - sessionState.recHeight;
     }
 }
+
+function MoveSource(offsetX,offsetY){
+
+     const diffX = offsetX - runTimeState.mouseDownX;
+      const diffY = offsetY - runTimeState.mouseDownY;
+      let relativeMoveX = diffX / mainCanvas.width;
+      let relativeMoveY = diffY / mainCanvas.height;
+      let realDiffx = sessionState.recWidth * relativeMoveX;
+      let realDiffy = sessionState.recHeight * relativeMoveY;
+  
+      sessionState.recOffX =sessionState.recDownOffX - realDiffx;
+      sessionState.recOffY =sessionState.recDownOffY - realDiffy;
+      fixRec();
+
+      UpdateNewServerImg();
+
+}
+
+
 function canvasMouseup(event) {
 
   if(event.offsetX && event.offsetY){
@@ -1594,22 +1619,12 @@ function canvasMouseup(event) {
       UpdateNewServerImg();
     }
     else if (runTimeState.imgManipulationMode == IMG_MANIPULATION_ZOOM_MOVE) {
-      const diffX = runTimeState.mouseUpX - runTimeState.mouseDownX;
-      const diffY = runTimeState.mouseUpY - runTimeState.mouseDownY;
-      let relativeMoveX = diffX / mainCanvas.width;
-      let relativeMoveY = diffY / mainCanvas.height;
-      let realDiffx = sessionState.recWidth * relativeMoveX;
-      let realDiffy = sessionState.recHeight * relativeMoveY;
-  
-      sessionState.recOffX -= realDiffx;
-      sessionState.recOffY -= realDiffy;
-      fixRec();
-  
-  
-      UpdateNewServerImg();
-  
+    
+      MoveSource(runTimeState.mouseUpX,runTimeState.mouseUpY);
   
     }
+
+
 
   }
  
