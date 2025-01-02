@@ -134,7 +134,7 @@ function InitState() {
 InitState();
 
 
-const IMG_TO_CANVAS_SCLAE = 3;
+let IMG_TO_CANVAS_SCLAE = 1;
 
 
 function ApplyWeight() {
@@ -1201,7 +1201,7 @@ onStateChange((newState)=>{
 
 function main() {
 
-  canvasPixelScale = 4;
+  //  IMG_TO_CANVAS_SCLAE
 
   const fileInput = document.getElementById("loadImgFile");
   fileInput.addEventListener('input', handleImageFileSelect, false);
@@ -1215,6 +1215,14 @@ function main() {
   document.getElementById("signOut").style.display = "none";
   document.getElementById('sessionFileName').addEventListener('input', adjustSessionFileNameWidth);
   updateOptionalValue("ip",sessionState.serverAddr);
+
+  // Get device pixel ratio for proper canvas rendering
+  const devicePixelRatio = window.devicePixelRatio || 1;
+  IMG_TO_CANVAS_SCLAE = devicePixelRatio*3;
+
+
+
+
   RestartState();
   GoToCanvas(ON_CANVAS_STRINGS);
   startMainCanvas();
