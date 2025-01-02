@@ -609,8 +609,8 @@ function RestartState() {
 }
 function handleNewState(params) {
   sessionState = params
-  sessionState.snapshotBuffer =  base64ToArrayBuffer(sessionState.snapshotB64)  ;
   RestartState();
+  sessionState.snapshotBuffer =  base64ToArrayBuffer(sessionState.snapshotB64)  ;
   GoToCanvas(ON_CANVAS_STRINGS);
 }
 
@@ -1677,7 +1677,9 @@ function loader() {
       emitStateChange(States.ES);
     }
 
+    let changed = sessionState.originalImgSrc != originalImg.src;
     sessionState.originalImgSrc = originalImg.src;
+    
     can.weight.canvas.width = originalImg.width / IMG_TO_CANVAS_SCLAE;
     can.weight.canvas.height = originalImg.height / IMG_TO_CANVAS_SCLAE;
     fillCanvas("weight", "#7F7F7F");
@@ -1690,7 +1692,7 @@ function loader() {
     
     can.original.canvas.width = originalImg.width / IMG_TO_CANVAS_SCLAE;
     can.original.canvas.height = originalImg.height / IMG_TO_CANVAS_SCLAE;
-    if(can.original.canvas.width!=oldW || can.original.canvas.height!=oldH){
+    if(changed && (can.original.canvas.width!=oldW || can.original.canvas.height!=oldH)){
       initRec();
     }
     else if (sessionState.recWidth == 1 || sessionState.recWidth == -1) {

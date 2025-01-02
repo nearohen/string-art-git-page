@@ -58,6 +58,7 @@ const workerStae = {
     srcFocusBuffer: undefined,
 }
 function initWorkerState() {
+  console.log("initWorkerState");
   workerStae.improveInterval = 0;
   workerStae.snapshotBuffer = undefined;
   workerStae.transalatebaleSnapshot = undefined;
@@ -73,11 +74,13 @@ onmessage = function (msg){
     const {data : {cmd ,args}} = msg ;
     if(cmd === "stopImprove")
     {
+        console.log("on cmd stopImprove");
         clearInterval(workerStae.improveInterval) ;
         workerStae.improveInterval = 0;
     }
     else if(cmd === "startImprove")
     {
+        console.log("on cmd startImprove");
         workerStae.srcRawBuffer.set(args.thumbnailMainRaw); 
         workerStae.improveInterval = setInterval(()=>{
             const okOrFail = SAImprove(1000,args.sessionKey);
@@ -97,6 +100,7 @@ onmessage = function (msg){
     {
         if(workerStae.srcRawBuffer)
         {
+            console.log("on cmd updateThumbnailMainRaw");
             workerStae.srcRawBuffer.set(args.thumbnailMainRaw); 
         }
         
@@ -105,16 +109,18 @@ onmessage = function (msg){
     {
         if(workerStae.srcFocusBuffer)
         {
+            console.log("on cmd updateThumbnailFocusRaw");
             workerStae.srcFocusBuffer.set(args.thumbnailFocusRaw); 
         }
     }
     else if(cmd === "snapshotBuffer") 
     {
+        console.log("on cmd snapshotBuffer");
         workerStae.transalatebaleSnapshot = args.buffer ;
     } 
     else if(cmd === "init")
     {
-
+        console.log("on cmd init");
         const p = JSON.parse(args);
         //p.serverSnapshot = "";
         console.log("p:"+p);
@@ -138,10 +144,12 @@ onmessage = function (msg){
     }
     else if(cmd === "initWorkerState")
     {
+        console.log("on cmd initWorkerState");
         initWorkerState();
     }
     else if(cmd === "updateParam")
-    {
+    {   
+        console.log("on cmd updateParam");
         const name = args.name ;
         const val = args.val ;
         const type = args.type ;
