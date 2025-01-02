@@ -1218,7 +1218,7 @@ function main() {
 
   // Get device pixel ratio for proper canvas rendering
   const devicePixelRatio = window.devicePixelRatio || 1;
-  IMG_TO_CANVAS_SCLAE = devicePixelRatio*3;
+  IMG_TO_CANVAS_SCLAE = devicePixelRatio*5;
 
 
 
