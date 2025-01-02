@@ -268,8 +268,7 @@ function initMainCanvas() {
   // Add touch event handlers
   mainCanvas.addEventListener('touchstart', function(event) {
     event.preventDefault();
-    document.getElementById('debugInfoTouches').textContent = `Touches: ${event.touches.length}`;
-    if (event.touches.length === 2) {
+     if (event.touches.length === 2) {
       // Two finger touch - prepare for pinch zoom
       runTimeState.zoomMove = [];
      
@@ -292,7 +291,6 @@ function initMainCanvas() {
 
   mainCanvas.addEventListener('touchmove', function(event) {
     event.preventDefault();
-    document.getElementById('debugInfoTouches').textContent = `Touches: ${event.touches.length}`;
     if (event.touches.length === 2) {
       // Update zoom points
       let finger1 = event.touches[0];
@@ -314,9 +312,7 @@ function initMainCanvas() {
 
   mainCanvas.addEventListener('touchend', function(event) {
     event.preventDefault();
-    document.getElementById('debugInfoTouches').textContent = `Touches: ${event.touches.length}`;
-
-    
+      
      
     if (runTimeState.zoomMove.length === 2) {
 
