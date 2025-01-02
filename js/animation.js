@@ -391,6 +391,10 @@ async function AnimateSnapshotToSnapshot(fromSnapshot,toSnapshot){
 
 
 function Animate(){
+  
+  if(runTimeState.debugMode){
+    return ;
+  }
 
   fetch('./js/output.json') // Adjust the path to your file
   .then(response => {

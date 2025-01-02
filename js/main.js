@@ -59,6 +59,7 @@ const States = {
 
 runTimeState = {
   state: States.NS ,
+  debugMode: false,
   mouseDown: false,
   mouseButton: -1,
   mouseX: -1,
@@ -128,6 +129,12 @@ function InitState() {
     sessionFileName: "",
     serverAddr: `${window.location.protocol}//${window.location.hostname}`,
     customPointSpacingPercent: 1,
+  }
+
+  if(runTimeState.debugMode) {
+    sessionState.originalImgSrc = "temp.jpg";  // Set the temporary image
+  } else {
+    sessionState.originalImgSrc = "";  // Keep empty for debug mode
   }
   initRelevantPixels();
 }
@@ -210,10 +217,8 @@ function canvasPinchZoom(zoomMove1,zoomMove2){
   );
 
 
-  let growth = 1.02;
-  if(d1>d2){
-    growth = 0.98;
-  }
+  let growth =d1/d2;
+  
 
 
   // Calculate the middle point between the two fingers
@@ -226,8 +231,9 @@ function canvasPinchZoom(zoomMove1,zoomMove2){
 
 
 function addZoomMove(finger1,finger2){
+
   const rect = mainCanvas.getBoundingClientRect();
-  runTimeState.zoomMove.push({f1:{
+  let toAdd = {f1:{
     offsetX: finger1.clientX - rect.left,
     offsetY: finger1.clientY - rect.top,
     relativePosX: (finger1.clientX - rect.left) / mainCanvas.width,
@@ -237,7 +243,13 @@ function addZoomMove(finger1,finger2){
     offsetY: finger2.clientY - rect.top,
     relativePosX: (finger2.clientX - rect.left) / mainCanvas.width,
     relativePosY: (finger2.clientY - rect.top) / mainCanvas.height
-  }});
+  }};
+  if(runTimeState.zoomMove.length<2){ 
+    runTimeState.zoomMove.push(toAdd);
+  }
+  else{
+    runTimeState.zoomMove[1] = toAdd;
+  }
 }
 
 function initMainCanvas() {
@@ -256,6 +268,7 @@ function initMainCanvas() {
   // Add touch event handlers
   mainCanvas.addEventListener('touchstart', function(event) {
     event.preventDefault();
+    document.getElementById('debugInfoTouches').textContent = `Touches: ${event.touches.length}`;
     if (event.touches.length === 2) {
       // Two finger touch - prepare for pinch zoom
       runTimeState.zoomMove = [];
@@ -264,13 +277,6 @@ function initMainCanvas() {
       let finger2 = event.touches[1];
       addZoomMove(finger1,finger2);
     
-
-
-      if (runTimeState.zoomMove.length === 2) {
-
-        canvasPinchZoom(runTimeState.zoomMove[0], runTimeState.zoomMove[1],);
-        runTimeState.zoomMove = [];
-      }
     } else {
       // Single finger touch - handle as mouse event
       runTimeState.zoomMove = []; // Clear zoom points
@@ -282,25 +288,20 @@ function initMainCanvas() {
       };
       canvasMousedown(touchEvent);
     }
-  });
+  }, { passive: false });
 
   mainCanvas.addEventListener('touchmove', function(event) {
     event.preventDefault();
+    document.getElementById('debugInfoTouches').textContent = `Touches: ${event.touches.length}`;
     if (event.touches.length === 2) {
       // Update zoom points
-      
       let finger1 = event.touches[0];
       let finger2 = event.touches[1];
       addZoomMove(finger1,finger2);
-    
-      if (runTimeState.zoomMove.length === 2) {
-
-        canvasPinchZoom(runTimeState.zoomMove[0], runTimeState.zoomMove[1],);
-        runTimeState.zoomMove = [];
-      }
+     
     } else {
       // Single finger touch
-      runTimeState.zoomMove = []; // Clear zoom points
+     
       const touch = event.touches[0];
       const rect = mainCanvas.getBoundingClientRect();
       const touchEvent = {
@@ -309,20 +310,32 @@ function initMainCanvas() {
       };
       canvasMouseMove(touchEvent);
     }
-  });
+  }, { passive: false });
 
   mainCanvas.addEventListener('touchend', function(event) {
     event.preventDefault();
-    runTimeState.zoomMove = []; // Clear zoom points
-    // For touchend, use the last known touch position
-    const touch = event.changedTouches[0];
-    const rect = mainCanvas.getBoundingClientRect();
-    const touchEvent = {
-      offsetX: touch.clientX - rect.left,
-      offsetY: touch.clientY - rect.top
-    };
-    canvasMouseup(touchEvent);
-  });
+    document.getElementById('debugInfoTouches').textContent = `Touches: ${event.touches.length}`;
+
+    
+     
+    if (runTimeState.zoomMove.length === 2) {
+
+        canvasPinchZoom(runTimeState.zoomMove[0], runTimeState.zoomMove[1],);
+        runTimeState.zoomMove = [];
+      
+    }
+    else{
+      runTimeState.zoomMove = []; // Clear zoom points
+      // For touchend, use the last known touch position
+      const touch = event.changedTouches[0];
+      const rect = mainCanvas.getBoundingClientRect();
+      const touchEvent = {
+        offsetX: touch.clientX - rect.left,
+        offsetY: touch.clientY - rect.top
+      };
+      canvasMouseup(touchEvent);
+    }
+  }, { passive: false });
 
   mainCanvas.height = height + 1;//plus 1 cus most right circle dot out of bounds
   mainCanvas.width = width + 1;
@@ -1111,6 +1124,15 @@ const divsToHide = ["signIn", "chooseProject", "createSession","container","edit
 const divsToInvisible = ["instructions", "sessionCreated","stop"];
 const divsToDisable = [ "signOut","home"];
 
+const divsToHideDebug = [ 
+  "original","lockNkey","advanced","animation",
+  "improvementsInfo","editPointsDiv"] ;
+
+const divsToInvisibleDebug = [ ];
+const divsToDisableDebug = [ "signOut","home"];
+
+
+
 let allowedDivs = {
   [States.NS] : ["signIn","animation","container"],
   [States.CP] : ["chooseProject","signOut"],
@@ -1162,9 +1184,9 @@ function hideDivsForState(currentState) {
   }
 
   // Process each group of divs
-  processDivs(divsToHide, hideAction);
-  processDivs(divsToInvisible, invisibleAction);
-  processDivs(divsToDisable, disableAction);
+  runTimeState.debugMode ? processDivs(divsToHideDebug, hideAction) : processDivs(divsToHide, hideAction);
+  runTimeState.debugMode ? processDivs(divsToInvisibleDebug, invisibleAction) : processDivs(divsToInvisible, invisibleAction);
+  runTimeState.debugMode ? processDivs(divsToDisableDebug, disableAction) : processDivs(divsToDisable, disableAction);
 }
 
 onStateChange((newState)=>{
@@ -1218,7 +1240,7 @@ function main() {
 
   // Get device pixel ratio for proper canvas rendering
   const devicePixelRatio = window.devicePixelRatio || 1;
-  IMG_TO_CANVAS_SCLAE = devicePixelRatio*5;
+  IMG_TO_CANVAS_SCLAE = devicePixelRatio*3;
 
 
 
@@ -1941,7 +1963,7 @@ window.onload = loader;
 
 
 function imageLoaded(){
-  return sessionState.originalImgSrc != null;
+  return sessionState.originalImgSrc != null && sessionState.originalImgSrc.length > 0;
 }
 //inputs 
 

@@ -178,8 +178,6 @@ input[type="range"] {
 	justify-self: end;
 	width: 43px;
 	text-align: right;
-	padding: 2px 4px;
-	box-sizing: border-box;
 }
 
 /* Add some vertical spacing between rows */
@@ -342,11 +340,6 @@ input[id^="bgColor"] {
 }
 
 #simulation {
-	position: relative;
-	width: fit-content;
-	height: fit-content;
-	min-width: 100px;
-	min-height: 100px;
 	background-color: white;
 	padding: var(--spacing);
 	border-radius: var(--border-radius);
