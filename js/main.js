@@ -209,10 +209,12 @@ function canvasPinchZoom(zoomMove1,zoomMove2){
     zoomMove2.f1.offsetY - zoomMove2.f2.offsetY
   );
 
+
   let growth = 1.02;
-  if (event.deltaY < 0) {
+  if(d1>d2){
     growth = 0.98;
   }
+
 
   // Calculate the middle point between the two fingers
   const relativePosX = (zoomMove2.f1.relativePosX + zoomMove2.f2.relativePosX) / 2;
@@ -221,6 +223,8 @@ function canvasPinchZoom(zoomMove1,zoomMove2){
   handleGrow(growth,relativePosX,relativePosY) ;
   
 }
+
+
 function addZoomMove(finger1,finger2){
   const rect = mainCanvas.getBoundingClientRect();
   runTimeState.zoomMove.push({f1:{
@@ -356,6 +360,8 @@ function leftRight(left){
   fixRec();
   UpdateNewServerImg();
 }
+
+
 function Zoom(positive){
   let growth = 1.02;
   if(positive) {
