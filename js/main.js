@@ -1220,6 +1220,7 @@ onStateChange((newState)=>{
 function main() {
 
   //  IMG_TO_CANVAS_SCLAE
+  alert("maasdin");
 
   const fileInput = document.getElementById("loadImgFile");
   fileInput.addEventListener('input', handleImageFileSelect, false);
