@@ -631,6 +631,153 @@ button.continue-button:disabled:hover {
 	display: block;
 }
 
+/* Mobile-specific adjustments */
+@media screen and (max-width: 768px) {
+	/* Increase base font size */
+	body {
+		font-size: 16px;
+	}
+
+	/* Make buttons larger and more touch-friendly */
+	button, #playStop {
+		padding: 12px 24px;
+		font-size: 16px;
+		min-height: 44px; /* Apple's recommended minimum touch target size */
+		min-width: 44px;
+	}
+
+	/* Increase icon sizes */
+	.material-icons {
+		font-size: 28px !important;
+	}
+
+	/* Make input fields larger */
+	input[type="text"],
+	input[type="number"],
+	input[type="range"] {
+		padding: 12px;
+		font-size: 16px;
+		height: 44px;
+	}
+
+	/* Adjust icon buttons */
+	.icon-button {
+		width: 44px;
+		height: 44px;
+	}
+
+	/* Increase spacing for better touch targets */
+	#controls {
+		gap: 16px;
+	}
+
+	/* Adjust toolbar for mobile */
+	#topToolbar {
+		padding: 12px var(--spacing);
+	}
+
+	/* Make controls more touch-friendly */
+	#zoom button {
+		width: 44px;
+		height: 44px;
+	}
+
+	/* Adjust improvements info for mobile */
+	#improvementsInfo input[type="text"] {
+		width: 80px;
+		height: 44px;
+		font-size: 16px;
+	}
+
+	/* Increase spacing between elements */
+	.simulation-container {
+		gap: 24px;
+	}
+
+	/* Make range inputs more touch-friendly */
+	input[type="range"] {
+		height: 44px;
+		margin: 8px 0;
+	}
+
+	/* Make ALL icons bigger */
+	.material-icons {
+		font-size: 32px !important;
+	}
+
+	/* Specific icon adjustments */
+	#secretControls .material-icons,
+	#controls .material-icons,
+	#topToolbar .material-icons,
+	.shape-button .material-icons,
+	.edit-points-buttons .material-icons,
+	#toggleControls .material-icons {
+		font-size: 32px !important;
+	}
+
+	/* Make icon containers bigger */
+	.icon-button,
+	#controls .icon-button,
+	#zoom button,
+	.shape-button,
+	#secretControls button {
+		width: 48px !important;
+		height: 48px !important;
+		padding: 8px !important;
+	}
+
+	/* Special handling for play/stop button */
+	#playStop {
+		width: 56px !important;
+		height: 56px !important;
+	}
+
+	#playStop .material-icons {
+		font-size: 40px !important;
+	}
+
+	/* Adjust toolbar spacing */
+	#topToolbar {
+		padding: 16px var(--spacing);
+	}
+
+	/* Increase gap between buttons */
+	.shape-buttons,
+	#secretControls,
+	.edit-points-buttons {
+		gap: 12px;
+	}
+}
+
+/* Even larger for very small screens */
+@media screen and (max-width: 380px) {
+	body {
+		font-size: 18px;
+	}
+
+	.material-icons {
+		font-size: 32px !important;
+	}
+
+	.icon-button,
+	#controls .icon-button,
+	#zoom button,
+	.shape-button,
+	#secretControls button {
+		width: 56px !important;
+		height: 56px !important;
+	}
+
+	#playStop {
+		width: 64px !important;
+		height: 64px !important;
+	}
+
+	#playStop .material-icons {
+		font-size: 48px !important;
+	}
+}
+
 
 
 
