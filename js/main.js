@@ -141,7 +141,7 @@ function InitState() {
 InitState();
 
 
-let IMG_TO_CANVAS_SCLAE = 1;
+let IMG_TO_CANVAS_SCLAE = 3;
 
 
 function ApplyWeight() {
@@ -254,8 +254,8 @@ function addZoomMove(finger1,finger2){
 
 function initMainCanvas() {
 
-  width = sessionState.sourceWidth * IMG_TO_CANVAS_SCLAE;
-  height = sessionState.sourceHeight * IMG_TO_CANVAS_SCLAE;
+  width = sessionState.sourceWidth*IMG_TO_CANVAS_SCLAE
+  height = sessionState.sourceHeight*IMG_TO_CANVAS_SCLAE 
 
   mainCanvas = getMainCanvas()
   mainCanvas.onmousemove = canvasMouseMove
@@ -412,8 +412,9 @@ function canvasMouseWheel(event) {
     }
     else if (runTimeState.imgManipulationMode == IMG_MANIPULATION_ZOOM_MOVE) {
 
-      let relativePosX = event.offsetX / mainCanvas.width;
-      let relativePosY = event.offsetY / mainCanvas.height;
+
+      const scaled = getCanvasCoordinates(mainCanvas,event);
+     
 
 
 
@@ -422,7 +423,7 @@ function canvasMouseWheel(event) {
         growth = 0.98;
       }
 
-      handleGrow(growth,relativePosX,relativePosY) ;
+      handleGrow(growth,scaled.x/mainCanvas.width,scaled.y/mainCanvas.height) ;
       
 
     }
@@ -609,7 +610,6 @@ function loadSavedToCanvas(canvasName, data) {
 }
 
 function RestartState() {
-  InitInstructions(sessionState);
   sessionState.stateId = "";
   LoadStateValuesToUI()
   handlePointsChange()
@@ -710,8 +710,6 @@ function LoadStateValuesToUI() {
   updateOptionalValue("brightnessRange",sessionState.brightness);
   updateOptionalValue("bgStrength",sessionState.bgStrength);
   
-
-  document.getElementById('totalInstruction').value = sessionState.instructions.instructionsArray.length;
 
   
     // Update the toggle view icon to match the current state
@@ -905,13 +903,30 @@ function pixelWidthToOriginal() {
   return ret;
 }
 
+function getCanvasCoordinates(canvas, event) {
+  // Get the canvas's bounding rectangle on the page
+  const rect = canvas.getBoundingClientRect();
+  
+  // Get the scaling factors
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
+  
+  // Calculate the real canvas coordinates
+  const x = (event.clientX - rect.left) * scaleX;
+  const y = (event.clientY - rect.top) * scaleY;
+  
+  return { x, y };
+}
+
+
 function canvasMouseMove(event) {
-  runTimeState.mouseX = event.offsetX
-  runTimeState.mouseY = event.offsetY
-  X = Math.floor(event.offsetX / IMG_TO_CANVAS_SCLAE);
-  Y = Math.floor(event.offsetY / IMG_TO_CANVAS_SCLAE);
+  const scaled = getCanvasCoordinates(mainCanvas,event);
+  runTimeState.mouseX = scaled.x
+  runTimeState.mouseY = scaled.y
+  let X = Math.floor(scaled.x / IMG_TO_CANVAS_SCLAE);
+  let Y = Math.floor(scaled.y / IMG_TO_CANVAS_SCLAE);
   FillPixelInfo(X, Y)
-  R = Math.floor(sessionState.radius / IMG_TO_CANVAS_SCLAE);
+  let R = Math.floor(sessionState.radius / IMG_TO_CANVAS_SCLAE);
   if (sessionState.onCanvas == ON_CANVAS_IMG || sessionState.onCanvas == ON_CANVAS_STRINGS || sessionState.onCanvas == ON_CANVAS_PIXEL_WEIGHT) {
 
     if (runTimeState.mouseDown) {
@@ -1117,7 +1132,7 @@ const divsToHide = ["signIn", "chooseProject", "createSession","container","edit
   "original","controls","lockNkey","loadImgDiv","advanced","playStop","animation",
   "improvementsInfo","toggleControls","editPointsDiv"] ;
 
-const divsToInvisible = ["instructions", "sessionCreated","stop"];
+const divsToInvisible = [ "sessionCreated","stop"];
 const divsToDisable = [ "signOut","home"];
 
 const divsToHideDebug = [ 
@@ -1136,7 +1151,7 @@ let allowedDivs = {
   [States.SC] : ["sessionCreated","signOut","container","improvementsInfo","original","playStop","controls","stop","home","toggleControls"],
   [States.PL] : ["sessionCreated","playStop","container","improvementsInfo","original","controls","toggleControls"],
   [States.ST] : ["sessionCreated","playStop","stop","signOut","container","improvementsInfo","original","controls","home","toggleControls"],
-  [States.IN] : ["instructions","signOut","container","home","toggleControls"]
+  [States.IN] : ["signOut","container","home","toggleControls"]
 }
 
 
@@ -1220,7 +1235,6 @@ onStateChange((newState)=>{
 function main() {
 
   //  IMG_TO_CANVAS_SCLAE
-  alert("maasdin");
 
   const fileInput = document.getElementById("loadImgFile");
   fileInput.addEventListener('input', handleImageFileSelect, false);
@@ -1230,14 +1244,13 @@ function main() {
   });
 
   document.getElementById('loadSessionFile').addEventListener('input', LoadSession, false);
-  document.getElementById("instructions").style.display = "none"
   document.getElementById("signOut").style.display = "none";
   document.getElementById('sessionFileName').addEventListener('input', adjustSessionFileNameWidth);
   updateOptionalValue("ip",sessionState.serverAddr);
 
   // Get device pixel ratio for proper canvas rendering
   const devicePixelRatio = window.devicePixelRatio || 1;
-  IMG_TO_CANVAS_SCLAE = devicePixelRatio*3;
+ 
 
 
 
@@ -1508,25 +1521,6 @@ function getXY(e) {
   }
   return [mouseX, mouseY]
   /* do something with mouseX/mouseY */
-}
-window.onkeydown = (ev) => {
-  if (sessionState.onCanvas == ON_CANVAS_INSTRUCTION) {
-    if (ev.code == "ArrowRight") {
-
-      instructions(1);
-    }
-    if (ev.code == "ArrowLeft") {
-
-      instructions(-1);
-    }
-
-  }
-
-
-}
-function MoveSrcImage(x, y) {
-
-
 }
 
 function addCustomPoint(offsetX,offsetY){

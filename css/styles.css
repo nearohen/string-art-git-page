@@ -609,13 +609,19 @@ button.continue-button:disabled:hover {
 	.controls-panel {
 		width: 100%; /* Full width controls in portrait */
 		order: 1;
+		max-width: none; /* Remove any max-width constraints */
+	}
+
+	#controls {
+		min-width: 100%; /* Make controls take full width */
+		max-width: none; /* Remove max-width limitation */
 	}
 }
 
 /* For landscape orientation on mobile devices */
 @media screen and  (orientation: landscape) {
 	#simulation {
-		width: 100%;
+		width: 30%;
 	}
 }
 
