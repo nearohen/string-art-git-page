@@ -1,10 +1,18 @@
 let improveWorker = new Worker("./js/improveWorker.js");
 
-improveWorker.onmessage = function ({data :{type,args}}){
-    if(type=="snapshotBuffer")
-    {
-        sessionState.snapshotBuffer  = args.buffer.slice();
-        improveWorker.postMessage({cmd : "snapshotBuffer",args },[args.buffer]);
+improveWorker.onmessage = function({data: {type, args}}) {
+    if(type == "snapshotBuffer") {
+        // Make copy of the data
+        sessionState.snapshotBuffer = new Int8Array(args.buffer).slice();
+        
+        // Return the buffer to the worker's pool
+        improveWorker.postMessage({
+            cmd: "returnBuffer",
+            args: {
+                buffer: args.buffer,
+                bufferIndex: args.bufferIndex
+            }
+        });
     }
     else if(type=="sessionLock")
     {
