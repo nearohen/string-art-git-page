@@ -2107,3 +2107,42 @@ function selectShape(shape) {
 
 
 
+function makeIt() {
+    // Add the instructions to the database with a callback
+    addInstructionsObToDB(sessionState, (result) => {
+        const linkContainer = document.getElementById('instructionAppLink');
+        
+        if (result.error) {
+            linkContainer.innerHTML = `<p style="color: red;">${result.message}</p>`;
+            return;
+        }
+
+        // Create and display the PWA link
+        const link = document.createElement('a');
+        link.href = result.url;
+        link.target = '_blank';
+        link.textContent = result.text;
+        link.style.display = 'block';
+        link.style.marginTop = '10px';
+        link.style.color = '#ffffff';
+        link.style.backgroundColor = '#ff0000';
+        link.style.padding = '12px 20px';
+        link.style.borderRadius = '5px';
+        link.style.textDecoration = 'none';
+        link.style.textAlign = 'center';
+        link.style.fontWeight = 'bold';
+        link.style.boxShadow = '0 2px 4px rgba(0,0,0,0.2)';
+        
+        // Add installation instructions
+        const instructions = document.createElement('p');
+        instructions.style.marginTop = '10px';
+        instructions.style.fontSize = '14px';
+        instructions.style.color = '#666';
+        instructions.innerHTML = result.tip;
+        
+        linkContainer.innerHTML = '';
+        linkContainer.appendChild(link);
+        linkContainer.appendChild(instructions);
+    });
+}
+window.makeIt = makeIt;

@@ -276,6 +276,15 @@ input[id^="bgColor"] {
 	color: white;
 }
 
+#userEmail {
+	font-size: 1em;
+	color: #4CAF50;
+	margin-right: 10px;
+	background-color: rgba(0, 0, 0, 0.2);
+	padding: 4px 8px;
+	border-radius: 4px;
+	font-family: monospace;
+}
 
 /* Canvas Container */
 #container > div:first-child {

@@ -55,6 +55,7 @@
 
       <div id="signOut">
         <span type="text" id="displayName" value="" size="32" readonly></span>
+        <span type="text" id="userEmail" value="" size="32" readonly></span>
         <button id="signOutButton" type="button">Sign Out</button>
       </div>
     </div>
@@ -202,7 +203,10 @@
         <button id="editSession" type="button" onclick="emitStateChange(States.ES)">
             <span class="material-icons">edit</span>
         </button>
-        <button type="button" onclick="initInstructions()">Instructions</button>
+        <div id="makeIt">
+        <button type="button" onclick="makeIt()" style="background-color: red; color: white;">Make It!</button>
+        <div id="instructionAppLink"></div>
+        </div>
       </div>
 
     </div>

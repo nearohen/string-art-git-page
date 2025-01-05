@@ -1,6 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth ,signOut ,getRedirectResult, GoogleAuthProvider ,signInWithPopup,onAuthStateChanged,signInWithRedirect,createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { getDatabase, ref, update,onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-functions.js";
 
 
 
@@ -33,14 +34,15 @@ const firebaseConfig = {
 
 function handleUser(userE){
   if (userE) {
-    document.getElementById("displayName").textContent = userE.displayName ; 
+    document.getElementById("displayName").textContent = userE.displayName;
+    document.getElementById("userEmail").textContent = userE.email;
     document.getElementById("signOut").style.display = "block";
     document.getElementById("signInButton").style.display = "none";
     document.getElementById("advanced").style.display = "none";
     // User is signed in, see docs for a list of available properties
     // https://firebase.google.com/docs/reference/js/auth.user
-    sessionState.userId = userE.uid ;
-    user = userE  ;
+    sessionState.userId = userE.uid;
+    user = userE;
     if(getUserCB){
       getUserCB(userE); 
     }
@@ -48,7 +50,6 @@ function handleUser(userE){
     // User is signed out
     // ...
   }
-
 }
 
   console.log("End")
@@ -99,34 +100,38 @@ function handleUser(userE){
 
 
 
-function updateDB(userId,sessionLock,cb) {
+function updateDB(userId, sessionLock, cb) {
+    const user = auth.currentUser;
+    if (!user) {
+        console.error("No user logged in");
+        return;
+    }
    
     const newData = {
-      assemblyLock: sessionLock,
-      // Add your data here
+        assemblyLock: sessionLock,
+        userEmail: user.email,  // Add user's email
+        lastUpdated: Date.now() // Optional: add timestamp
     };
+
     const db = getDatabase(app);
-    // Reference to the database
     const dbRef = ref(db, `users/${userId}`);
 
     const onKey = ref(db, `users/${userId}/assemblyKey`);
     onValue(onKey, (snapshot) => {
-      const updatedData = snapshot.val();
-      cb(updatedData); 
-      console.log("Data changed:", updatedData);
-      // Call your callback function here passing updatedData
-  });
+        const updatedData = snapshot.val();
+        cb(updatedData); 
+        console.log("Data changed:", updatedData);
+    });
 
-    // Update the database
     update(dbRef, newData)
-      .then(() => {
-        console.log("Data updated successfully");
-      })
-      .catch((error) => {
-        console.error("Error updating data:", error);
-      });
-  }
-  window.updateDB = updateDB ;
+        .then(() => {
+            console.log("Data updated successfully");
+        })
+        .catch((error) => {
+            console.error("Error updating data:", error);
+        });
+}
+window.updateDB = updateDB ;
 
   /*
     createUserWithEmailAndPassword(auth, "nir.hen@gmail.com", password)
@@ -141,3 +146,50 @@ function updateDB(userId,sessionLock,cb) {
     // ..
   });
   */
+
+function addInstructionsObToDB(sessionState, callback) {
+    // Get current user
+    const projectId = crypto.randomUUID();
+    const user = auth.currentUser;
+    if (!user) {
+        console.error("No user logged in");
+        return;
+    }
+
+    const instructionData = {
+        dots: sessionState.dots,
+        snapshotB64: sessionState.snapshotB64,
+        projectId: projectId,
+        createdAt: Date.now(),
+        userId: user.uid
+    };
+
+    const db = getDatabase(app);
+    // Reference to the instructions in RTDB under the user's path
+    const dbRef = ref(db, `users/${user.uid}/instructions/${projectId}`);
+
+    // Update the database
+    update(dbRef, instructionData)
+        .then(() => {
+            console.log("Instructions added successfully for project:", projectId);
+            // Get PWA link from our function
+            return fetch(`https://us-central1-stringart-18a36.cloudfunctions.net/getPWALink?id=${projectId}&userId=${user.uid}`);
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Create and return link object
+            callback({
+                url: data.url,
+                text: 'Open String Art Instructions',
+                tip: 'Tip: After opening, click the install button in your browser to add this app to your device!'
+            });
+        })
+        .catch((error) => {
+            console.error("Error in instruction process:", error);
+            callback({
+                error: true,
+                message: 'Error generating instructions link. Please try again.'
+            });
+        });
+}
+window.addInstructionsObToDB = addInstructionsObToDB;
