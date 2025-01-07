@@ -237,6 +237,8 @@ function DrawLinesMainCanvas() {
     if(changes)
       document.getElementById("improvements").value = changes-1 ; 
     runTimeState.previousSnapshot = sessionState.snapshotBuffer;
+    runTimeState.lines = count;
+    sessionState.lines = count;
     return count;
   }
 }
@@ -301,7 +303,30 @@ function thPos(x, y) {
 
 
 
+function DrawBgColors(){
 
+    // Draw small squares showing background colors in grayscale
+    const squareSize = 20;
+    const padding = 5;
+    const startX = padding;
+    const startY = padding;
+
+    // Top left square
+    ctxMainCanvas.fillStyle = bgValToColor(sessionState.bgColors[0]);
+    ctxMainCanvas.fillRect(startX, startY, squareSize, squareSize);
+
+    // Top right square 
+    ctxMainCanvas.fillStyle = bgValToColor(sessionState.bgColors[1]);
+    ctxMainCanvas.fillRect(startX + squareSize + padding, startY, squareSize, squareSize);
+
+    // Bottom left square
+    ctxMainCanvas.fillStyle = bgValToColor(sessionState.bgColors[2]); 
+    ctxMainCanvas.fillRect(startX, startY + squareSize + padding, squareSize, squareSize);
+
+    // Bottom right square
+    ctxMainCanvas.fillStyle = bgValToColor(sessionState.bgColors[3]);
+    ctxMainCanvas.fillRect(startX + squareSize + padding, startY + squareSize + padding, squareSize, squareSize);
+}
 
 function DrawImg() {
 
@@ -333,14 +358,17 @@ function DrawImg() {
         if (isFocusEdge(i, j)) {
           alpha = 0.5 + Math.random() / 2;
         }
+        color = (3*bgColor+color)/4;
       }
       if (runTimeState.imgManipulationMode == IMG_MANIPULATION_SELECT_PIXELS) {
-        if (runTimeState.mouseOnCanvas) {
+
+
+        if (runTimeState.mouseOnCanvas && runTimeState.mouseMoving) {
 
           if (isFocusEdge(i, j)) {
             alpha = 0.5 + Math.random() / 2;
           }
-
+          color = (3*bgColor+color)/4;
         }
         else {
           color = bgColor;
@@ -369,7 +397,7 @@ function DrawImg() {
       ctxMainCanvas.fillRect(i * IMG_TO_CANVAS_SCLAE, j * IMG_TO_CANVAS_SCLAE, IMG_TO_CANVAS_SCLAE, IMG_TO_CANVAS_SCLAE)
     }
   }
-
+  DrawBgColors();
 }
 
 

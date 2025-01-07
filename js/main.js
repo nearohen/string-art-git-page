@@ -64,6 +64,8 @@ runTimeState = {
   mouseButton: -1,
   mouseX: -1,
   mouseY: -1,
+  mouseMoving: false,
+
   lastMouseX: -1,
   lastMouseY: -1,
   lastMouseR: -1,
@@ -77,9 +79,11 @@ runTimeState = {
     timeoutNewThumbnails: 0,
     intervalSprints: 0,
     animationInterval: 0,
+    mouseMoveInterval: 0,
 
   },
   linesArr: [],
+  lines:0,
   pixelWeightSent: [],
   pixelWeightColor: 0x7f,
   previousSnapshot: "",
@@ -89,11 +93,13 @@ runTimeState = {
   maxSnapshots: 20,
   snapshots: [],
   zoomMove: [],
+
 }
 let sessionState = {};
 function InitState() {
   sessionState = {
     version : STRINGS_STATE_VERSION,
+    lines:0,
     pointsW:86,
     pointsH: 106,
     pointsC: 256,
@@ -114,18 +120,14 @@ function InitState() {
     customPoints: [],
     snapshot: "",
     onCanvas: ON_CANVAS_STRINGS,
-    
     stateId: "",
     bgColors: [0x7f, 0x7f, 0x7f, 0x7f],
     bgStrength: 0.5,
     onBGColor: 0,
-
-
     recOffX: 0,
     recOffY: 0,
     recWidth: 1,
     recHeight: 1,
-
     sessionFileName: "",
     serverAddr: `${window.location.protocol}//${window.location.hostname}`,
     customPointSpacingPercent: 1,
@@ -158,6 +160,7 @@ function OnZoomMove() {
 }
 function OnSelect() {
   runTimeState.imgManipulationMode = IMG_MANIPULATION_SELECT_PIXELS;
+  GoToCanvas(ON_CANVAS_IMG);
 }
 
 function newSession() {
@@ -698,10 +701,6 @@ function LoadStateValuesToUI() {
   document.getElementById("pointsH").value = sessionState.pointsH;
   document.getElementById("pointsC").value = sessionState.pointsC;
 
-  document.getElementById("bgColor0").style.backgroundColor = bgValToColor(sessionState.bgColors[0]);
-  document.getElementById("bgColor1").style.backgroundColor = bgValToColor(sessionState.bgColors[1]);
-  document.getElementById("bgColor2").style.backgroundColor = bgValToColor(sessionState.bgColors[2]);
-  document.getElementById("bgColor3").style.backgroundColor = bgValToColor(sessionState.bgColors[3]);
   setSessionFileName() ;
   updateOptionalValue("contrastRangeText",sessionState.contrast);
   updateOptionalValue("contrastRange",sessionState.contrast);
@@ -920,53 +919,28 @@ function getCanvasCoordinates(canvas, event) {
 
 
 function canvasMouseMove(event) {
+  // Set mouse moving state
+  runTimeState.mouseMoving = true;
+ 
+  // Clear existing timer if any
+  if (runTimeState.intervals.mouseMoveInterval) {
+    clearTimeout(runTimeState.intervals.mouseMoveInterval);
+  }
+
+  // Set new timer to mark mouse as stopped after 100ms of no movement
+  runTimeState.intervals.mouseMoveInterval = setTimeout(() => {
+    runTimeState.mouseMoving = false;
+    runTimeState.intervals.mouseMoveInterval = 0;
+  }, 100);
+
+  // Existing mouse move code
   const scaled = getCanvasCoordinates(mainCanvas,event);
   runTimeState.mouseX = scaled.x
   runTimeState.mouseY = scaled.y
   let X = Math.floor(scaled.x / IMG_TO_CANVAS_SCLAE);
   let Y = Math.floor(scaled.y / IMG_TO_CANVAS_SCLAE);
   FillPixelInfo(X, Y)
-  let R = Math.floor(sessionState.radius / IMG_TO_CANVAS_SCLAE);
-  if (sessionState.onCanvas == ON_CANVAS_IMG || sessionState.onCanvas == ON_CANVAS_STRINGS || sessionState.onCanvas == ON_CANVAS_PIXEL_WEIGHT) {
-
-    if (runTimeState.mouseDown) {
-      //mouse is down
-    
-      if(runTimeState.imgManipulationMode != IMG_MANIPULATION_ZOOM_MOVE)  {
-        for (x = X - R; x < X + R; x++) {
-          for (y = Y - R; y < Y + R; y++) {
-            xD = (x - X) ** 2;
-            yD = (y - Y) ** 2;
-            if (xD + yD < R * R) {
-              if (runTimeState.imgManipulationMode == IMG_MANIPULATION_SELECT_PIXELS) {
-                can.focus.ctx.fillStyle = runTimeState.mouseButton == 0 ? 'rgb(255,255,255)' : 'rgb(0,0,0)';
-                can.focus.ctx.fillRect(xToOriginal(x), yToOriginal(y), pixelWidthToOriginal(), pixelWidthToOriginal())
-              }
-              else if (runTimeState.imgManipulationMode == IMG_MANIPULATION_PIXELS_WEIGHT) {
-                let color = 0x7f;
-                if (runTimeState.mouseButton == 0) {
-                  color = 255 - runTimeState.pixelWeightColor
-                }
-                can.weight.ctx.fillStyle = 'rgb(' + color + ',' + color + ',' + color + ')'
-                can.weight.ctx.fillRect(xToOriginal(x), yToOriginal(y), pixelWidthToOriginal(), pixelWidthToOriginal())
-              }
-  
-  
-            }
-  
-          }
-  
-        }
-
-      }
-      if(runTimeState.imgManipulationMode == IMG_MANIPULATION_ZOOM_MOVE){
-        MoveSource(event.offsetX,event.offsetY);
-      }
-
-      updateNewThumbnails();
-    }
-
-  }
+  processFocus(event);  
 
 
   DrawMouse(true)
@@ -1201,11 +1175,34 @@ function hideDivsForState(currentState) {
 }
 
 onStateChange((newState)=>{
-  let stateChanged = runTimeState.state!=newState ;
 
+
+
+  let stateChanged = runTimeState.state!=newState ;
   runTimeState.state = newState ;
   hideDivsForState(newState);
 
+  // Hide Make It button if no lines are set
+  const makeItButton = document.getElementById('makeIt');
+  if (makeItButton) {
+    if (!runTimeState.lines || runTimeState.lines == 0) {
+      makeItButton.style.display = 'none';
+    } else {
+      makeItButton.style.display = '';
+    }
+  }
+
+  if(!runTimeState.lines || runTimeState.lines == 0){
+    GoToCanvas(ON_CANVAS_IMG);
+  }
+
+
+  if(stateChanged && newState==States.ES){
+    GoToCanvas(ON_CANVAS_IMG);
+  }
+  if(stateChanged && newState==States.PL){
+    GoToCanvas(ON_CANVAS_STRINGS);
+  }
   // Disable Continue button if no saved session exists or no image was loaded
   const continueButton = document.getElementById('continue');
   let lss = isLocalStorageStateValid();
@@ -1562,8 +1559,51 @@ function addCustomPoint(offsetX,offsetY){
 }
 
 
+
+function processFocus(event){
+  const scaled = getCanvasCoordinates(mainCanvas,event);
+  let X = Math.floor(scaled.x / IMG_TO_CANVAS_SCLAE);
+  let Y = Math.floor(scaled.y / IMG_TO_CANVAS_SCLAE);
+  let R = Math.floor(sessionState.radius / IMG_TO_CANVAS_SCLAE);
+  if (sessionState.onCanvas == ON_CANVAS_IMG || sessionState.onCanvas == ON_CANVAS_STRINGS || sessionState.onCanvas == ON_CANVAS_PIXEL_WEIGHT) {
+
+    if (runTimeState.mouseDown) {
+      //mouse is down
+    
+      if(runTimeState.imgManipulationMode == IMG_MANIPULATION_SELECT_PIXELS)  {
+        for (x = X - R; x < X + R; x++) {
+          for (y = Y - R; y < Y + R; y++) {
+            xD = (x - X) ** 2;
+            yD = (y - Y) ** 2;
+            if (xD + yD < R * R) {
+              if (runTimeState.imgManipulationMode == IMG_MANIPULATION_SELECT_PIXELS) {
+                can.focus.ctx.fillStyle = runTimeState.mouseButton == 2 ? 'rgb(255,255,255)' : 'rgb(0,0,0)';
+                can.focus.ctx.fillRect(xToOriginal(x), yToOriginal(y), pixelWidthToOriginal(), pixelWidthToOriginal())
+              }
+             
+  
+            }
+  
+          }
+  
+        }
+
+      }
+      if(runTimeState.imgManipulationMode == IMG_MANIPULATION_ZOOM_MOVE){
+        MoveSource(event.offsetX,event.offsetY);
+      }
+
+      updateNewThumbnails();
+    }
+
+  }
+
+
+
+}
 function canvasMousedown(event) {
 
+  runTimeState.mouseDown = true
   if(event.offsetX && event.offsetY){
     runTimeState.mouseDownX = event.offsetX
     runTimeState.mouseDownY = event.offsetY
@@ -1572,7 +1612,7 @@ function canvasMousedown(event) {
     sessionState.recDownOffX = sessionState.recOffX;
     sessionState.recDownOffY = sessionState.recOffY;
   }
-
+  processFocus(event);
 }
 
 function fixRec() {
@@ -1620,6 +1660,8 @@ function MoveSource(offsetX,offsetY){
 
 function canvasMouseup(event) {
 
+  runTimeState.mouseDown = false;
+  runTimeState.mouseButton = event.button;
   if(event.offsetX && event.offsetY){
     runTimeState.mouseUpX = event.offsetX
     runTimeState.mouseUpY = event.offsetY
