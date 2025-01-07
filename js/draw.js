@@ -242,17 +242,16 @@ function DrawLinesMainCanvas() {
     return count;
   }
 }
-function updateServerSnapshot(snapshot) {
-  if (snapshot != undefined) {
-    sessionState.snapshotBuffer = snapshot;
-    document.getElementById('lines').value = DrawLinesThumbnailCanvas()
-  }
-}
+
 function DrawCanvas() {
   ///rotate = rotate+1
   // initLines()
 
   ;
+
+  if (sessionState.snapshotBuffer != undefined) {
+    DrawLinesThumbnailCanvas()
+  }
   if(sessionState.onCanvas != ON_CANVAS_INSTRUCTION){
     clearMainCanvas();
   }
@@ -328,32 +327,39 @@ function DrawBgColors(){
     ctxMainCanvas.fillRect(startX + squareSize + padding, startY + squareSize + padding, squareSize, squareSize);
 }
 
+function GetCalculatedColor(i,j){
+  let largestDistance = distance(sessionState.sourceWidth, sessionState.sourceHeight)
+  let color = runTimeState.thumbnailMainBuf[thPos(i, j)];
+  color = GetColor(color);
+  let bgColor = color;
+  if (runTimeState.thumbnailFocusBuf[thPos(i, j)] < 0x7f) {
+
+    dTL = largestDistance - distance(i, j)
+    dTR = largestDistance - distance(sessionState.sourceWidth - i, j)
+    dBL = largestDistance - distance(i, sessionState.sourceHeight - j)
+    dBR = largestDistance - distance(sessionState.sourceWidth - i, sessionState.sourceHeight - j)
+    bgColor = dTL * sessionState.bgColors[0] + dTR * sessionState.bgColors[1] + dBL * sessionState.bgColors[2] + dBR * sessionState.bgColors[3]
+    bgColor = bgColor / (dTL + dTR + dBL + dBR)
+  }
+
+  return {color,bgColor};
+}
+
+
 function DrawImg() {
 
   if (runTimeState.thumbnailMainBuf == undefined) {
     return;
   }
 
-  largestDistance = distance(sessionState.sourceWidth, sessionState.sourceHeight)
+  
 
   for (var i = 0; i < sessionState.sourceWidth; i++) {
     for (var j = 0; j < sessionState.sourceHeight; j++) {
       a = runTimeState.thumbnailMainBuf[thPos(i, j)];
-      let color = GetColor(a)
-      let bgColor = color;
-      alpha = 1;
-
-      if (runTimeState.thumbnailFocusBuf[thPos(i, j)] < 0x7f) {
-
-        dTL = largestDistance - distance(i, j)
-        dTR = largestDistance - distance(sessionState.sourceWidth - i, j)
-        dBL = largestDistance - distance(i, sessionState.sourceHeight - j)
-        dBR = largestDistance - distance(sessionState.sourceWidth - i, sessionState.sourceHeight - j)
-        bgColor = dTL * sessionState.bgColors[0] + dTR * sessionState.bgColors[1] + dBL * sessionState.bgColors[2] + dBR * sessionState.bgColors[3]
-        bgColor = bgColor / (dTL + dTR + dBL + dBR)
-      }
-
-
+      let alpha = 1;
+      let {color,bgColor} = GetCalculatedColor(i,j);
+     
       if (runTimeState.imgManipulationMode == IMG_MANIPULATION_ZOOM_MOVE) {
         if (isFocusEdge(i, j)) {
           alpha = 0.5 + Math.random() / 2;

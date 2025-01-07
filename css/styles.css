@@ -787,6 +787,27 @@ button.continue-button:disabled:hover {
 	}
 }
 
+.canvas-container {
+	display: flex;
+	gap: 20px;
+	align-items: flex-start;
+}
+
+#thumbnails {
+	visibility: visible;
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	padding: 10px;
+	background: #f5f5f5;
+	border-radius: 4px;
+}
+
+#thumbnails canvas {
+	max-width: 200px;
+	height: auto;
+}
+
 
 
 

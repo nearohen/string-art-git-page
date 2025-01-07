@@ -1049,6 +1049,18 @@ function updateThumbnail(name, defaultColor, source, scale, binray) {
   updateRaw(fullName, binray);
 
 }
+function updateThumbnailSource(){
+  fillCanvas("thumbnailSource", "#FFFFFF");
+  can.thumbnailSource.canvas.width = sessionState.sourceWidth;
+  can.thumbnailSource.canvas.height = sessionState.sourceHeight;
+  for (var i = 0; i < sessionState.sourceWidth; i++) {
+    for (var j = 0; j < sessionState.sourceHeight; j++) {
+      let {color,bgColor} = GetCalculatedColor(i,j);
+      can.thumbnailSource.ctx.fillStyle = 'rgb(' + bgColor + ',' + bgColor + ',' + bgColor + ')';
+      can.thumbnailSource.ctx.fillRect(i, j, 1, 1)
+    }
+  }
+}
 
 function updateThumbnails() {
   updateThumbnail("Main", "#FFFFFF", originalImg, IMG_TO_CANVAS_SCLAE, false);
@@ -1056,6 +1068,7 @@ function updateThumbnails() {
   updateThumbnail("Focus", "#FFFFFF", can.focus.canvas, 1, true);
   UpdatThumbnailMainRaw();
   UpdatThumbnailFocusRaw();
+  updateThumbnailSource();
   if (serverConnected()) {
     updateSessionParams();
   }
@@ -1104,7 +1117,7 @@ function initRec() {
 // Separate arrays for handling different behaviors
 const divsToHide = ["signIn", "chooseProject", "createSession","container","editSession", 
   "original","controls","lockNkey","loadImgDiv","advanced","playStop","animation",
-  "improvementsInfo","toggleControls","editPointsDiv"] ;
+  "improvementsInfo","toggleControls","editPointsDiv","thumbnails"] ;
 
 const divsToInvisible = [ "sessionCreated","stop"];
 const divsToDisable = [ "signOut","home"];
@@ -1122,9 +1135,9 @@ let allowedDivs = {
   [States.NS] : ["signIn","animation","container"],
   [States.CP] : ["chooseProject","signOut"],
   [States.ES] : ["editSession","signOut","original","home","loadImgDiv","container","editPointsDiv"],
-  [States.SC] : ["sessionCreated","signOut","container","improvementsInfo","original","playStop","controls","stop","home","toggleControls"],
-  [States.PL] : ["sessionCreated","playStop","container","improvementsInfo","original","controls","toggleControls"],
-  [States.ST] : ["sessionCreated","playStop","stop","signOut","container","improvementsInfo","original","controls","home","toggleControls"],
+  [States.SC] : ["sessionCreated","signOut","container","improvementsInfo","original","playStop","controls","stop","home","toggleControls","thumbnails"],
+  [States.PL] : ["sessionCreated","playStop","container","improvementsInfo","original","controls","toggleControls","thumbnails"],
+  [States.ST] : ["sessionCreated","playStop","stop","signOut","container","improvementsInfo","original","controls","home","toggleControls","thumbnails"],
   [States.IN] : ["signOut","container","home","toggleControls"]
 }
 
@@ -1190,11 +1203,14 @@ onStateChange((newState)=>{
     } else {
       makeItButton.style.display = '';
     }
-  }
+  } 
 
-  if(!runTimeState.lines || runTimeState.lines == 0){
-    GoToCanvas(ON_CANVAS_IMG);
+  if( runTimeState.state!=States.NS){
+    if(!runTimeState.lines || runTimeState.lines == 0){
+      GoToCanvas(ON_CANVAS_IMG);
+    }
   }
+  
 
 
   if(stateChanged && newState==States.ES){
@@ -1561,6 +1577,13 @@ function addCustomPoint(offsetX,offsetY){
 
 
 function processFocus(event){
+  if(!runTimeState.mouseDown){
+    return;
+  }
+  let mb = runTimeState.mouseButton;
+  if(mb==-1){
+    mb = event.button;
+  }
   const scaled = getCanvasCoordinates(mainCanvas,event);
   let X = Math.floor(scaled.x / IMG_TO_CANVAS_SCLAE);
   let Y = Math.floor(scaled.y / IMG_TO_CANVAS_SCLAE);
@@ -1570,14 +1593,14 @@ function processFocus(event){
     if (runTimeState.mouseDown) {
       //mouse is down
     
-      if(runTimeState.imgManipulationMode == IMG_MANIPULATION_SELECT_PIXELS)  {
+      if(runTimeState.imgManipulationMode == IMG_MANIPULATION_SELECT_PIXELS &&  mb!=-1)  {
         for (x = X - R; x < X + R; x++) {
           for (y = Y - R; y < Y + R; y++) {
             xD = (x - X) ** 2;
             yD = (y - Y) ** 2;
             if (xD + yD < R * R) {
               if (runTimeState.imgManipulationMode == IMG_MANIPULATION_SELECT_PIXELS) {
-                can.focus.ctx.fillStyle = runTimeState.mouseButton == 2 ? 'rgb(255,255,255)' : 'rgb(0,0,0)';
+                can.focus.ctx.fillStyle = mb == 2 ? 'rgb(255,255,255)' : 'rgb(0,0,0)';
                 can.focus.ctx.fillRect(xToOriginal(x), yToOriginal(y), pixelWidthToOriginal(), pixelWidthToOriginal())
               }
              
@@ -1727,11 +1750,11 @@ function addCanvasElement(name, create) {
 
 function loader() {
   addCanvasElement("animation", true);
-  addCanvasElement("thumbnailMain", true);
+  addCanvasElement("thumbnailMain", false);
   addCanvasElement("thumbnailStrings", false);
   addCanvasElement("thumbnailWeight", false);
   addCanvasElement("thumbnailFocus", false);
-
+  addCanvasElement("thumbnailSource", false);
   // Check if we're on localhost and show secret controls if we are
   if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
     const secretControls = document.getElementById('secretControls');
@@ -1915,7 +1938,7 @@ function updateContrast(val, bDone) {
   document.getElementById("contrastRangeText").value = val;
   sessionState.contrast = val;
   PostWorkerMessage({cmd : "updateParam" ,args : {type: "double",name : "contrast", val : sessionState.contrast }});
-  
+  updateThumbnailSource();
 
 }
 
@@ -1924,7 +1947,7 @@ function updateBrightness(val, bDone) {
   document.getElementById("brightnessRangeText").value = val;
   sessionState.brightness = val;
   PostWorkerMessage({cmd : "updateParam" ,args : {type: "double",name : "brightness", val : sessionState.brightness }});
-  
+  updateThumbnailSource();
 
 }
 
