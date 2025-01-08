@@ -175,6 +175,7 @@ function OnSelect() {
 
 function newSession() {
   InitState();
+  LoadStateValuesToUI();
   let user  = runTimeState.user;
   initRunTimeState();
   runTimeState.user = user;
@@ -711,6 +712,13 @@ function LoadStateValuesToUI() {
   document.getElementById("pointsC").value = sessionState.pointsC;
 
   setSessionFileName() ;
+  if(!sessionState.sessionFileName){
+    document.getElementById("triggerFileInput").textContent = "Upload Image" ;
+  }
+
+  
+
+  
   updateOptionalValue("contrastRangeText",sessionState.contrast);
   updateOptionalValue("contrastRange",sessionState.contrast);
 
@@ -1366,6 +1374,9 @@ function handleImageFileSelect(evt) {
     setSessionFileName();
       
     GoToCanvas(ON_CANVAS_STRINGS);
+    
+    // Clear the file input value so the same file can be selected again
+    document.getElementById("loadImgFile").value = '';
   }
   reader.readAsDataURL(file);
 
