@@ -204,6 +204,7 @@ input[type="range"] {
 	gap: var(--spacing);
 	margin-bottom: var(--spacing);
 	min-height: 120px;
+	flex: 2;
 }
 
 #loadImgDiv button,
@@ -370,6 +371,14 @@ input[id^="bgColor"] {
 
 #shapeControls {
 	margin: var(--spacing) 0;
+	flex: 1;
+}
+
+#shapeControls h3 {
+	margin-bottom: 10px;
+	color: var(--text-color);
+	font-size: 16px;
+	font-weight: 500;
 }
 
 .shape-buttons {
@@ -841,6 +850,52 @@ button.continue-button:disabled:hover {
 /* Special styling for CLEAR button - always enabled */
 .edit-point-mode[data-mode="CLEAR"] i {
 	color: #000;
+}
+
+.controls-section {
+	display: flex;
+	gap: var(--spacing);
+	align-items: flex-start;
+	margin-bottom: var(--spacing);
+	width: 100%;
+	max-width: 1200px; /* Add max-width to prevent too wide expansion */
+}
+
+#shapeControls {
+	flex: 0 0 30%; /* Don't grow, don't shrink, fixed width of 30% */
+	min-width: 200px;
+	max-width: 300px;
+}
+
+#loadImgDiv {
+	flex: 0 0 60%; /* Don't grow, don't shrink, fixed width of 60% */
+	min-width: 300px;
+	max-width: 600px;
+	margin-bottom: 0;
+}
+
+/* Ensure proper spacing and alignment of headings */
+#loadImgDiv h3,
+#shapeControls h3 {
+	margin-bottom: 10px;
+	font-size: 16px;
+	font-weight: bold;
+	color: #333;
+	margin-top: 0;
+}
+
+/* Responsive adjustments for mobile */
+@media screen and (max-width: 768px) {
+	.controls-section {
+		flex-direction: column;
+	}
+
+	#shapeControls,
+	#loadImgDiv {
+		flex: 0 0 100%;
+		max-width: 100%;
+		min-width: 100%;
+	}
 }
 
 

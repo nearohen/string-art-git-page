@@ -76,14 +76,16 @@
   </div>
 
 
- <div id="loadImgDiv">
-  <input type="file" id="loadImgFile" style="display: none;"/>
-  <canvas id="originalTiny"></canvas>
-  <button id="triggerFileInput">Upload Image</button>
-</div>
+
 
   <div id=editSession>
+    <div id="loadImgDiv">
+      <input type="file" id="loadImgFile" style="display: none;"/>
+      <canvas id="originalTiny"></canvas>
+      <button id="triggerFileInput">Upload Image</button>
+    </div>
     <div id="shapeControls">
+      <h3>Select Shape</h3>
       <div class="shape-buttons">
 
         <button type="button" class="icon-button shape-button" onclick="selectShape('rectangle')" id="rectangleButton">

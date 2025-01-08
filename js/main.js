@@ -65,46 +65,50 @@ const CustomPointEditTypes = {
   CLEAR: 'CLEAR'
 };
 
-runTimeState = {
-  state: States.NS ,
-  debugMode: false,
-  mouseDown: false,
-  mouseButton: -1,
-  mouseX: -1,
-  mouseY: -1,
-  mouseMoving: false,
+let runTimeState = {};
+function initRunTimeState(){    
+  runTimeState = {
+    state: States.NS ,
+    debugMode: false,
+    mouseDown: false,
+    mouseButton: -1,
+    mouseX: -1,
+    mouseY: -1,
+    mouseMoving: false,
 
-  lastMouseX: -1,
-  lastMouseY: -1,
-  lastMouseR: -1,
-  mouseOnCanvas: false,
-  imgManipulationMode: IMG_MANIPULATION_ZOOM_MOVE,
-  intervals: {
-    intervalUpdateBackend: 0,
-    intervalStreamPictures: 0,
-    intervalInstruction: 0,
-    timeoutNewServerImg: 0,
-    timeoutNewThumbnails: 0,
-    intervalSprints: 0,
-    animationInterval: 0,
-    mouseMoveInterval: 0,
+    lastMouseX: -1,
+    lastMouseY: -1,
+    lastMouseR: -1,
+    mouseOnCanvas: false,
+    imgManipulationMode: IMG_MANIPULATION_ZOOM_MOVE,
+    intervals: {
+      intervalUpdateBackend: 0,
+      intervalStreamPictures: 0,
+      intervalInstruction: 0,
+      timeoutNewServerImg: 0,
+      timeoutNewThumbnails: 0,
+      intervalSprints: 0,
+      animationInterval: 0,
+      mouseMoveInterval: 0,
 
-  },
-  linesArr: [],
-  lines:0,
-  pixelWeightSent: [],
-  pixelWeightColor: 0x7f,
-  previousSnapshot: "",
-  rate: 1000,
-  animationOn: false,
-  updateCanvasRate: 50,
-  maxSnapshots: 20,
-  snapshots: [],
-  zoomMove: [],
-  
-  onEditCustomPoints: false,
-  customPointEditType: CustomPointEditTypes.ADD,  // Default to ADD mode
+    },
+    linesArr: [],
+    lines:0,
+    pixelWeightSent: [],
+    pixelWeightColor: 0x7f,
+    previousSnapshot: "",
+    rate: 1000,
+    animationOn: false,
+    updateCanvasRate: 50,
+    maxSnapshots: 20,
+    snapshots: [],
+    zoomMove: [],
+    
+    onEditCustomPoints: false,
+    customPointEditType: CustomPointEditTypes.ADD,  // Default to ADD mode
+  }
 }
+initRunTimeState();
 let sessionState = {};
 function InitState() {
   sessionState = {
@@ -143,11 +147,6 @@ function InitState() {
     customPointSpacingPercent: 1,
   }
 
-  if(runTimeState.debugMode) {
-    sessionState.originalImgSrc = "temp.jpg";  // Set the temporary image
-  } else {
-    sessionState.originalImgSrc = "";  // Keep empty for debug mode
-  }
   initRelevantPixels();
 }
 InitState();
@@ -175,6 +174,9 @@ function OnSelect() {
 
 function newSession() {
   InitState();
+  let user  = runTimeState.user;
+  initRunTimeState();
+  runTimeState.user = user;
   emitStateChange(States.ES);
 }
 
@@ -597,11 +599,6 @@ function handlePointsChange(initImgRec) {
     originalImg.src = sessionState.originalImgSrc;//to trigger onLoad
   }
   else{
-    let esArray = allowedDivs[States.ES];
-    let editSessionIndex = esArray.indexOf("editSession");
-    if (editSessionIndex > -1) {
-      esArray.splice(editSessionIndex, 1);
-    }
     initOriginalSmall();
   }
   loadSavedToCanvas("weight", sessionState.weightImg);
@@ -1107,6 +1104,10 @@ function handleNewServerImg() {
   can.original.ctx.stroke();
   can.original.ctx.restore();
   initOriginalSmall();
+  if(runTimeState.state==States.ES && imageLoaded()){
+    document.getElementById('startSession').style.display = '';
+    document.getElementById('shapeControls').style.display = '';
+  }
 }
 
 function fillCanvas(name, color) {
@@ -1271,6 +1272,13 @@ onStateChange((newState)=>{
     else if(sessionState.pointsType=="P"){
       selectShape("polygon");
     }
+
+    if(!imageLoaded()){
+      document.getElementById('startSession').style.display = 'none';
+      document.getElementById('shapeControls').style.display = 'none';
+    }
+
+
   }
 })
 
