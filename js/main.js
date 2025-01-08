@@ -106,6 +106,7 @@ function initRunTimeState(){
     
     onEditCustomPoints: false,
     customPointEditType: CustomPointEditTypes.ADD,  // Default to ADD mode
+    cutomPointChosenIndex: -1,
   }
 }
 initRunTimeState();
@@ -491,8 +492,11 @@ function onPointsCustom(){
 
 function customPointsToDots(){
 
-
-  if(sessionState.customPoints.length<4){
+  
+  if(sessionState.customPoints.length<2){
+    if(sessionState.customPoints.length==0){
+      sessionState.dots  = [] ;
+    }
     return;
   }
   // Create a closed polygon by adding the first point at the end if needed
@@ -558,7 +562,7 @@ function applyCustomPoints() {
 
   customPointsToDots();
   runTimeState.onEditCustomPoints = false;
-  handlePointsChange(true);
+  handlePointsChange(false);
   
 }
 
@@ -946,8 +950,13 @@ function canvasMouseMove(event) {
   let Y = Math.floor(scaled.y / IMG_TO_CANVAS_SCLAE);
   FillPixelInfo(X, Y)
   processFocus(event);  
-
-
+  if(runTimeState.onEditCustomPoints && runTimeState.cutomPointChosenIndex!=-1 && runTimeState.mouseDown) {
+    let {x, y} = getCanvasCoordinates(mainCanvas, event);
+    x = x / mainCanvas.width;
+    y = y / mainCanvas.height;
+    sessionState.customPoints[runTimeState.cutomPointChosenIndex][0] = x;
+    sessionState.customPoints[runTimeState.cutomPointChosenIndex][1] = y;
+  }
   DrawMouse(true)
 }
 
@@ -1290,7 +1299,7 @@ function main() {
   fileInput.addEventListener('input', handleImageFileSelect, false);
   const button = document.getElementById("triggerFileInput");
   button.addEventListener("click", () => {
-    fileInput.click(); // Trigger the hidden file input
+    fileInput.click(); // Trigg
   });
 
   document.getElementById('loadSessionFile').addEventListener('input', LoadSession, false);
@@ -1649,7 +1658,11 @@ function processFocus(event){
         }
 
       }
-      if(runTimeState.imgManipulationMode == IMG_MANIPULATION_ZOOM_MOVE){
+
+
+      let onCustomMove =  (runTimeState.onEditCustomPoints && runTimeState.customPointEditType === CustomPointEditTypes.MOVE) ;
+    
+      if(!onCustomMove && runTimeState.imgManipulationMode == IMG_MANIPULATION_ZOOM_MOVE){
         MoveSource(event.offsetX,event.offsetY);
       }
 
@@ -1661,6 +1674,22 @@ function processFocus(event){
 
 
 }
+
+function getNearestCustomPoint(x, y) {   
+  x = x / mainCanvas.width;
+  y = y / mainCanvas.height;
+  let minDistance = Infinity; 
+  let minIndex = -1;
+  for(let i = 0; i < sessionState.customPoints.length; i++) {
+    const distance = Math.hypot(sessionState.customPoints[i][0] - x, sessionState.customPoints[i][1] - y);
+    if(distance < minDistance) {
+      minDistance = distance;
+      minIndex = i;
+    }
+  }
+  return minIndex;
+}
+
 function canvasMousedown(event) {
 
   runTimeState.mouseDown = true
@@ -1676,11 +1705,18 @@ function canvasMousedown(event) {
     switch(runTimeState.customPointEditType) {
       case CustomPointEditTypes.ADD:
         addCustomPoint(x, y);
+        handlePointsChange(false);
         break;
-
+      case CustomPointEditTypes.MOVE:
+        runTimeState.cutomPointChosenIndex = getNearestCustomPoint(x, y);
+        break;
+      case CustomPointEditTypes.DELETE:
+        runTimeState.cutomPointChosenIndex = getNearestCustomPoint(x, y);
+        sessionState.customPoints.splice(runTimeState.cutomPointChosenIndex, 1);
+        break;
     }
     
-    handlePointsChange(true);
+    
   } else {
     processFocus(event);
   }
@@ -1734,17 +1770,18 @@ function canvasMouseup(event) {
 
   runTimeState.mouseDown = false;
   runTimeState.mouseButton = event.button;
+  runTimeState.cutomPointChosenIndex = -1;
   if(event.offsetX && event.offsetY){
     runTimeState.mouseUpX = event.offsetX
     runTimeState.mouseUpY = event.offsetY
 
 
-
-
+    let onCustomMove =  (runTimeState.onEditCustomPoints && runTimeState.customPointEditType === CustomPointEditTypes.MOVE) ;
+    
     if (runTimeState.imgManipulationMode == IMG_MANIPULATION_PIXELS_WEIGHT) {
       UpdateNewServerImg();
     }
-    else if (runTimeState.imgManipulationMode == IMG_MANIPULATION_ZOOM_MOVE) {
+    else if (!onCustomMove && runTimeState.imgManipulationMode == IMG_MANIPULATION_ZOOM_MOVE) {
     
       MoveSource(runTimeState.mouseUpX,runTimeState.mouseUpY);
   
