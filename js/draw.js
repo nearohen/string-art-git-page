@@ -260,6 +260,7 @@ function DrawCanvas() {
     
     DrawImg();
     if(runTimeState.onEditCustomPoints){
+      customPointsToDots();
       drawPoints();
     }
     runTimeState.lastMouseImage = null

@@ -1038,6 +1038,14 @@ function UpdateStatus() {
 
 function GoToCanvas(type) {
   sessionState.onCanvas = type;
+  const button = document.querySelector('#toggleControls .icon-button');
+  const icon = button.querySelector('.material-icons');
+  if(type==ON_CANVAS_IMG){
+      icon.textContent = 'timeline';
+  }
+  if(type==ON_CANVAS_STRINGS){
+    icon.textContent = 'image';
+  }
 }
 
 function updateThumbnail(name, defaultColor, source, scale, binray) {
@@ -1187,6 +1195,10 @@ function hideDivsForState(currentState) {
   runTimeState.debugMode ? processDivs(divsToDisableDebug, disableAction) : processDivs(divsToDisable, disableAction);
 }
 
+function noLines(){
+  return !runTimeState.lines || runTimeState.lines == 0;
+}
+
 onStateChange((newState)=>{
 
 
@@ -1198,7 +1210,7 @@ onStateChange((newState)=>{
   // Hide Make It button if no lines are set
   const makeItButton = document.getElementById('makeIt');
   if (makeItButton) {
-    if (!runTimeState.lines || runTimeState.lines == 0) {
+    if (noLines()) {
       makeItButton.style.display = 'none';
     } else {
       makeItButton.style.display = '';
@@ -1206,16 +1218,19 @@ onStateChange((newState)=>{
   } 
 
   if( runTimeState.state!=States.NS){
-    if(!runTimeState.lines || runTimeState.lines == 0){
-      GoToCanvas(ON_CANVAS_IMG);
+    if(noLines() && sessionState.pointsType!="P"){
+
+        GoToCanvas(ON_CANVAS_IMG);
+    
+    }
+    else{
+      GoToCanvas(ON_CANVAS_STRINGS);
     }
   }
   
 
 
-  if(stateChanged && newState==States.ES){
-    GoToCanvas(ON_CANVAS_IMG);
-  }
+
   if(stateChanged && newState==States.PL){
     GoToCanvas(ON_CANVAS_STRINGS);
   }
@@ -1233,6 +1248,8 @@ onStateChange((newState)=>{
 
 
   if(stateChanged && newState==States.ES){
+    OnZoomMove();
+    GoToCanvas(ON_CANVAS_IMG);
     if(sessionState.pointsType=="C"){
       selectShape("circle");
     }
@@ -1635,7 +1652,18 @@ function canvasMousedown(event) {
     sessionState.recDownOffX = sessionState.recOffX;
     sessionState.recDownOffY = sessionState.recOffY;
   }
-  processFocus(event);
+  if(runTimeState.onEditCustomPoints){
+    
+    const {x,y} = getCanvasCoordinates(mainCanvas,event);
+    addCustomPoint(x,y);
+    handlePointsChange(true);
+    
+
+  }
+  else{
+    processFocus(event);
+  }
+  
 }
 
 function fixRec() {
@@ -1689,15 +1717,6 @@ function canvasMouseup(event) {
     runTimeState.mouseUpX = event.offsetX
     runTimeState.mouseUpY = event.offsetY
 
-    if(runTimeState.onEditCustomPoints){
-      if(runTimeState.mouseUpX==runTimeState.mouseDownX && runTimeState.mouseUpY==runTimeState.mouseDownY){
-
-        // Find optimal insertion point that minimizes total distance between adjacent points
-        addCustomPoint(runTimeState.mouseUpX,runTimeState.mouseUpY);
-        handlePointsChange(true);
-      }
-
-    }
 
 
 
