@@ -141,21 +141,22 @@
       <input type="text" id="lines" value="0" size="2">string used</input>
       <input type="text" id="improvements" value="0" size="2">improvements</input>
       </div>
-      <div id="editPointsDiv" style="display: none;" class="shape-input polygon-input">
-        <div class="edit-points-buttons">
-          <button type="button" class="icon-button" onclick="editCustomPoints()">
-            <span class="material-icons">add</span>
+      <div id="editPointsDiv" style="display: none;">
+        <div class="edit-points-controls">
+          <button class="edit-point-mode active" data-mode="ADD" onclick="setCustomPointEditType(CustomPointEditTypes.ADD)">
+            <i class="material-icons">add_circle</i>
           </button>
-          <button type="button" class="icon-button" onclick="clearPoints()">
-            <span class="material-icons">delete_sweep</span>
+          <button class="edit-point-mode" data-mode="MOVE" onclick="setCustomPointEditType(CustomPointEditTypes.MOVE)">
+            <i class="material-icons">open_with</i>
           </button>
-          <button type="button" class="icon-button" onclick="movePoint()">
-            <span class="material-icons">open_with</span>
+          <button class="edit-point-mode" data-mode="DELETE" onclick="setCustomPointEditType(CustomPointEditTypes.DELETE)">
+            <i class="material-icons">remove_circle</i>
           </button>
-          <button type="button" class="icon-button" onclick="deletePoint()">
-            <span class="material-icons">delete</span>
+          <button class="edit-point-mode" data-mode="CLEAR" onclick="clearCustomPoints()">
+            <i class="material-icons">delete_sweep</i>
           </button>
         </div>
+        <!-- ... rest of edit points controls ... -->
       </div>
   
       <div id="toggleControls">

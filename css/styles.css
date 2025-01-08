@@ -808,6 +808,41 @@ button.continue-button:disabled:hover {
 	height: auto;
 }
 
+.edit-point-mode {
+	padding: 8px;
+	border: 1px solid #ccc;
+	border-radius: 4px;
+	background: white;
+	cursor: pointer;
+}
+
+.edit-point-mode i {
+	color: #000; /* Default black color for icons */
+}
+
+/* Gray out non-active buttons when any mode is active */
+.edit-points-controls.has-active .edit-point-mode:not(.active):not([data-mode="CLEAR"]) i {
+	color: #999;
+}
+
+.edit-point-mode:hover {
+	background: #f0f0f0;
+}
+
+.edit-point-mode.active {
+	background: #007bff; /* Bootstrap primary blue */
+	border-color: #0056b3;
+}
+
+.edit-point-mode.active i {
+	color: white; /* White icon on blue background */
+}
+
+/* Special styling for CLEAR button - always enabled */
+.edit-point-mode[data-mode="CLEAR"] i {
+	color: #000;
+}
+
 
 
 

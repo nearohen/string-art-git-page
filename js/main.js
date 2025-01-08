@@ -57,6 +57,14 @@ const States = {
   IN:"INSTRUCTIONS",
 };
 
+// Add enum for edit types at the top with other constants
+const CustomPointEditTypes = {
+  ADD: 'ADD',
+  MOVE: 'MOVE',
+  DELETE: 'DELETE',
+  CLEAR: 'CLEAR'
+};
+
 runTimeState = {
   state: States.NS ,
   debugMode: false,
@@ -93,7 +101,9 @@ runTimeState = {
   maxSnapshots: 20,
   snapshots: [],
   zoomMove: [],
-
+  
+  onEditCustomPoints: false,
+  customPointEditType: CustomPointEditTypes.ADD,  // Default to ADD mode
 }
 let sessionState = {};
 function InitState() {
@@ -459,15 +469,17 @@ function updateNewThumbnails() {
   }, 100);
 }
 
+
+
 function editCustomPoints(){
   sessionState.dots = [];
   emitStateChange(States.ES);
 
   runTimeState.onEditCustomPoints = true;
+  runTimeState.customPointEditType = CustomPointEditTypes.ADD;  // Set initial mode
   
-  runTimeState.onEditCustomPointsFirstTime = sessionState.customPoints.length<3;
-  showEditPoints(); // Show the edit points div when entering edit mode
-  
+  runTimeState.onEditCustomPointsFirstTime = sessionState.customPoints.length < 3;
+  showEditPoints();
 }
 function onPointsCustom(){
 
@@ -548,11 +560,7 @@ function applyCustomPoints() {
   
 }
 
-function clearPoints(){
-  sessionState.customPoints = [];
-  handlePointsChange(true);
 
-}
 
 function handlePointsChange(initImgRec) {
   fixRec();
@@ -1228,7 +1236,11 @@ onStateChange((newState)=>{
     }
   }
   
-
+  if( runTimeState.state==States.ES && sessionState.pointsType=="P"){
+    showEditPoints(); 
+  } else{
+    hideEditPoints();
+  }
 
 
   if(stateChanged && newState==States.PL){
@@ -1647,20 +1659,21 @@ function canvasMousedown(event) {
   if(event.offsetX && event.offsetY){
     runTimeState.mouseDownX = event.offsetX
     runTimeState.mouseDownY = event.offsetY
-    const diffX = event.offsetX - runTimeState.mouseDownX;
-    const diffY = event.offsetY - runTimeState.mouseDownY;
     sessionState.recDownOffX = sessionState.recOffX;
     sessionState.recDownOffY = sessionState.recOffY;
   }
-  if(runTimeState.onEditCustomPoints){
+  if(runTimeState.onEditCustomPoints) {
+    const {x, y} = getCanvasCoordinates(mainCanvas, event);
     
-    const {x,y} = getCanvasCoordinates(mainCanvas,event);
-    addCustomPoint(x,y);
-    handlePointsChange(true);
-    
+    switch(runTimeState.customPointEditType) {
+      case CustomPointEditTypes.ADD:
+        addCustomPoint(x, y);
+        break;
 
-  }
-  else{
+    }
+    
+    handlePointsChange(true);
+  } else {
     processFocus(event);
   }
   
@@ -2230,3 +2243,44 @@ function makeIt() {
     });
 }
 window.makeIt = makeIt;
+
+// Update UI functions to handle edit type selection
+function setCustomPointEditType(type) {
+    if (Object.values(CustomPointEditTypes).includes(type)) {
+        runTimeState.customPointEditType = type;
+        
+        // Get the container and all edit buttons
+        const container = document.querySelector('.edit-points-controls');
+        const editButtons = document.querySelectorAll('.edit-point-mode');
+        
+        // Update UI to show active mode
+        editButtons.forEach(btn => {
+            // Skip the CLEAR button
+            if (btn.getAttribute('data-mode') !== 'CLEAR') {
+                btn.classList.remove('active');
+                if (btn.getAttribute('data-mode') === type) {
+                    btn.classList.add('active');
+                }
+            }
+        });
+
+        // Add has-active class to container when a mode is selected
+        container.classList.add('has-active');
+    }
+}
+
+// Placeholder functions for new edit types
+function moveCustomPoint(x, y) {
+  // TODO: Implement point moving logic
+  console.log("moveCustomPoint", x, y);
+}
+
+function deleteCustomPoint(x, y) {
+  // TODO: Implement point deletion logic 
+  console.log("deleteCustomPoint", x, y);
+}
+function clearCustomPoints(){
+  sessionState.customPoints = [];
+  handlePointsChange(true);
+
+}
