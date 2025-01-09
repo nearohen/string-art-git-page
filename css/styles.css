@@ -194,15 +194,35 @@ input[type="range"] {
 	border-radius: var(--border-radius);
 	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 	margin: var(--spacing) 0;
-	max-width: 200px;
+	max-width: 100px;
 }
 
 /* Load Image Section */
 
 
-#loadImgDiv button,
-#loadImgDiv input {
-	margin-bottom: 10px;
+#loadImgDiv {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 8px;
+	padding: 12px;
+	background-color: white;
+	border-radius: var(--border-radius);
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+#loadImgDiv canvas {
+	width: 150px;
+	height: 150px;
+	object-fit: contain;
+	border: 1px solid #ccc;
+	border-radius: var(--border-radius);
+}
+
+#loadImgDiv button {
+	width: 150px;
+	padding: 8px;
+	margin: 0;
 }
 
 /* Advanced Controls */
@@ -354,8 +374,8 @@ input[id^="bgColor"] {
 }
 
 #originalTiny {
-	width: 100px;
-	height: 100px;
+	width: 50px;
+	height: 50px;
 	object-fit: contain;
 	border: 1px solid #ccc;
 	border-radius: var(--border-radius);
@@ -366,16 +386,18 @@ input[id^="bgColor"] {
 
 #shapeControls h3 {
 	margin-left: auto; /* This will push #shapeControls to the right, aligning it to the left edge of #loadImgDiv */
-	margin-bottom: 10px;
+	margin-bottom: 8px;
 	color: var(--text-color);
-	font-size: 16px;
+	font-size: 14px;
 	font-weight: 500;
 }
 
 .shape-buttons {
 	display: flex;
-	align-items: center;
-	gap: 10px;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 8px;
+	width: 100%;
 }
 
 .shape-button {
@@ -445,19 +467,15 @@ input[id^="bgColor"] {
 
 .polygon-input {
 	display: flex;
-	align-items: center;
-	gap: 8px;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 4px;
+	width: 150px;
 }
 
-.polygon-input input[type="range"] {
-	width: 100px;
-	margin: 0;
-}
-
+.polygon-input input[type="range"],
 .polygon-input input[type="text"] {
-	width: 40px;
-	text-align: center;
-	padding: 4px;
+	width: 100%;
 }
 
 #topToolbar {
@@ -854,12 +872,63 @@ button.continue-button:disabled:hover {
 }
 
 #shapeControls {
-	flex: 0 0 30%; /* Don't grow, don't shrink, fixed width of 30% */
-	min-width: 200px;
-	max-width: 300px;
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 8px;
+	padding: 12px;
+	background-color: white;
+	border-radius: var(--border-radius);
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
+.shape-buttons {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 8px;
+	width: 100%;
+}
 
+.shape-button-container {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	gap: 8px;
+	width: 100%;
+}
+
+/* Adjust inputs to be left-aligned */
+.shape-input {
+	width: 40px;
+	text-align: center;
+}
+
+.polygon-input {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	gap: 8px;
+	width: auto;
+}
+
+.polygon-input input[type="range"] {
+	width: 100px;
+}
+
+.polygon-input input[type="text"] {
+	width: 40px;
+}
+
+#shapeControls h3 {
+	text-align: left;
+	width: 100%;
+	margin: 0 0 8px 0;
+	font-size: 14px;
+	font-weight: bold;
+	color: #333;
+	margin-top: 0;
+}
 
 /* Ensure proper spacing and alignment of headings */
 #loadImgDiv h3,
@@ -915,7 +984,8 @@ button.continue-button:disabled:hover {
 }
 #editSession {
 	display: flex;
-  }
+	gap: 12px;
+}
 
 
 /* Show overlay in portrait mode */

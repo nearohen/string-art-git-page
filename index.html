@@ -92,46 +92,52 @@
     <div id="shapeControls">
       <h3>Select Shape</h3>
       <div class="shape-buttons">
-
-        <button type="button" class="icon-button shape-button" onclick="selectShape('rectangle')" id="rectangleButton">
-          <span class="material-icons">rectangle</span>
-        </button>
-        <input type="text" id="pointsW" value="" size="1" onchange="handlePointsChange(true);" class="shape-input rectangle-input">
-        <input type="text" id="pointsH" value="" size="1" onchange="handlePointsChange(true);" class="shape-input rectangle-input">
-
-
-        
-        <button type="button" class="icon-button shape-button" onclick="selectShape('circle')" id="circleButton">
-          <span class="material-icons">circle</span>
-        </button>
-        <input type="text" id="pointsC" value="" size="1" onchange="handlePointsChange(true);" class="shape-input circle-input">
-
-        
-        <button type="button" class="icon-button shape-button" onclick="selectShape('polygon')" id="polygonButton">
-          <span class="material-icons">hexagon</span>
-        </button>
-        <div class="shape-input polygon-input">
-          <input type="range" 
-                 id="polygonSpacing" 
-                 value="1" 
-                 min="1" 
-                 max="2" 
-                 step="0.1"
-                 oninput="updateCustomPointSpacing(this.value);"
-                 >
-          <input type="text" 
-                 id="polygonSpacingText" 
-                 value="1" 
-                 size="3" 
-                 onchange="updateCustomPointSpacing(this.value); applyCustomPoints();">
+        <div class="shape-button-container">
+          <button type="button" class="icon-button shape-button" onclick="selectShape('rectangle')" id="rectangleButton">
+            <span class="material-icons">rectangle</span>
+          </button>
+          <input type="text" id="pointsW" value="" size="1" onchange="handlePointsChange(true);" class="shape-input rectangle-input">
+          <input type="text" id="pointsH" value="" size="1" onchange="handlePointsChange(true);" class="shape-input rectangle-input">
         </div>
+     
+        <div class="shape-button-container">
+          <button type="button" class="icon-button shape-button" onclick="selectShape('circle')" id="circleButton">
+            <span class="material-icons">circle</span>
+          </button>
+          <input type="text" id="pointsC" value="" size="1" onchange="handlePointsChange(true);" class="shape-input circle-input">
+  
+
+        </div>
+
+        <div class="shape-button-container">
+          <button type="button" class="icon-button shape-button" onclick="selectShape('polygon')" id="polygonButton">
+            <span class="material-icons">hexagon</span>
+          </button>
+          <div class="shape-input polygon-input">
+            <input type="range" 
+                  id="polygonSpacing" 
+                  value="1" 
+                  min="1" 
+                  max="2" 
+                  step="0.1"
+                  oninput="updateCustomPointSpacing(this.value);"
+                  >
+            <input type="text" 
+                  id="polygonSpacingText" 
+                  value="1" 
+                  size="3" 
+                  onchange="updateCustomPointSpacing(this.value); applyCustomPoints();">
+          </div>
+
+        </div>
+          
+        <button id="startSession" type="button" onclick="startSession()">Create Project</button>
+
+
        </div>
     </div>
-
-    <div>
-      <button id="startSession" type="button" onclick="startSession()">Create Project</button>
-    </div>
     
+
   </div>
 
  
