@@ -159,6 +159,8 @@ function addInstructionsObToDB(sessionState, callback) {
     const instructionData = {
         dots: sessionState.dots,
         snapshotB64: sessionState.snapshotB64,
+        width: sessionState.sourceWidth,
+        height: sessionState.sourceHeight,  
         projectId: projectId,
         createdAt: Date.now(),
         userId: user.uid
