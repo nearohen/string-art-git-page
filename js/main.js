@@ -1262,6 +1262,9 @@ onStateChange((newState)=>{
 
 
   if(stateChanged && newState==States.PL){
+    document.getElementById('instructionAppLink').style.display = 'none';
+    document.getElementById('instructionAppLink').innerHTML = '';
+    document.getElementById('makeItButton').style.display = 'block';
     GoToCanvas(ON_CANVAS_STRINGS);
   }
   // Disable Continue button if no saved session exists or no image was loaded
@@ -2264,6 +2267,9 @@ function makeIt() {
     // Add the instructions to the database with a callback
     addInstructionsObToDB(sessionState, (result) => {
         const linkContainer = document.getElementById('instructionAppLink');
+        linkContainer.style.display = 'block';
+        document.getElementById('makeItButton').style.display = 'none';
+        
         
         if (result.error) {
             linkContainer.innerHTML = `<p style="color: red;">${result.message}</p>`;

@@ -369,7 +369,7 @@ input[id^="bgColor"] {
 	box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 	flex: 0 1 auto;
 	min-width: 0;
-	width: 50%;
+	width: 30%;
 	margin: 0;
 }
 
@@ -646,14 +646,34 @@ button.continue-button:disabled:hover {
 }
 
 /* For landscape orientation on mobile devices */
-@media screen and (orientation: landscape) {
+@media screen and (max-width: 768px) and (orientation: landscape) {
 	#simulation {
 		width: 67%;
+		max-height: 100vh;
+		height: calc(100vh - var(--spacing) * 2);
+		overflow: auto;
+	}
+
+	/* Make canvas fit within the container while maintaining aspect ratio */
+	#simulation canvas {
+		width: 100%;
+		height: auto;
+		max-height: calc(100vh - 100px);
+		object-fit: contain;
 	}
 
 	/* Adjust controls width to fit remaining space */
 	.controls-panel {
 		width: 30%;
+		max-height: 100vh;
+		overflow-y: auto;
+	}
+
+	/* Ensure the container respects viewport height */
+	#container {
+		height: 100vh;
+		overflow: hidden;
+		padding: var(--spacing);
 	}
 }
 

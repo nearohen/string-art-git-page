@@ -161,6 +161,7 @@ function addInstructionsObToDB(sessionState, callback) {
         snapshotB64: sessionState.snapshotB64,
         width: sessionState.sourceWidth,
         height: sessionState.sourceHeight,  
+        thickness: sessionState.stringPixelRation,
         projectId: projectId,
         createdAt: Date.now(),
         userId: user.uid
