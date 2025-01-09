@@ -198,14 +198,7 @@ input[type="range"] {
 }
 
 /* Load Image Section */
-#loadImgDiv {
-	display: flex;
-	align-items: flex-end;
-	gap: var(--spacing);
-	margin-bottom: var(--spacing);
-	min-height: 120px;
-	flex: 2;
-}
+
 
 #loadImgDiv button,
 #loadImgDiv input {
@@ -369,12 +362,10 @@ input[id^="bgColor"] {
 	margin-bottom: 10px;
 }
 
-#shapeControls {
-	margin: var(--spacing) 0;
-	flex: 1;
-}
+
 
 #shapeControls h3 {
+	margin-left: auto; /* This will push #shapeControls to the right, aligning it to the left edge of #loadImgDiv */
 	margin-bottom: 10px;
 	color: var(--text-color);
 	font-size: 16px;
@@ -772,6 +763,7 @@ button.continue-button:disabled:hover {
 	body {
 		font-size: 18px;
 	}
+	
 
 	.material-icons {
 		font-size: 32px !important;
@@ -867,12 +859,7 @@ button.continue-button:disabled:hover {
 	max-width: 300px;
 }
 
-#loadImgDiv {
-	flex: 0 0 60%; /* Don't grow, don't shrink, fixed width of 60% */
-	min-width: 300px;
-	max-width: 600px;
-	margin-bottom: 0;
-}
+
 
 /* Ensure proper spacing and alignment of headings */
 #loadImgDiv h3,
@@ -895,6 +882,51 @@ button.continue-button:disabled:hover {
 		flex: 0 0 100%;
 		max-width: 100%;
 		min-width: 100%;
+	}
+}
+
+/* Add this new class for the overlay */
+.rotate-device-overlay {
+	display: none;
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background-color: var(--primary-color);
+	z-index: 9999;
+	justify-content: center;
+	align-items: center;
+	flex-direction: column;
+	color: white;
+	text-align: center;
+	padding: 20px;
+}
+
+.rotate-device-overlay .material-icons {
+	font-size: 64px !important;
+	margin-bottom: 20px;
+	animation: rotate 2s infinite linear;
+}
+
+@keyframes rotate {
+	from { transform: rotate(0deg); }
+	to { transform: rotate(360deg); }
+}
+#editSession {
+	display: flex;
+  }
+
+
+/* Show overlay in portrait mode */
+@media screen and (orientation: portrait) {
+	.rotate-device-overlay {
+		display: flex;
+	}
+
+	/* Hide main content in portrait mode */
+	#container, #topToolbar, #chooseProject, #editSession, #advanced {
+		display: none !important;
 	}
 }
 

@@ -19,6 +19,11 @@
 </head>
 
 <body oncontextmenu="return false;">
+  <div class="rotate-device-overlay">
+    <span class="material-icons">screen_rotation</span>
+    <h2>Please Rotate Your Device</h2>
+    <p>This application works best in landscape mode.</p>
+  </div>
   <script src="https://unpkg.com/react@17/umd/react.development.js" crossorigin></script>
   <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js" crossorigin></script>
   <!-- Load our React component. -->
@@ -80,7 +85,7 @@
 
   <div id=editSession>
     <div id="loadImgDiv">
-      <input type="file" id="loadImgFile" style="display: none;"/>
+      
       <canvas id="originalTiny"></canvas>
       <button id="triggerFileInput">Upload Image</button>
     </div>
@@ -123,12 +128,14 @@
        </div>
     </div>
 
-
-    <button id="startSession" type="button" onclick="startSession()">Create Project</button>
+    <div>
+      <button id="startSession" type="button" onclick="startSession()">Create Project</button>
+    </div>
+    
   </div>
 
  
-
+  <input type="file" id="loadImgFile" style="display: none;"/>
 
 
 
