@@ -646,8 +646,13 @@ button.continue-button:disabled:hover {
 }
 
 /* For landscape orientation on mobile devices */
-@media screen and  (orientation: landscape) {
+@media screen and (orientation: landscape) {
 	#simulation {
+		width: 67%;
+	}
+
+	/* Adjust controls width to fit remaining space */
+	.controls-panel {
 		width: 30%;
 	}
 }
