@@ -85,7 +85,7 @@
 
   <div id=editSession>
     <div id="loadImgDiv">
-      
+      <h3>Upload Image</h3>
       <canvas id="originalTiny"></canvas>
       <button id="triggerFileInput">Upload Image</button>
     </div>
@@ -96,7 +96,9 @@
           <button type="button" class="icon-button shape-button" onclick="selectShape('rectangle')" id="rectangleButton">
             <span class="material-icons">rectangle</span>
           </button>
+         <span class="shape-input rectangle-input">Width</span>
           <input type="text" id="pointsW" value="" size="1" onchange="handlePointsChange(true);" class="shape-input rectangle-input">
+          <span class="shape-input rectangle-input">Height</span>
           <input type="text" id="pointsH" value="" size="1" onchange="handlePointsChange(true);" class="shape-input rectangle-input">
         </div>
      
@@ -104,6 +106,7 @@
           <button type="button" class="icon-button shape-button" onclick="selectShape('circle')" id="circleButton">
             <span class="material-icons">circle</span>
           </button>
+          <span class="shape-input circle-input">Circle</span>
           <input type="text" id="pointsC" value="" size="1" onchange="handlePointsChange(true);" class="shape-input circle-input">
   
 
@@ -114,6 +117,7 @@
             <span class="material-icons">hexagon</span>
           </button>
           <div class="shape-input polygon-input">
+            <span class="shape-input polygon-input">Spacing</span>
             <input type="range" 
                   id="polygonSpacing" 
                   value="1" 

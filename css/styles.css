@@ -896,28 +896,36 @@ button.continue-button:disabled:hover {
 	align-items: center;
 	gap: 8px;
 	width: 100%;
+	padding: 4px;
+	flex-wrap: wrap;
 }
 
-/* Adjust inputs to be left-aligned */
+/* Make inputs a bit wider to prevent cutting */
 .shape-input {
-	width: 40px;
+	width: 50px;
 	text-align: center;
+	padding: 4px;
+	min-width: 50px;
 }
 
+/* Adjust polygon input specifically */
 .polygon-input {
 	display: flex;
 	flex-direction: row;
 	align-items: center;
 	gap: 8px;
 	width: auto;
+	min-width: 200px;
 }
 
 .polygon-input input[type="range"] {
-	width: 100px;
+	width: 120px;
+	min-width: 120px;
 }
 
 .polygon-input input[type="text"] {
-	width: 40px;
+	width: 50px;
+	min-width: 50px;
 }
 
 #shapeControls h3 {
