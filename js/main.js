@@ -873,30 +873,6 @@ function startSession() {
 
 
 
-
-
-
-
-
-function FillPixelInfo(x, y) {
-  if (lastDistance != null) {
-    let pos = sessionState.sourceHeight * x + y
-    let a = lastDistance.charCodeAt(pos);
-    document.getElementById("disPixelInfo").value = a
-  }
-  if (lastStringColor != null) {
-    let pos = sessionState.sourceHeight * x + y
-    let a = lastStringColor.charCodeAt(pos);
-    document.getElementById("strPixelInfo").value = a
-  }
-  let color = can.thumbnailMain.ctx.getImageData(x, y, 1, 1).data;
-  let grScale = parseInt((color[0] + color[1] + color[2]) / 3);
-  document.getElementById("imgPixelInfo").value = grScale
-
-  document.getElementById("XPixelInfo").value = x
-
-  document.getElementById("YPixelInfo").value = y
-}
 function getRndColor() {
   var r = 255 * Math.random() | 0,
     g = 255 * Math.random() | 0,
@@ -956,7 +932,7 @@ function canvasMouseMove(event) {
   runTimeState.mouseY = scaled.y
   let X = Math.floor(scaled.x / IMG_TO_CANVAS_SCLAE);
   let Y = Math.floor(scaled.y / IMG_TO_CANVAS_SCLAE);
-  FillPixelInfo(X, Y)
+
   processFocus(event);  
   if(runTimeState.onEditCustomPoints && runTimeState.cutomPointChosenIndex!=-1 && runTimeState.mouseDown) {
     let {x, y} = getCanvasCoordinates(mainCanvas, event);

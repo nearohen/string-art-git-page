@@ -183,7 +183,7 @@ function addInstructionsObToDB(sessionState, callback) {
             // Create and return link object
             callback({
                 url: data.url,
-                text: 'Open String Art Instructions',
+                text: 'Step by Step Instructions',
                 tip: 'Tip: After opening, click the install button in your browser to add this app to your device!'
             });
         })

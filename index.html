@@ -19,11 +19,6 @@
 </head>
 
 <body oncontextmenu="return false;">
-  <div class="rotate-device-overlay">
-    <span class="material-icons">screen_rotation</span>
-    <h2>Please Rotate Your Device</h2>
-    <p>This application works best in landscape mode.</p>
-  </div>
   <script src="https://unpkg.com/react@17/umd/react.development.js" crossorigin></script>
   <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js" crossorigin></script>
   <!-- Load our React component. -->
@@ -154,11 +149,28 @@
     <div id="simulation">
 
       <div id="improvementsInfo">
-      <button type="button" class="icon-button" id="playStop" onclick="PlayStop()">
-        <span class="material-icons">play_arrow</span>
-      </button>
-      <input type="text" id="lines" value="0" size="2">string used</input>
-      <input type="text" id="improvements" value="0" size="2">improvements</input>
+        <div class="improvements-section">
+          <button type="button" class="icon-button" id="playStop" onclick="PlayStop()">
+            <span class="material-icons">play_arrow</span>
+          </button>
+        </div>
+        <div class="improvements-section"> 
+          
+          <input type="text" id="lines" value="0" size="2"></input>
+          <span>strings</span>  
+        </div>
+        <div class="improvements-section">
+          
+          <input type="text" id="improvements" value="0" size="2"></input>
+          <span>improvements</span>
+        </div>
+
+
+
+
+
+
+
       </div>
       <div id="editPointsDiv" style="display: none;">
         <div class="edit-points-controls">
@@ -223,17 +235,21 @@
 
       
       <canvas id="originalSmall"></canvas>
-      <div id="stop">
-        <button id="saveSession" type="button" onclick="saveSession()">
+      <div id="stop" class="stop">
+        <div class="stop-section">
+          <button id="saveSession" type="button" onclick="saveSession()">
             <span class="material-icons">save</span>
+          </button>
+          <button id="editSession" type="button" onclick="emitStateChange(States.ES)">
+              <span class="material-icons">edit</span>
         </button>
-        <button id="editSession" type="button" onclick="emitStateChange(States.ES)">
-            <span class="material-icons">edit</span>
-        </button>
-        <div id="makeIt">
-        <button id="makeItButton" type="button" onclick="makeIt()" style="background-color: red; color: white;">Make It!</button>
-        <div id="instructionAppLink"></div>
         </div>
+   
+        <div id="makeIt" class="stop-section">
+        <button id="makeItButton" type="button" onclick="makeIt()" style="background-color: red; color: white;">Make it REAL!! - Step by Step Instructions</button>
+        </div>
+        <div id="instructionAppLink"></div>
+       
       </div>
 
     </div>

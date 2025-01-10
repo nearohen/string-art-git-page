@@ -12,7 +12,7 @@
 	--background-color: #f5f6fa;
 	--text-color: #2c3e50;
 	--border-radius: 8px;
-	--spacing: 20px;
+	--spacing: 5px;
 }
 
 body {
@@ -573,8 +573,39 @@ input[id^="bgColor"] {
 #playStop .material-icons {
 	font-size: 32px;
 }
+.improvements-section{
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	gap: var(--spacing);
+	justify-content: space-around;
+}
+@media screen and (max-width: 768px) {
+	.improvements-section {
+		flex-direction: column;
+		align-items: center;
+		text-align: center;
+	}
+}
+
+.stop{
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing);
+}
+
+.stop-section{
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	gap: var(--spacing);
+	justify-content: space-around;
+}
 
 #improvementsInfo {
+	display: flex;
+	flex-direction: row;
+	gap: var(--spacing);
 	background-color: #1a2634;
 	color: white;
 	padding: 8px var(--spacing);
@@ -583,6 +614,7 @@ input[id^="bgColor"] {
 	gap: var(--spacing);
 	margin: calc(-1 * var(--spacing)) calc(-1 * var(--spacing)) var(--spacing) calc(-1 * var(--spacing));
 	border-radius: var(--border-radius) var(--border-radius) 0 0;
+	justify-content: space-around;
 }
 
 #improvementsInfo input[type="text"] {
@@ -987,50 +1019,10 @@ button.continue-button:disabled:hover {
 	}
 }
 
-/* Add this new class for the overlay */
-.rotate-device-overlay {
-	display: none;
-	position: fixed;
-	top: 0;
-	left: 0;
-	width: 100%;
-	height: 100%;
-	background-color: var(--primary-color);
-	z-index: 9999;
-	justify-content: center;
-	align-items: center;
-	flex-direction: column;
-	color: white;
-	text-align: center;
-	padding: 20px;
-}
-
-.rotate-device-overlay .material-icons {
-	font-size: 64px !important;
-	margin-bottom: 20px;
-	animation: rotate 2s infinite linear;
-}
-
-@keyframes rotate {
-	from { transform: rotate(0deg); }
-	to { transform: rotate(360deg); }
-}
 #editSession {
 	display: flex;
+	flex-direction: column;
 	gap: 12px;
-}
-
-
-/* Show overlay in portrait mode */
-@media screen and (orientation: portrait) {
-	.rotate-device-overlay {
-		display: flex;
-	}
-
-	/* Hide main content in portrait mode */
-	#container, #topToolbar, #chooseProject, #editSession, #advanced {
-		display: none !important;
-	}
 }
 
 
