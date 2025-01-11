@@ -66,7 +66,7 @@ function DrawMouse(light) {
   R = Math.floor(sessionState.radius);
   imgDataR = R + 1
   ctxMainCanvas.lineWidth = 1
-  if (runTimeState.mouseOnCanvas) {
+  if (runTimeState.mouseOnCanvas && !isNaN(runTimeState.mouseX) && !isNaN(runTimeState.mouseY)) {
     x = runTimeState.mouseX
     y = runTimeState.mouseY
     if (runTimeState.lastMouseImage != null) {
@@ -100,7 +100,6 @@ function DrawMouse(light) {
     runTimeState.lastMouseX = x
     runTimeState.lastMouseY = y
     runTimeState.lastMouseR = imgDataR
-
 
   }
 }

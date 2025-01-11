@@ -285,6 +285,9 @@ function initMainCanvas() {
   // Add touch event handlers
   mainCanvas.addEventListener('touchstart', function(event) {
     event.preventDefault();
+    if(event.touches.length==1){
+      runTimeState.onZoomDisableMove = false;
+    }
      if (event.touches.length === 2) {
       // Two finger touch - prepare for pinch zoom
       runTimeState.zoomMove = [];
@@ -314,17 +317,7 @@ function initMainCanvas() {
       let finger2 = event.touches[1];
       addZoomMove(finger1,finger2);
      
-    } else {
-      // Single finger touch
-     
-      const touch = event.touches[0];
-      const rect = mainCanvas.getBoundingClientRect();
-      const touchEvent = {
-        offsetX: touch.clientX - rect.left,
-        offsetY: touch.clientY - rect.top
-      };
-      canvasMouseMove(touchEvent);
-    }
+    } 
   }, { passive: false });
 
   mainCanvas.addEventListener('touchend', function(event) {
@@ -335,6 +328,7 @@ function initMainCanvas() {
 
         canvasPinchZoom(runTimeState.zoomMove[0], runTimeState.zoomMove[1],);
         runTimeState.zoomMove = [];
+        runTimeState.onZoomDisableMove = true;
       
     }
     else{
@@ -346,7 +340,9 @@ function initMainCanvas() {
         offsetX: touch.clientX - rect.left,
         offsetY: touch.clientY - rect.top
       };
-      canvasMouseup(touchEvent);
+      if(!runTimeState.onZoomDisableMove){
+        canvasMouseup(touchEvent);
+      }
     }
   }, { passive: false });
 
@@ -933,7 +929,7 @@ function canvasMouseMove(event) {
   let X = Math.floor(scaled.x / IMG_TO_CANVAS_SCLAE);
   let Y = Math.floor(scaled.y / IMG_TO_CANVAS_SCLAE);
 
-  processFocus(event);  
+  processFocus(event,"move");  
   if(runTimeState.onEditCustomPoints && runTimeState.cutomPointChosenIndex!=-1 && runTimeState.mouseDown) {
     let {x, y} = getCanvasCoordinates(mainCanvas, event);
     x = x / mainCanvas.width;
@@ -1612,7 +1608,7 @@ function addCustomPoint(offsetX,offsetY){
 
 
 
-function processFocus(event){
+function processFocus(event,type){
   if(!runTimeState.mouseDown){
     return;
   }
@@ -1652,7 +1648,7 @@ function processFocus(event){
 
       let onCustomMove =  (runTimeState.onEditCustomPoints && runTimeState.customPointEditType === CustomPointEditTypes.MOVE) ;
     
-      if(!onCustomMove && runTimeState.imgManipulationMode == IMG_MANIPULATION_ZOOM_MOVE){
+      if(!onCustomMove && runTimeState.imgManipulationMode == IMG_MANIPULATION_ZOOM_MOVE && type=="move"){
         MoveSource(event.offsetX,event.offsetY);
       }
 
@@ -1708,7 +1704,7 @@ function canvasMousedown(event) {
     
     
   } else {
-    processFocus(event);
+    processFocus(event,"down");
   }
   
 }
@@ -1739,7 +1735,6 @@ function fixRec() {
 }
 
 function MoveSource(offsetX,offsetY){
-
      const diffX = offsetX - runTimeState.mouseDownX;
       const diffY = offsetY - runTimeState.mouseDownY;
       let relativeMoveX = diffX / mainCanvas.width;
@@ -1844,6 +1839,42 @@ function loader() {
     if(runTimeState.state==States.ES){
       emitStateChange(States.ES);
     }
+    // Check if image size needs to be compressed
+    const MAX_WIDTH = 1200;  // Maximum width for compressed image
+    const MAX_FILE_SIZE = 500 * 1024; // 500KB max file size
+    
+    // Get file size from base64 string
+    const base64Size = originalImg.src.length * 3/4; // Approximate size in bytes
+    
+    if (originalImg.width > MAX_WIDTH || base64Size > MAX_FILE_SIZE) {
+      // Create temporary canvas for compression
+      const tempCanvas = document.createElement('canvas');
+      const tempCtx = tempCanvas.getContext('2d');
+      
+      // Calculate new dimensions maintaining aspect ratio
+      let newWidth = originalImg.width;
+      let newHeight = originalImg.height;
+      
+      if (originalImg.width > MAX_WIDTH) {
+        newWidth = MAX_WIDTH;
+        newHeight = (originalImg.height * MAX_WIDTH) / originalImg.width;
+      }
+      
+      // Set canvas size and draw scaled image
+      tempCanvas.width = newWidth;
+      tempCanvas.height = newHeight;
+      tempCtx.drawImage(originalImg, 0, 0, newWidth, newHeight);
+      
+      // Convert to compressed base64
+      const quality = 0.7; // Adjust quality (0 to 1)
+      originalImg.src = tempCanvas.toDataURL('image/jpeg', quality);
+      
+      // Clean up
+      tempCanvas.remove();
+      return; // Will trigger onload again with compressed image
+    }
+
+    
 
     let changed = sessionState.originalImgSrc != originalImg.src;
     sessionState.originalImgSrc = originalImg.src;

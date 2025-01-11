@@ -7,7 +7,9 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "android": "adb shell am start -n com.android.chrome/com.google.android.apps.chrome.Main -d \"http://localhost:%npm_config_port%\"",
+    "portforward": "adb reverse tcp:%npm_config_port% tcp:%npm_config_port%"
   },
   "repository": {
     "type": "git",
