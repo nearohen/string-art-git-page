@@ -221,7 +221,7 @@ input[type="range"] {
 	border-radius: var(--border-radius);
 }
 
-#loadImgDiv button {
+#loadImgDiv#startSession button {
 	width: 150px;
 	padding: 8px;
 	margin: 0;
@@ -402,6 +402,7 @@ input[id^="bgColor"] {
 	align-items: flex-start;
 	width: 100%;
 	flex-wrap: wrap;
+	
 }
 
 
@@ -490,7 +491,6 @@ input[id^="bgColor"] {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
-	position: sticky;
 	top: 0;
 	z-index: 1000;
 	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -954,6 +954,7 @@ button.continue-button:disabled:hover {
 	background-color: white;
 	border-radius: var(--border-radius);
 	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+	justify-content: space-between;
 }
 
 

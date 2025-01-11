@@ -62,7 +62,7 @@ function drawSrcImageOnCanvas(offX, offY, scale, img, canvas, ctxCanvas) {
 
 
 function DrawMouse(light) {
-  light = true
+  light = true;
   R = Math.floor(sessionState.radius);
   imgDataR = R + 1
   ctxMainCanvas.lineWidth = 1
@@ -100,6 +100,7 @@ function DrawMouse(light) {
     runTimeState.lastMouseX = x
     runTimeState.lastMouseY = y
     runTimeState.lastMouseR = imgDataR
+
 
   }
 }
