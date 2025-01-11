@@ -203,12 +203,14 @@ input[type="range"] {
 #loadImgDiv {
 	display: flex;
 	flex-direction: column;
+	flex-wrap: wrap;
 	align-items: center;
 	gap: 8px;
 	padding: 12px;
 	background-color: white;
 	border-radius: var(--border-radius);
 	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+	min-height: 0;
 }
 
 #loadImgDiv canvas {
@@ -390,15 +392,18 @@ input[id^="bgColor"] {
 	color: var(--text-color);
 	font-size: 14px;
 	font-weight: 500;
+
+
 }
 
 .shape-buttons {
 	display: flex;
 	flex-direction: column;
 	align-items: flex-start;
-	gap: 8px;
 	width: 100%;
+	flex-wrap: wrap;
 }
+
 
 .shape-button {
 	background-color: #e0e0e0;
@@ -660,7 +665,17 @@ button.continue-button:disabled:hover {
 	#simulation {
 		width: 100%;
 	}
-	
+	#uploadImgDiv{
+		width: 100%;
+	}
+	#editSession{
+		flex-direction: column;
+	}
+	#shapeControls{
+		width: 100%;
+		flex-direction: column;
+	}
+
 	.simulation-container {
 		flex-direction: column; /* Stack elements vertically */
 	}
@@ -693,7 +708,9 @@ button.continue-button:disabled:hover {
 		max-height: calc(100vh - 100px);
 		object-fit: contain;
 	}
-
+	#editSession{
+		flex-direction: column;
+	}
 	/* Adjust controls width to fit remaining space */
 	.controls-panel {
 		width: 30%;
@@ -932,20 +949,13 @@ button.continue-button:disabled:hover {
 	display: flex;
 	flex-direction: column;
 	align-items: flex-start;
-	gap: 8px;
+	flex-wrap: wrap;	
 	padding: 12px;
 	background-color: white;
 	border-radius: var(--border-radius);
 	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.shape-buttons {
-	display: flex;
-	flex-direction: column;
-	align-items: flex-start;
-	gap: 8px;
-	width: 100%;
-}
 
 .shape-button-container {
 	display: flex;
@@ -1004,7 +1014,12 @@ button.continue-button:disabled:hover {
 	color: #333;
 	margin-top: 0;
 }
-
+#editSession {
+	display: flex;
+	flex-direction: row;
+	flex-wrap: wrap;
+	gap: 12px;
+}
 /* Responsive adjustments for mobile */
 @media screen and (max-width: 768px) {
 	.controls-section {
@@ -1019,11 +1034,7 @@ button.continue-button:disabled:hover {
 	}
 }
 
-#editSession {
-	display: flex;
-	flex-direction: column;
-	gap: 12px;
-}
+
 
 
 
