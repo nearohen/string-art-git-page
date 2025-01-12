@@ -2147,7 +2147,7 @@ function initOriginalSmall() {
     }
   
     if (originalTinyCanvas && can.original.canvas) {
-      const TINY_HEIGHT = 50;
+      const TINY_HEIGHT = 150;
       const aspectRatio = can.original.canvas.width / can.original.canvas.height;
       const width = Math.round(TINY_HEIGHT * aspectRatio);
       
@@ -2277,7 +2277,6 @@ function makeIt() {
         linkContainer.style.display = 'block';
         document.getElementById('makeItButton').style.display = 'none';
         
-        
         if (result.error) {
             linkContainer.innerHTML = `<p style="color: red;">${result.message}</p>`;
             return;
@@ -2306,9 +2305,18 @@ function makeIt() {
         instructions.style.color = '#666';
         instructions.innerHTML = result.tip;
         
+        // Add URL display
+        const urlDisplay = document.createElement('div');
+        urlDisplay.style.marginTop = '5px';
+        urlDisplay.style.fontSize = '12px';
+        urlDisplay.style.color = '#666';
+        urlDisplay.style.wordBreak = 'break-all';
+        urlDisplay.textContent = link.href;
+        
         linkContainer.innerHTML = '';
         linkContainer.appendChild(link);
         linkContainer.appendChild(instructions);
+        linkContainer.appendChild(urlDisplay);
     });
 }
 window.makeIt = makeIt;

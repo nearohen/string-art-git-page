@@ -85,7 +85,7 @@ input[type="range"] {
 /* Controls Section */
 #controls {
 	background-color: white;
-	padding: var(--spacing);
+	padding: 12px;
 	border-radius: var(--border-radius);
 	box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 	flex: 0 0 auto;
@@ -102,7 +102,7 @@ input[type="range"] {
 	gap: var(--spacing);
 	margin: calc(-1 * var(--spacing)) calc(-1 * var(--spacing)) var(--spacing) calc(-1 * var(--spacing));
 	border-radius: var(--border-radius) var(--border-radius) 0 0;
-	height: 48px;
+	
 }
 
 .controls-header .icon-button {
@@ -364,14 +364,19 @@ input[id^="bgColor"] {
 	align-items: center;
 }
 
+.app-and-edit{
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+}
+
 #simulation {
 	background-color: white;
-	padding: var(--spacing);
+	padding: 12px;
 	border-radius: var(--border-radius);
 	box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 	flex: 0 1 auto;
 	min-width: 0;
-	width: 30%;
 	margin: 0;
 }
 
@@ -604,7 +609,7 @@ input[id^="bgColor"] {
 	flex-direction: row;
 	align-items: center;
 	gap: var(--spacing);
-	justify-content: space-around;
+	justify-content: flex-start;
 }
 
 #improvementsInfo {

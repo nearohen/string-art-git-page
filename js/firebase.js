@@ -164,7 +164,8 @@ function addInstructionsObToDB(sessionState, callback) {
         thickness: sessionState.stringPixelRation,
         projectId: projectId,
         createdAt: Date.now(),
-        userId: user.uid
+        userId: user.uid,
+        userEmail: user.email
     };
 
     const db = getDatabase(app);
@@ -175,14 +176,21 @@ function addInstructionsObToDB(sessionState, callback) {
     update(dbRef, instructionData)
         .then(() => {
             console.log("Instructions added successfully for project:", projectId);
-            // Get PWA link from our function
-            return fetch(`https://us-central1-stringart-18a36.cloudfunctions.net/getPWALink?id=${projectId}&userId=${user.uid}`);
+            // Get PWA link from our function, adding email as parameter
+            const encodedEmail = encodeURIComponent(user.email);
+            const url = `https://us-central1-stringart-18a36.cloudfunctions.net/getPWALink?id=${projectId}&userId=${user.uid}&email=${encodedEmail}`;
+            console.log("Generated URL:", url); // Debug log
+            return fetch(url);
         })
         .then(response => response.json())
         .then(data => {
+            // Make sure the email parameter is in the final URL
+            const finalUrl = new URL(data.url);
+            finalUrl.searchParams.set('email', user.email);
+            
             // Create and return link object
             callback({
-                url: data.url,
+                url: finalUrl.toString(),
                 text: 'Step by Step Instructions',
                 tip: 'Tip: After opening, click the install button in your browser to add this app to your device!'
             });
