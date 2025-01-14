@@ -87,12 +87,12 @@ onmessage = function (msg){
     }
     else if(cmd === "startImprove")
     {
-        console.log("on cmd startImprove");
+        //console.log("on cmd startImprove");
         workerState.srcRawBuffer.set(args.thumbnailMainRaw); 
         workerState.improveInterval = setInterval(() => {
             console.log("on cmd startImprove interval");
             const okOrFail = SAImprove(1000, args.sessionKey);
-            console.log("on cmd startImprove interval okOrFail", okOrFail);
+           // console.log("on cmd startImprove interval okOrFail", okOrFail);
             // Find available buffer
             let availableBufferIndex = -1;
             for(let i = 0; i < BUFFER_POOL_SIZE; i++) {
@@ -101,9 +101,9 @@ onmessage = function (msg){
                     break;
                 }
             }
-            console.log("on cmd startImprove interval availableBufferIndex", availableBufferIndex);
+           //// console.log("on cmd startImprove interval availableBufferIndex", availableBufferIndex);
             if(workerState.snapshotBuffer && availableBufferIndex !== -1) {
-                console.log("on cmd startImprove interval workerState.snapshotBuffer", workerState.snapshotBuffer ? "true" : "false");
+              // console.log("on cmd startImprove interval workerState.snapshotBuffer", workerState.snapshotBuffer ? "true" : "false");
                 const currentBuffer = workerState.bufferPool[availableBufferIndex];
                 workerState.bufferStates[availableBufferIndex] = false; // Mark as in-use
                 
