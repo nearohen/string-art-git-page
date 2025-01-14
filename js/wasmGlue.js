@@ -4,7 +4,7 @@ improveWorker.onmessage = function({data: {type, args}}) {
     if(type == "snapshotBuffer") {
         // Make copy of the data
         sessionState.snapshotBuffer = new Int8Array(args.buffer).slice();
-        
+        sessionState.newSnapshotBuffer = true ;
         // Return the buffer to the worker's pool
         improveWorker.postMessage({
             cmd: "returnBuffer",

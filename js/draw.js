@@ -196,8 +196,9 @@ function DrawLines(canvas, ctxCanvas, updateImprovements, snapshot) {
     }
   }
   ctxCanvas.stroke();
-  if (updateImprovements) {
+  if (updateImprovements && sessionState.newSnapshotBuffer) {
     document.getElementById('improvements').value = changes;
+    sessionState.newSnapshotBuffer = false ;
   }
 
   return {count,changes} ;
