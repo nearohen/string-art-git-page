@@ -566,7 +566,9 @@ function applyCustomPoints() {
 
 
 function handlePointsChange(initImgRec) {
-  fixRec();
+  if(initImgRec){//on loading saved - this is called before image loaded dont 
+    fixRec();
+  }
   initDots();
   initLines();
   PostWorkerMessage({cmd : "initWorkerState" , args : {}});
@@ -621,7 +623,7 @@ function loadSavedToCanvas(canvasName, data) {
 function RestartState() {
   sessionState.stateId = "";
   LoadStateValuesToUI()
-  handlePointsChange()
+  handlePointsChange(false);
 
 
 }
