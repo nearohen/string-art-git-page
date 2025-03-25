@@ -165,7 +165,8 @@ function addInstructionsObToDB(sessionState, callback) {
         projectId: projectId,
         createdAt: Date.now(),
         userId: user.uid,
-        userEmail: user.email
+        userEmail: user.email,
+        title: sessionState.sessionFileName,
     };
 
     const db = getDatabase(app);

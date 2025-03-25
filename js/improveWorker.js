@@ -63,7 +63,11 @@ const workerState = {
 
 function initWorkerState() {
     console.log("initWorkerState");
-    workerState.improveInterval = 0;
+    if(workerState.improveInterval)
+    {
+        clearInterval(workerState.improveInterval);
+        workerState.improveInterval = 0;
+    }
     workerState.snapshotBuffer = undefined;
     workerState.bufferPool = [];
     workerState.bufferStates = [];
