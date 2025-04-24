@@ -231,6 +231,11 @@
         <input type="range" id="stringPixelRatio" value="" min='2' max='48' step='1'
             oninput="updateStringPixelRatio(this.value,false);" onchange="updateStringPixelRatio(this.value,true);">
         <input type="text" id="stringPixelRatioText" value="" size="1">
+
+        <label for="minLength">Min Length</label>
+        <input type="range" id="minLength" value="1" min='1' max='100' step='1'
+            oninput="updateMinLength(this.value,false);" onchange="updateMinLength(this.value,true);">
+        <input type="text" id="minLengthText" value="1" size="1">
       </div>
 
       

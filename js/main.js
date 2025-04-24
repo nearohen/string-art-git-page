@@ -129,6 +129,7 @@ function InitState() {
     stringPixelRation: 32,
     lineThicknessMulltiply: 1,
     distanceViewFactor: 1,
+    minLength: 1,  // Add minLength to session state
     sendRawSourceImg: "",
     pixelWeight: [],
     pointsArr: [],
@@ -2362,4 +2363,9 @@ function clearCustomPoints(){
   sessionState.customPoints = [];
   handlePointsChange(true);
 
+}
+
+function updateMinLength(val, bDone) {
+  document.getElementById("minLengthText").value = val;
+  sessionState.minLength = parseInt(val);
 }
