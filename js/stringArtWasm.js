@@ -2196,6 +2196,7 @@ var ___getTypeName = createExportWrapper('__getTypeName', 1);
 var _free = createExportWrapper('free', 1);
 var _malloc = createExportWrapper('malloc', 1);
 var __Z16setInputCallbackPFvPKcE = Module['__Z16setInputCallbackPFvPKcE'] = createExportWrapper('_Z16setInputCallbackPFvPKcE', 1);
+var _SA_RebuildRelevantLines = Module['_SA_RebuildRelevantLines'] = createExportWrapper('SA_RebuildRelevantLines', 0);
 var _SA_GetBuffer = Module['_SA_GetBuffer'] = createExportWrapper('SA_GetBuffer', 1);
 var _SA_GetBufferLength = Module['_SA_GetBufferLength'] = createExportWrapper('SA_GetBufferLength', 1);
 var _SA_Init = Module['_SA_Init'] = createExportWrapper('SA_Init', 1);

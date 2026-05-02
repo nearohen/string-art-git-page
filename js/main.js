@@ -107,6 +107,7 @@ function initRunTimeState(){
     onEditCustomPoints: false,
     customPointEditType: CustomPointEditTypes.ADD,  // Default to ADD mode
     cutomPointChosenIndex: -1,
+    keyConfirmed: false,
   }
 }
 initRunTimeState();
@@ -1208,6 +1209,19 @@ onStateChange((newState)=>{
   runTimeState.state = newState ;
   hideDivsForState(newState);
 
+  // Keep play/stop icon in sync with state — was previously set ad-hoc by
+  // PlayStop()/Play()/Stop() which left it stuck on "stop" after a keyRejected
+  // bounced PL -> ST.
+  const playStopBtn = document.getElementById("playStop");
+  if(playStopBtn){
+    const icon = playStopBtn.querySelector('.material-icons');
+    if(icon){
+      icon.textContent = newState==States.PL ? 'stop' : 'play_arrow' ;
+    }
+    playStopBtn.disabled = !runTimeState.keyConfirmed ;
+    playStopBtn.title = runTimeState.keyConfirmed ? '' : 'authorizing...' ;
+  }
+
   // Hide Make It button if no lines are set
   const makeItButton = document.getElementById('makeIt');
   if (makeItButton) {
@@ -1935,31 +1949,28 @@ function inputControler(name, unit, callback) {
 
 
 function PlayStop(){
-  const button = document.getElementById("playStop");
-  const icon = button.querySelector('.material-icons');
-
   if(runTimeState.state==States.PL){
       Stop();
-      icon.textContent = 'play_arrow';
       saveState();
   } else {
       Play();
-      icon.textContent = 'stop';
   }
 }
 
 function Play() {
+  if(!runTimeState.keyConfirmed){
+    console.warn("Play blocked: key not confirmed yet");
+    return;
+  }
   updateThumbnails();
   GoToCanvas(ON_CANVAS_STRINGS);
   StartCapturing();
-  const icon = document.getElementById("playStop").querySelector('.material-icons');
-  icon.textContent = 'stop';
 }
 
 function Stop(cb) {
   pauseSender();
   PostWorkerMessage({cmd : "stopImprove" ,args : { }});
-  emitStateChange(States.ST) ;  
+  emitStateChange(States.ST) ;
 }
 
 

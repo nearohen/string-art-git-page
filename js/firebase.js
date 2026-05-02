@@ -100,13 +100,14 @@ function handleUser(userE){
 
 
 
+let unsubscribeAssemblyKey = null;
 function updateDB(userId, sessionLock, cb) {
     const user = auth.currentUser;
     if (!user) {
         console.error("No user logged in");
         return;
     }
-   
+
     const newData = {
         assemblyLock: sessionLock,
         userEmail: user.email,  // Add user's email
@@ -116,10 +117,20 @@ function updateDB(userId, sessionLock, cb) {
     const db = getDatabase(app);
     const dbRef = ref(db, `users/${userId}`);
 
+    if (unsubscribeAssemblyKey) {
+        unsubscribeAssemblyKey();
+        unsubscribeAssemblyKey = null;
+    }
+    let firstFire = true;
     const onKey = ref(db, `users/${userId}/assemblyKey`);
-    onValue(onKey, (snapshot) => {
+    unsubscribeAssemblyKey = onValue(onKey, (snapshot) => {
         const updatedData = snapshot.val();
-        cb(updatedData); 
+        if (firstFire) {
+            firstFire = false;
+            console.log("Data changed (initial, skipping stale):", updatedData);
+            return;
+        }
+        cb(updatedData);
         console.log("Data changed:", updatedData);
     });
 

@@ -54,17 +54,38 @@ improveWorker.onmessage = function({data: {type, args}}) {
     }
     else if(type=="sessionLock")
     {
-        sessionState.sessionLock  = args.sessionLock;
+        sessionState.sessionLock = args.sessionLock;
+        sessionState.sessionKey = "";
+        runTimeState.keyConfirmed = false;
         document.getElementById('lock').textContent = sessionState.sessionLock.length > 0 ? "locked" : "..." ;
+        let ke = document.getElementById('key');
+        if(ke) ke.textContent = "..." ;
+        emitStateChange(runTimeState.state) ; // refresh button gate
         window.updateDB(runTimeState.user.uid,sessionState.sessionLock,(key) => {
-            sessionState.sessionKey = key ;
-            let ke = document.getElementById('key');
-            ke.textContent = sessionState.sessionKey.length > 0 ? "got key" : "..." ;;
+            sessionState.sessionKey = key || "" ;
+            runTimeState.keyConfirmed = !!(key && key.length > 0) ;
+            if(ke) ke.textContent = runTimeState.keyConfirmed ? "got key" : "..." ;
             emitStateChange(States.SC) ;
-            
-            
         });
 
+    }
+    else if(type=="keyRejected")
+    {
+        console.warn("worker reports key rejected, re-authorizing");
+        sessionState.sessionKey = "" ;
+        runTimeState.keyConfirmed = false ;
+        let ke = document.getElementById('key');
+        if(ke) ke.textContent = "re-auth..." ;
+        emitStateChange(States.ST) ;
+        if(runTimeState.user && sessionState.sessionLock)
+        {
+            window.updateDB(runTimeState.user.uid,sessionState.sessionLock,(key) => {
+                sessionState.sessionKey = key || "" ;
+                runTimeState.keyConfirmed = !!(key && key.length > 0) ;
+                if(ke) ke.textContent = runTimeState.keyConfirmed ? "got key" : "..." ;
+                emitStateChange(runTimeState.state) ; // refresh button gate
+            });
+        }
     }
 };
 
@@ -91,8 +112,18 @@ function UpdatThumbnailFocusRaw(){
 
 function StartCapturing()
 {
+    // DIAG: log the call site so we can see if Firebase "Data changed" / re-auth /
+    // some other path is calling StartCapturing while we're already in States.PL.
+    // If so, that's the source of the leaked-interval bug in improveWorker.js.
+    try {
+        console.log("[DIAG] StartCapturing called",
+            "currentState=", (typeof runTimeState !== 'undefined' ? runTimeState.state : '?'),
+            "hasThumbnail=", !!sessionState.thumbnailMainRaw,
+            "stack=", new Error().stack);
+    } catch(e) { /* defensive: don't break play if logging fails */ }
+
     if(sessionState.thumbnailMainRaw){
-        PostWorkerMessage({cmd: "startImprove",args : 
+        PostWorkerMessage({cmd: "startImprove",args :
         {
              thumbnailMainRaw : sessionState.thumbnailMainRaw,
              sessionKey : sessionState.sessionKey,

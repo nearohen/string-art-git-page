@@ -16,12 +16,24 @@ var SAInit = Module.cwrap(
 const BUFF_SNAPSHOT = 1;
 const BUFF_SRC_RAW = 2;
 const BUFF_SRC_FOCUS = 3;
+const BUFF_RELEVANT_MASK = 4;
 const BUFFER_POOL_SIZE = 2; // Can adjust size based on needs
+
+// SA_Improve return codes — keep in sync with stringArtWasm.cpp
+const SESSION_OK            =  0;
+const SESSION_FAILED        = -1;
+const SESSION_KEY_REJECTED  = -2;
 
 var SAGetBuffer = Module.cwrap(
     "SA_GetBuffer",
     "number",
     ["i8*"]
+);
+
+var SARebuildRelevantLines = Module.cwrap(
+    "SA_RebuildRelevantLines",
+    "number",
+    []
 );
 
 
@@ -59,6 +71,16 @@ const workerState = {
     currentBufferIndex: 0,
     srcRawBuffer: undefined,
     srcFocusBuffer: undefined,
+    relevantMaskBuffer: undefined,
+    // --- DIAG: research sporadic "endless loop" / leaked-interval bug ---
+    diag: {
+        startImproveCount: 0,   // how many times startImprove arrived
+        stopImproveCount: 0,    // how many times stopImprove arrived
+        intervalFireCount: 0,   // total times the setInterval callback fired
+        lastFireTs: 0,          // ms timestamp of last fire (to detect tight-loop bursts)
+        lastReportTs: 0,        // last time we printed a periodic diag
+        leakedIntervalsSuspected: 0, // # of times we overwrote a non-zero improveInterval
+    }
 }
 
 function initWorkerState() {
@@ -74,6 +96,7 @@ function initWorkerState() {
     workerState.currentBufferIndex = 0;
     workerState.srcRawBuffer = undefined;
     workerState.srcFocusBuffer = undefined;
+    workerState.relevantMaskBuffer = undefined;
 }
 
 function typedArrayToBuffer(array) {
@@ -85,17 +108,67 @@ onmessage = function (msg){
     const {data : {cmd ,args}} = msg ;
     if(cmd === "stopImprove")
     {
-        console.log("on cmd stopImprove");
+        workerState.diag.stopImproveCount++;
+        // DIAG: log existing interval id so we can see if a leaked one is still running.
+        // If user reports "I pressed stop but strings keep forming", expect prevId !== 0
+        // here AND another interval still firing in the logs after this line.
+        const prevId = workerState.improveInterval;
+        console.log("on cmd stopImprove",
+            "prevIntervalId=", prevId,
+            "stopCount=", workerState.diag.stopImproveCount,
+            "totalFires=", workerState.diag.intervalFireCount,
+            "leaksSuspected=", workerState.diag.leakedIntervalsSuspected);
         clearInterval(workerState.improveInterval) ;
         workerState.improveInterval = 0;
     }
     else if(cmd === "startImprove")
     {
-        //console.log("on cmd startImprove");
-        workerState.srcRawBuffer.set(args.thumbnailMainRaw); 
+        workerState.diag.startImproveCount++;
+        // DIAG: BUG SUSPECT — if improveInterval is already non-zero, the previous
+        // interval id is about to be overwritten and LEAKED (cannot be cleared later).
+        // Two intervals will run concurrently => double the fire rate, "endless loop"
+        // appearance, and stop button only kills the newest one.
+        // Hypothesis: Firebase "Data changed" handler retriggers StartCapturing()
+        // while one is already running.
+        if(workerState.improveInterval)
+        {
+            workerState.diag.leakedIntervalsSuspected++;
+            console.warn("[DIAG] startImprove received while interval already running!",
+                "existingIntervalId=", workerState.improveInterval,
+                "startCount=", workerState.diag.startImproveCount,
+                "leaksSuspected=", workerState.diag.leakedIntervalsSuspected,
+                "-- previous interval will be LEAKED");
+        }
+        console.log("on cmd startImprove",
+            "startCount=", workerState.diag.startImproveCount,
+            "stopCount=", workerState.diag.stopImproveCount);
+        workerState.srcRawBuffer.set(args.thumbnailMainRaw);
         workerState.improveInterval = setInterval(() => {
-            console.log("on cmd startImprove interval");
+            // DIAG: throttle the per-fire log so a runaway loop doesn't spam,
+            // but still surface burst rate. Print every 100 fires + dt since last batch.
+            workerState.diag.intervalFireCount++;
+            const now = Date.now();
+            const dtSinceLastFire = workerState.diag.lastFireTs ? (now - workerState.diag.lastFireTs) : 0;
+            workerState.diag.lastFireTs = now;
+            if(workerState.diag.intervalFireCount % 100 === 0)
+            {
+                const dtBatch = workerState.diag.lastReportTs ? (now - workerState.diag.lastReportTs) : 0;
+                workerState.diag.lastReportTs = now;
+                console.log("[DIAG] interval fire #", workerState.diag.intervalFireCount,
+                    "dt-last-fire(ms)=", dtSinceLastFire,
+                    "ms-per-100-fires=", dtBatch,
+                    "leaksSuspected=", workerState.diag.leakedIntervalsSuspected);
+            }
+            //console.log("on cmd startImprove interval");
             const okOrFail = SAImprove(1000, args.sessionKey);
+            if(okOrFail === SESSION_KEY_REJECTED)
+            {
+                console.warn("SA_Improve key rejected, stopping interval");
+                clearInterval(workerState.improveInterval);
+                workerState.improveInterval = 0;
+                this.postMessage({type: "keyRejected", args: {sessionKey: args.sessionKey}});
+                return;
+            }
            // console.log("on cmd startImprove interval okOrFail", okOrFail);
             // Find available buffer
             let availableBufferIndex = -1;
@@ -174,7 +247,23 @@ onmessage = function (msg){
         const SFbufferLength = SAGetBufferLength(BUFF_SRC_FOCUS);
         workerState.srcFocusBuffer = new Int8Array(Module.HEAP8.buffer, SFbufferPtr,SFbufferLength);
 
-
+        const RMbufferPtr = SAGetBuffer(BUFF_RELEVANT_MASK);
+        const RMbufferLength = SAGetBufferLength(BUFF_RELEVANT_MASK);
+        workerState.relevantMaskBuffer = new Int8Array(Module.HEAP8.buffer, RMbufferPtr,RMbufferLength);
+    }
+    else if(cmd === "setRelevantMask")
+    {
+        if(workerState.relevantMaskBuffer)
+        {
+            console.log("on cmd setRelevantMask");
+            workerState.relevantMaskBuffer.set(args.mask);
+            SARebuildRelevantLines();
+        }
+    }
+    else if(cmd === "rebuildRelevantLines")
+    {
+        console.log("on cmd rebuildRelevantLines");
+        SARebuildRelevantLines();
     }
     else if(cmd === "initWorkerState")
     {
