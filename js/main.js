@@ -125,6 +125,7 @@ function InitState() {
     pointsType: "R",
     brightness: 50,
     contrast: 50,
+    vivid: 0,
     normalize: 1.5,
     collision: 0,
     stringPixelRation: 32,
@@ -224,23 +225,11 @@ function saveSession() {
 
   let filename = getSessionOutFileName()
 
-  // CMYK manual mode: before serializing, capture the in-flight DNA of the
-  // currently-active channel into cmykChannels — otherwise the saved JSON
-  // would have an out-of-date dna for whichever channel the user is in
-  // the middle of optimizing. Additive, no effect when cmykMode=false.
-  if (sessionState.cmykMode && sessionState.activeChannel &&
-      sessionState.cmykChannels &&
-      sessionState.cmykChannels[sessionState.activeChannel] &&
-      sessionState.snapshotBuffer && sessionState.snapshotBuffer.length > 0) {
-    try {
-      sessionState.cmykChannels[sessionState.activeChannel].dna =
-        arrayBufferToBase64(sessionState.snapshotBuffer);
-      console.log('[CMYK-mode] captured live DNA for', sessionState.activeChannel,
-                  'before save');
-    } catch (e) {
-      console.warn('[CMYK-mode] failed to capture live DNA before save:', e);
-    }
-  }
+  // CMYK multi-slot: capture EVERY slot's live DNA (not just the active
+  // one — all 4 channels can have been running independently). saveState()
+  // also does this, but call it here too so the file we write uses
+  // up-to-the-moment DNAs.
+  captureLiveCmykDnasToSessionState();
 
   saveState();
   saveText(JSON.stringify(sessionState), filename)
@@ -703,11 +692,20 @@ function LoadSession(evt) {
 
     params = JSON.parse(reader.result);
 
- 
+
     if (params != null) {
 
       handleNewState(params);
-      startSession();
+      // Tear down any slots left from a previous session — Load is a
+      // hard reset. Then route to CMYK or single-channel init.
+      if (typeof tearDownAllSlots === 'function') tearDownAllSlots();
+      if (sessionState.cmykMode) {
+        // initCMYKProject lazy-spawns the channel slots via setActiveChannel.
+        initCMYKProject();
+      } else {
+        if (typeof recreateMainSlot === 'function') recreateMainSlot();
+        startSession();
+      }
     }
   }
   reader.readAsText(file)
@@ -769,6 +767,8 @@ function LoadStateValuesToUI() {
 
   updateOptionalValue("brightnessRangeText",sessionState.brightness);
   updateOptionalValue("brightnessRange",sessionState.brightness);
+  updateOptionalValue("vividRangeText",sessionState.vivid);
+  updateOptionalValue("vividRange",sessionState.vivid);
   updateOptionalValue("bgStrength",sessionState.bgStrength);
   
 
@@ -1117,7 +1117,18 @@ function updateThumbnails() {
   updateThumbnail("Main", "#FFFFFF", originalImg, IMG_TO_CANVAS_SCLAE, false);
   updateThumbnail("Weight", "#7F7F7F", can.weight.canvas, 1, false);
   updateThumbnail("Focus", "#FFFFFF", can.focus.canvas, 1, true);
-  UpdatThumbnailMainRaw();
+  // Push m_srcBuff bytes to wasm. In single-channel mode UpdatThumbnailMainRaw
+  // posts to the active 'main' slot with the bytes extracted from the
+  // displayed canvas (which is the user's color image).
+  // In CMYK mode each slot needs its OWN channel's bytes (extracted from
+  // cmykChannels[ch].src with the shared crop applied) — we cannot reuse
+  // thumbnailMainRaw because that was extracted from whatever originalImg
+  // currently shows (= the active channel's grayscale only).
+  if (sessionState.cmykMode) {
+    pushSrcToAllCmykSlots();
+  } else {
+    UpdatThumbnailMainRaw();
+  }
   UpdatThumbnailFocusRaw();
   updateThumbnailSource();
   if (serverConnected()) {
@@ -1126,6 +1137,29 @@ function updateThumbnails() {
   sessionState.weightImg = can.weight.canvas.toDataURL();
   sessionState.focusImg = can.focus.canvas.toDataURL();
   saveState();
+}
+
+// For each live CMYK slot, re-extract its channel grayscale bytes with the
+// CURRENT crop (recOff/recWidth/recHeight) and push to that slot's wasm.
+// Called from updateThumbnails() so any code path that re-derives thumbnails
+// (zoom, pan, B/C tweak, etc.) automatically updates every channel.
+// Independent of play state — shared-mem write hits m_srcBuff which the
+// optimizer reads on every iteration regardless.
+async function pushSrcToAllCmykSlots() {
+  if (!sessionState.cmykMode || !sessionState.cmykChannels) return;
+  if (typeof getSlotIds !== 'function') return;
+  const ids = getSlotIds();
+  for (const ch of ids) {
+    if (!['K','Y','M','C'].includes(ch)) continue;
+    const chData = sessionState.cmykChannels[ch];
+    if (!chData || !chData.src) continue;
+    try {
+      const bytes = await extractThumbnailBytesForChannelSrc(chData.src);
+      postToSlot(ch, { cmd: 'updateThumbnailMainRaw', args: { thumbnailMainRaw: bytes } });
+    } catch (e) {
+      console.error(`[CMYK-mode] pushSrcToAllCmykSlots: slot ${ch} failed`, e);
+    }
+  }
 }
 
 function handleNewServerImg() {
@@ -1254,17 +1288,27 @@ onStateChange((newState)=>{
   runTimeState.state = newState ;
   hideDivsForState(newState);
 
-  // Keep play/stop icon in sync with state — was previously set ad-hoc by
-  // PlayStop()/Play()/Stop() which left it stuck on "stop" after a keyRejected
-  // bounced PL -> ST.
+  // Keep play/stop icon in sync with the ACTIVE SLOT's play state — so
+  // switching channels in CMYK mode immediately shows the right icon
+  // for the channel you switched to, even if other channels are still
+  // running in the background.
   const playStopBtn = document.getElementById("playStop");
   if(playStopBtn){
+    const slot = (typeof getActiveSlot === 'function') ? getActiveSlot() : null;
+    const slotId = slot ? slot.id : '(none)';
+    const isPlaying = slot ? slot.playing : (newState == States.PL);
+    const keyConfirmed = slot ? slot.keyConfirmed : runTimeState.keyConfirmed;
     const icon = playStopBtn.querySelector('.material-icons');
     if(icon){
-      icon.textContent = newState==States.PL ? 'stop' : 'play_arrow' ;
+      icon.textContent = isPlaying ? 'stop' : 'play_arrow' ;
     }
-    playStopBtn.disabled = !runTimeState.keyConfirmed ;
-    playStopBtn.title = runTimeState.keyConfirmed ? '' : 'authorizing...' ;
+    const wasDisabled = playStopBtn.disabled;
+    const nowDisabled = !keyConfirmed;
+    playStopBtn.disabled = nowDisabled;
+    playStopBtn.title = keyConfirmed ? '' : 'authorizing...' ;
+    if (wasDisabled !== nowDisabled) {
+      console.log(`[PlayBtn] disabled=${nowDisabled} (slot=${slotId}, slotKeyConfirmed=${slot ? slot.keyConfirmed : '?'}, runTimeState.keyConfirmed=${runTimeState.keyConfirmed})`);
+    }
   }
 
   // Hide Make It button if no lines are set
@@ -1399,6 +1443,10 @@ function handleGifFileSelect(evt) {
 function handleImageFileSelect(evt) {
   const fileList = this.files;
   var file = this.files[0];
+  console.log('[UPLOAD] handleImageFileSelect — file=', file && file.name,
+              'size=', file && file.size,
+              'cmykMode=', sessionState.cmykMode,
+              'activeChannel=', sessionState.activeChannel);
 
   // Update button text to show filename
   const button = document.getElementById("triggerFileInput");
@@ -1406,12 +1454,14 @@ function handleImageFileSelect(evt) {
 
   var reader = new FileReader();
   reader.onloadend = function () {
+    console.log('[UPLOAD] FileReader done — data URL len=', reader.result.length,
+                'prevOriginalImgSrc len=', (sessionState.originalImgSrc || '').length);
     originalImg.src = reader.result;
     sessionState.sessionFileName = getImageFileName();
     setSessionFileName();
-      
+
     GoToCanvas(ON_CANVAS_STRINGS);
-    
+
     // Clear the file input value so the same file can be selected again
     document.getElementById("loadImgFile").value = '';
   }
@@ -1457,9 +1507,28 @@ function updateSessionParams(cb) {
 
 
 
+// Capture each CMYK slot's live snapshotBuffer into cmykChannels[ch].dna so
+// the saved JSON has the actual current DNAs (not the stale ones from when
+// the channel was last switched away from). Single-channel mode is a no-op.
+function captureLiveCmykDnasToSessionState() {
+  if (!sessionState.cmykMode || !sessionState.cmykChannels) return;
+  if (typeof getSlot !== 'function') return;
+  for (const ch of ['K','Y','M','C']) {
+    const slot = getSlot(ch);
+    if (!slot || !slot.snapshotBuffer) continue;
+    if (!sessionState.cmykChannels[ch]) continue;
+    try {
+      sessionState.cmykChannels[ch].dna = arrayBufferToBase64(slot.snapshotBuffer);
+    } catch (e) {
+      console.warn(`[saveState] failed to capture live DNA for ${ch}:`, e);
+    }
+  }
+}
+
 function saveState() {
   //localStorage.clear();
   if(runTimeState.state!=States.NS){
+    captureLiveCmykDnasToSessionState();
     let tmp = arrayBufferToBase64(sessionState.snapshotBuffer) ; ;
     sessionState.snapshotB64 = tmp ;
     localStorage.sessionState = JSON.stringify(sessionState);
@@ -1901,14 +1970,33 @@ function loader() {
     if(runTimeState.state==States.ES){
       emitStateChange(States.ES);
     }
+
+    // EARLY channel-switch detection — we need this BEFORE the size-
+    // compression block below. If originalImg.src is one of our cached
+    // CMYK channel grayscales (i.e. setActiveChannel just swapped the
+    // display image), DO NOT auto-compress: re-encoding the grayscale
+    // as JPEG (a) destroys per-channel fidelity and (b) the compressed
+    // result wouldn't match any cmykChannels[ch].src, so the next
+    // onload re-fires would mistake it for a new user upload, update
+    // originalImgSrc with the compressed grayscale, and resplitCMYK
+    // would derive 4 channels from a grayscale-treated-as-color source
+    // (collapsing C=M=Y identical, breaking the whole CMYK pipeline).
+    let _onloadIsChannelSwitch = false;
+    if (sessionState.cmykMode && sessionState.cmykChannels) {
+      for (const ch of ['K','Y','M','C']) {
+        const cs = sessionState.cmykChannels[ch] && sessionState.cmykChannels[ch].src;
+        if (cs && cs === originalImg.src) { _onloadIsChannelSwitch = true; break; }
+      }
+    }
+
     // Check if image size needs to be compressed
     const MAX_WIDTH = 1200;  // Maximum width for compressed image
     const MAX_FILE_SIZE = 500 * 1024; // 500KB max file size
-    
+
     // Get file size from base64 string
     const base64Size = originalImg.src.length * 3/4; // Approximate size in bytes
-    
-    if (originalImg.width > MAX_WIDTH || base64Size > MAX_FILE_SIZE) {
+
+    if (!_onloadIsChannelSwitch && (originalImg.width > MAX_WIDTH || base64Size > MAX_FILE_SIZE)) {
       // Create temporary canvas for compression
       const tempCanvas = document.createElement('canvas');
       const tempCtx = tempCanvas.getContext('2d');
@@ -1938,23 +2026,69 @@ function loader() {
 
     
 
-    // `changed` is the "did the user upload a genuinely new image?" signal
-    // that downstream code uses to decide whether to reset the crop rect.
-    // In CMYK mode, originalImg.src is set to the active channel's
-    // grayscale (see handlePointsChange) while originalImgSrc is preserved
-    // as the color source — so they ALWAYS differ on channel switches and
-    // on Load, even though no new image was uploaded. Treat that as
-    // "not changed" so the saved recOffX/Y/Width/Height survive the load.
-    let changed = !sessionState.cmykMode &&
+    // In CMYK mode, the `originalImg.src` we just loaded is one of two
+    // kinds of thing:
+    //   (a) a channel grayscale data URL we cached in cmykChannels[ch].src
+    //       — this happens on channel-switch and on Load. Must NOT replace
+    //       sessionState.originalImgSrc (which holds the color original)
+    //       and must NOT trigger the "new image" code paths (crop reset,
+    //       re-split).
+    //   (b) anything else — a brand-new upload the user picked. MUST
+    //       replace originalImgSrc AND trigger a re-split so the channels
+    //       re-derive from the new color image.
+    // Non-CMYK mode has no channel-grayscale concept, so it always treats
+    // a different src as a new image.
+    let isCmykChannelSwitch = false;
+    let matchedChannel = null;
+    if (sessionState.cmykMode && sessionState.cmykChannels) {
+      for (const ch of ['K','Y','M','C']) {
+        const cs = sessionState.cmykChannels[ch] && sessionState.cmykChannels[ch].src;
+        if (cs && cs === originalImg.src) {
+          isCmykChannelSwitch = true;
+          matchedChannel = ch;
+          break;
+        }
+      }
+    }
+    let changed = !isCmykChannelSwitch &&
                   sessionState.originalImgSrc != originalImg.src;
-    // In CMYK mode, originalImgSrc MUST stay as the full color image so
-    // re-splits and channel switches always derive from it. Without this
-    // guard, the first setActiveChannel() would copy the K-grayscale data
-    // URL into originalImgSrc, then sliding the K curve would "re-split"
-    // the GRAYSCALE (not the color), producing 4 near-identical garbage
-    // channels and the K image visibly disappearing.
-    if (!sessionState.cmykMode) {
+    console.log('[ONLOAD] cmykMode=', sessionState.cmykMode,
+                'srcLen=', (originalImg.src || '').length,
+                'originalImgSrcLen=', (sessionState.originalImgSrc || '').length,
+                'isCmykChannelSwitch=', isCmykChannelSwitch,
+                'matchedChannel=', matchedChannel,
+                'changed=', changed);
+    if (sessionState.cmykMode && sessionState.cmykChannels) {
+      // Brief fingerprint of channel srcs so we can see when match logic gets confused
+      const fp = ch => {
+        const s = sessionState.cmykChannels[ch] && sessionState.cmykChannels[ch].src;
+        return s ? (s.length + ':' + s.substring(s.length - 12)) : '(none)';
+      };
+      console.log('[ONLOAD] cached channel srcs len:tail —',
+                  'K=', fp('K'), 'Y=', fp('Y'), 'M=', fp('M'), 'C=', fp('C'),
+                  '| originalImg.src tail=', originalImg.src.substring(originalImg.src.length - 12));
+    }
+    if (!isCmykChannelSwitch) {
       sessionState.originalImgSrc = originalImg.src;
+      console.log('[ONLOAD] updated sessionState.originalImgSrc → new len=', sessionState.originalImgSrc.length);
+    } else {
+      console.log('[ONLOAD] preserved sessionState.originalImgSrc (channel switch)');
+    }
+    // CMYK-mode new-image upload: cached channel grayscales are now stale.
+    // Fire resplitCMYK() asynchronously so the onload chain can finish
+    // its synchronous work first; resplitCMYK will reload the active
+    // channel via setActiveChannel and trigger onload again — which will
+    // then take the "channel switch" branch above and not loop.
+    if (sessionState.cmykMode && !isCmykChannelSwitch) {
+      console.log('[ONLOAD→CMYK] new image detected — calling resplitCMYK()');
+      try {
+        const p = resplitCMYK();
+        if (p && typeof p.then === 'function') {
+          p.then(()  => console.log('[ONLOAD→CMYK] resplitCMYK() resolved'))
+           .catch(e => console.error('[ONLOAD→CMYK] resplitCMYK() rejected:', e));
+        }
+      }
+      catch (e) { console.error('[ONLOAD→CMYK] resplitCMYK threw sync:', e); }
     }
 
     can.weight.canvas.width = originalImg.width / IMG_TO_CANVAS_SCLAE;
@@ -1992,8 +2126,15 @@ function initUploadButton() {
 }
 
 function Continue(){
-  LoadStateFromLocalStorage()
-  startSession();
+  LoadStateFromLocalStorage();
+  // Same teardown logic as LoadSession — Continue is a fresh start.
+  if (typeof tearDownAllSlots === 'function') tearDownAllSlots();
+  if (sessionState.cmykMode) {
+    initCMYKProject();
+  } else {
+    if (typeof recreateMainSlot === 'function') recreateMainSlot();
+    startSession();
+  }
 }
 function inputControler(name, unit, callback) {
   let input = document.getElementById(name + "-in")
@@ -2010,7 +2151,11 @@ function inputControler(name, unit, callback) {
 
 
 function PlayStop(){
-  if(runTimeState.state==States.PL){
+  // Per-slot play state: the button toggles the ACTIVE slot's play/stop.
+  // In CMYK mode the inactive slots keep doing whatever they were doing.
+  const slot = (typeof getActiveSlot === 'function') ? getActiveSlot() : null;
+  const isPlaying = slot ? slot.playing : (runTimeState.state == States.PL);
+  if (isPlaying) {
       Stop();
       saveState();
   } else {
@@ -2019,8 +2164,9 @@ function PlayStop(){
 }
 
 function Play() {
-  if(!runTimeState.keyConfirmed){
-    console.warn("Play blocked: key not confirmed yet");
+  const slot = (typeof getActiveSlot === 'function') ? getActiveSlot() : null;
+  if (!slot || !slot.keyConfirmed) {
+    console.warn(`[Play] blocked — slot=${slot ? slot.id : '?'} keyConfirmed=${slot ? slot.keyConfirmed : '?'}`);
     return;
   }
   updateThumbnails();
@@ -2030,7 +2176,13 @@ function Play() {
 
 function Stop(cb) {
   pauseSender();
-  PostWorkerMessage({cmd : "stopImprove" ,args : { }});
+  // Target the active slot only — other slots keep their own play state.
+  if (typeof StopCapturing === 'function') {
+    StopCapturing();
+  } else {
+    // Fallback for ordering edge cases at page load
+    PostWorkerMessage({cmd : "stopImprove" ,args : { }});
+  }
   emitStateChange(States.ST) ;
 }
 
@@ -2132,6 +2284,23 @@ function updateBrightness(val, bDone) {
   }
   PostWorkerMessage({cmd : "updateParam" ,args : {type: "double",name : "brightness", val : sessionState.brightness }});
   updateThumbnailSource();
+
+}
+
+// Vivid is a saturation boost applied to the COLOR original BEFORE the
+// CMYK split. Pushing the input image away from luma makes each channel
+// more separated, so the per-channel string art looks punchier.
+// In non-CMYK mode there's no color image to saturate — slider no-ops
+// for now (single-channel tone-curve would be a separate feature).
+function updateVivid(val, bDone) {
+
+  document.getElementById("vividRangeText").value = val;
+  sessionState.vivid = val;
+  if (sessionState.cmykMode) {
+    // Debounce re-split via the existing K-curve scheduler — same 250ms
+    // window keeps drag-interactions smooth without re-splitting 60x/sec.
+    scheduleCMYKResplit();
+  }
 
 }
 
@@ -2608,7 +2777,7 @@ function _localKBlend(s, destR, destG, destB) {
 //   srcBuff_M = G + kDens
 //   srcBuff_Y = B + kDens
 // srcBuff convention: 0 = full ink, 255 = blank.
-function computeChannelDataUrl(colorImg, channel, gcr) {
+function computeChannelDataUrl(colorImg, channel, gcr, vivid) {
   const w = colorImg.width;
   const h = colorImg.height;
   const cv = document.createElement('canvas');
@@ -2617,8 +2786,21 @@ function computeChannelDataUrl(colorImg, channel, gcr) {
   cx.drawImage(colorImg, 0, 0);
   const imgData = cx.getImageData(0, 0, w, h);
   const d = imgData.data;
+  // Vivid 0..100 → luma-preserving saturation multiplier 1..3.
+  // 0 = pass-through (neutral). Bigger pushes each pixel further from
+  // its own luma; gray pixels stay gray; saturated colors get more
+  // saturated → CMY channels separate more after the split below.
+  const v01 = (parseFloat(vivid) || 0) / 100;
+  const satFactor = 1 + 2 * v01;
+  const doSat = satFactor !== 1;
   for (let i = 0; i < d.length; i += 4) {
-    const r = d[i], g = d[i+1], b = d[i+2];
+    let r = d[i], g = d[i+1], b = d[i+2];
+    if (doSat) {
+      const lum = 0.299*r + 0.587*g + 0.114*b;
+      r = Math.max(0, Math.min(255, lum + (r - lum) * satFactor));
+      g = Math.max(0, Math.min(255, lum + (g - lum) * satFactor));
+      b = Math.max(0, Math.min(255, lum + (b - lum) * satFactor));
+    }
     const neutralAmount = 255 - Math.max(r, g, b);
     const kBlend = _localKBlend(gcr, r, g, b);
     const kDens = kBlend * neutralAmount;
@@ -2688,24 +2870,26 @@ function cmykShowPreview() {
 
   if (!dnaMap && sessionState.cmykMode && sessionState.cmykChannels) {
     dnaMap = {};
-    // Capture the in-flight snapshot for the active channel first.
-    if (sessionState.activeChannel && sessionState.snapshotBuffer &&
-        sessionState.snapshotBuffer.length > 0) {
-      const liveBuf = sessionState.snapshotBuffer;
-      dnaMap[sessionState.activeChannel] =
-        liveBuf.buffer && liveBuf.byteLength
-          ? liveBuf.buffer.slice(liveBuf.byteOffset, liveBuf.byteOffset + liveBuf.byteLength)
-          : new Uint8Array(liveBuf).slice().buffer;
-    }
-    // Then pull saved DNAs from cmykChannels for the others.
+    // For each channel, prefer the LIVE per-slot snapshotBuffer (each
+    // CMYK channel runs its own wasm session in its own worker, so we
+    // have a live snapshot for every channel that's been activated at
+    // least once). Fall back to the saved base64 .dna for channels
+    // whose slot hasn't been spawned yet.
     for (const ch of ['K', 'Y', 'M', 'C']) {
-      if (dnaMap[ch]) continue;
+      const slot = (typeof getSlot === 'function') ? getSlot(ch) : null;
+      const live = slot && slot.snapshotBuffer;
+      if (live && live.length > 0) {
+        dnaMap[ch] = live.buffer && live.byteLength
+          ? live.buffer.slice(live.byteOffset, live.byteOffset + live.byteLength)
+          : new Uint8Array(live).slice().buffer;
+        continue;
+      }
       const saved = sessionState.cmykChannels[ch] && sessionState.cmykChannels[ch].dna;
       if (saved && saved.length > 0) {
         dnaMap[ch] = base64ToArrayBuffer(saved);
       }
     }
-    source = 'CMYK-mode channels';
+    source = 'CMYK-mode channels (per-slot live + saved fallback)';
   }
 
   if (!dnaMap || Object.keys(dnaMap).length === 0) {
@@ -3017,7 +3201,7 @@ async function runCMYK() {
       try { Stop(); } catch(e) {}
       await _sleep(300);
 
-      const channelUrl = computeChannelDataUrl(colorImg, ch, gcr);
+      const channelUrl = computeChannelDataUrl(colorImg, ch, gcr, sessionState.vivid);
 
       status.textContent = `[${i+1}/${channels.length}] ${ch}: loading channel image...`;
       await setOriginalImgAndWait(channelUrl);
@@ -3195,8 +3379,11 @@ function createProject() {
     console.log('[Create Project] CMYK ticked → initCMYKProject()');
     initCMYKProject();
   } else {
-    // Existing single-channel path.
+    // Existing single-channel path. Tear down any leftover slots from a
+    // previous CMYK session and create a fresh 'main' slot for this one.
     sessionState.cmykMode = false;
+    if (typeof tearDownAllSlots === 'function') tearDownAllSlots();
+    if (typeof recreateMainSlot === 'function') recreateMainSlot();
     startSession();
   }
 }
@@ -3222,6 +3409,13 @@ async function initCMYKProject() {
   const previewBtn = document.getElementById('cmykPreviewBtn');
   if (previewBtn) previewBtn.disabled = false;
 
+  // Tear down the default single-channel 'main' slot. CMYK mode spawns
+  // up to 4 dedicated channel slots lazily — main is dead weight here.
+  if (typeof getSlot === 'function' && getSlot('main')) {
+    console.log('[CMYK-mode] entering CMYK — destroying default main slot');
+    try { destroyChannelSlot('main'); } catch(e) { console.warn('destroy main threw:', e); }
+  }
+
   // Only split if we don't already have channels (e.g. loading saved
   // session). Preserves per-channel DNAs across reloads.
   const haveChannels = sessionState.cmykChannels &&
@@ -3238,7 +3432,7 @@ async function initCMYKProject() {
     sessionState.cmykChannels = {};
     for (const ch of ['K', 'Y', 'M', 'C']) {
       sessionState.cmykChannels[ch] = {
-        src:        computeChannelDataUrl(colorImg, ch, gcr),
+        src:        computeChannelDataUrl(colorImg, ch, gcr, sessionState.vivid),
         dna:        '',
         brightness: seedB,
         contrast:   seedC,
@@ -3279,37 +3473,164 @@ function scheduleCMYKResplit() {
 // they had to disable + re-enable CMYK mode (which wiped DNAs). Now they
 // click "Re-split" and keep their work.
 async function resplitCMYK() {
+  console.log('[RESPLIT] enter resplitCMYK',
+              'cmykMode=', sessionState.cmykMode,
+              'originalImgSrc len=', (sessionState.originalImgSrc || '').length,
+              'activeChannel=', sessionState.activeChannel);
   if (!sessionState.cmykMode) {
-    console.warn('[CMYK-mode] resplitCMYK called but cmykMode is off');
+    console.warn('[RESPLIT] bail: cmykMode is off');
     return;
   }
   if (!sessionState.originalImgSrc || sessionState.originalImgSrc.length < 16) {
-    console.warn('[CMYK-mode] no original color image to re-split');
+    console.warn('[RESPLIT] bail: no original color image to re-split');
     return;
   }
   const labelDiv = document.getElementById('cmykActiveChannelLabel');
   if (labelDiv) labelDiv.textContent = 'Re-splitting…';
 
+  console.log('[RESPLIT] loading colorImg from originalImgSrc...');
   const colorImg = await loadImageFromDataUrl(sessionState.originalImgSrc);
+  console.log('[RESPLIT] colorImg loaded', colorImg.width, 'x', colorImg.height);
   const gcr = (parseInt(document.getElementById('cmykGCR').value, 10) || 0) / 100;
   for (const ch of ['K', 'Y', 'M', 'C']) {
     if (!sessionState.cmykChannels[ch]) {
       sessionState.cmykChannels[ch] = { src: '', dna: '' };
     }
+    const oldLen = (sessionState.cmykChannels[ch].src || '').length;
     // Only the grayscale changes — preserve any saved dna.
-    sessionState.cmykChannels[ch].src = computeChannelDataUrl(colorImg, ch, gcr);
+    sessionState.cmykChannels[ch].src = computeChannelDataUrl(colorImg, ch, gcr, sessionState.vivid);
+    console.log(`[RESPLIT]   channel ${ch}: src len ${oldLen} → ${sessionState.cmykChannels[ch].src.length}`);
   }
-  console.log(`[CMYK-mode] re-split done at gcr=${gcr.toFixed(2)} — DNAs preserved`);
+  console.log(`[RESPLIT] all 4 channels rebuilt at gcr=${gcr.toFixed(2)}, vivid=${sessionState.vivid}`);
 
-  // Reload the active channel so the user immediately sees the new K curve
-  // effect on the source canvas. setActiveChannel will save its current
-  // running DNA first (which we want — the user's mid-channel work).
-  await setActiveChannel(sessionState.activeChannel || 'K');
+  // Push the new grayscale bytes into each EXISTING channel slot's
+  // m_srcBuff via updateThumbnailMainRaw. The wasm session itself is
+  // preserved (no re-init), so DNA + auth all carry over. Each slot's
+  // next SA_Improve iteration uses the new target image automatically.
+  for (const ch of ['K','Y','M','C']) {
+    if (typeof getSlot === 'function' && getSlot(ch)) {
+      try {
+        const bytes = await extractThumbnailBytesForChannelSrc(sessionState.cmykChannels[ch].src);
+        postToSlot(ch, { cmd: 'updateThumbnailMainRaw', args: { thumbnailMainRaw: bytes } });
+        console.log(`[RESPLIT] pushed new src bytes to slot ${ch}`);
+      } catch (e) {
+        console.error(`[RESPLIT] failed to push bytes to slot ${ch}:`, e);
+      }
+    }
+  }
+
+  // Show the active channel's new grayscale on the display canvas.
+  const targetCh = sessionState.activeChannel || 'K';
+  await setActiveChannel(targetCh);
+  console.log('[RESPLIT] done');
 }
 
 // Switch which channel is currently being optimized. Saves the running
 // snapshot to the previous channel, swaps the source image, restores the
 // new channel's DNA, and restarts the wasm session so it picks up both.
+// ──────────────────────────────────────────────────────────────────────────
+// CMYK multi-slot helpers (Phase 2)
+// ──────────────────────────────────────────────────────────────────────────
+
+// Render a channel's grayscale data URL into a hidden canvas with the same
+// crop/scale the page applies for display, then read the bytes into an
+// Int8Array (one byte per pixel — channels are already grayscale so R=G=B).
+// This is what each slot's wasm `m_srcBuff` gets initialized from.
+async function extractThumbnailBytesForChannelSrc(channelSrc) {
+  const img = await loadImageFromDataUrl(channelSrc);
+  const sourceW = sessionState.sourceWidth;
+  const sourceH = sessionState.sourceHeight;
+  const tempCanvas = document.createElement('canvas');
+  tempCanvas.width = sourceW;
+  tempCanvas.height = sourceH;
+  const ctx = tempCanvas.getContext('2d', { willReadFrequently: true });
+  const s = IMG_TO_CANVAS_SCLAE;
+  // Match the crop rect: img(rec*s, ...) drawn to sourceW×sourceH.
+  ctx.drawImage(img,
+    sessionState.recOffX  * s, sessionState.recOffY  * s,
+    sessionState.recWidth * s, sessionState.recHeight * s,
+    0, 0, sourceW, sourceH);
+  const imgData = ctx.getImageData(0, 0, sourceW, sourceH);
+  const bytes = new Int8Array(sourceW * sourceH);
+  for (let i = 0; i < bytes.length; i++) {
+    bytes[i] = imgData.data[i * 4]; // R; G/B are identical for grayscale
+  }
+  return bytes;
+}
+
+// Build the init JSON for a specific CMYK channel — mirrors startSession()'s
+// params shape, but uses per-channel B/C + DNA from cmykChannels[ch].
+function buildInitJsonForChannel(ch) {
+  const chData = sessionState.cmykChannels[ch] || {};
+  const params = {
+    stringPixelRatio: parseInt(sessionState.stringPixelRation),
+    normalize: parseFloat(sessionState.normalize),
+    collision: parseFloat(sessionState.collision),
+    width: sessionState.sourceWidth,
+    height: sessionState.sourceHeight,
+    serverSnapshot: chData.dna || '',
+    bgColors: JSON.stringify(sessionState.bgColors),
+    dots: [],
+    brightness: parseFloat(chData.brightness !== undefined ? chData.brightness : sessionState.brightness),
+    contrast:   parseFloat(chData.contrast   !== undefined ? chData.contrast   : sessionState.contrast),
+    bgStrength: parseFloat(sessionState.bgStrength),
+    distanceViewFactor: parseFloat(sessionState.distanceViewFactor),
+  };
+  const dots = sessionState.dots || [];
+  for (let i = 0; i < dots.length; i++) {
+    const d = dots[i];
+    params.dots.push({ x: params.width * d[0], y: params.height * d[1] });
+  }
+  return JSON.stringify(params);
+}
+
+// If a slot for this channel doesn't exist yet, spawn it (which posts init
+// → triggers Firebase auth → resolves when keyConfirmed). Then push the
+// channel's thumbnail bytes. Subsequent calls are no-ops because the slot
+// is already live.
+async function ensureSlotExists(ch) {
+  if (typeof getSlot !== 'function') {
+    console.warn('[CMYK-mode] ensureSlotExists called but wasmGlue not loaded');
+    return null;
+  }
+  const existing = getSlot(ch);
+  if (existing) {
+    console.log(`[CMYK-mode] slot ${ch} already exists`);
+    return existing;
+  }
+  console.log(`[CMYK-mode] spawning slot ${ch}`);
+  const initJson = buildInitJsonForChannel(ch);
+  const slot = await spawnChannelSlot(ch, initJson);
+  // Push the channel's thumbnail bytes so its wasm m_srcBuff has the
+  // target image to optimize toward.
+  const bytes = await extractThumbnailBytesForChannelSrc(sessionState.cmykChannels[ch].src);
+  postToSlot(ch, { cmd: 'updateThumbnailMainRaw', args: { thumbnailMainRaw: bytes } });
+
+  // Pre-populate the slot's snapshotBuffer from the saved DNA (if any).
+  // Without this, switching to a freshly-spawned channel shows nothing
+  // because the worker only sends snapshots during improve — until Play
+  // is pressed, there's nothing to draw from. Pre-populating means the
+  // canvas shows whatever the saved state was the moment the channel
+  // is selected, even before Play.
+  const savedDna = sessionState.cmykChannels[ch] && sessionState.cmykChannels[ch].dna;
+  if (savedDna && savedDna.length > 0) {
+    try {
+      slot.snapshotBuffer = new Int8Array(base64ToArrayBuffer(savedDna));
+      console.log(`[CMYK-mode] pre-populated slot ${ch}.snapshotBuffer from saved DNA (${slot.snapshotBuffer.length} bytes)`);
+    } catch (e) {
+      console.warn(`[CMYK-mode] failed to pre-populate ${ch} snapshotBuffer:`, e);
+    }
+  }
+
+  console.log(`[CMYK-mode] slot ${ch} fully initialized (init + thumbnail)`);
+  return slot;
+}
+
+// Replaces the old in-place-swap-on-the-single-slot setActiveChannel.
+// Now: ensure the target channel has its own wasm slot (lazy-spawn on
+// first switch), then it's pure UI — point active slot at it, swap the
+// displayed image, sync sliders, update button. The previously-active
+// slot keeps running (or paused) independently.
 async function setActiveChannel(ch) {
   if (!sessionState.cmykMode) {
     console.warn('[CMYK-mode] setActiveChannel called but cmykMode is off');
@@ -3320,58 +3641,55 @@ async function setActiveChannel(ch) {
     return;
   }
 
-  // 0) If we're mid-play, stop cleanly BEFORE swapping. Otherwise the
-  //    in-flight setInterval keeps calling SA_Improve with the old
-  //    sessionKey while startSession() below builds a brand-new wasm
-  //    session with a different hash — the key-rejection recovery fires
-  //    and play silently dies. We capture intent here and resume below.
-  const wasPlaying = (runTimeState.state === States.PL);
-  if (wasPlaying) {
-    console.log('[CMYK-mode] channel switch while playing — stopping first');
-    Stop();
-  }
+  console.log(`[CMYK-mode] setActiveChannel → ${ch} (was ${sessionState.activeChannel})`);
 
-  // 1) Save in-flight snapshot AND current brightness/contrast to the OLD
-  //    channel before swapping out — each channel tracks its own b/c.
+  // 1) Persist the OUTGOING channel's slider values back into its slot's
+  //    cmykChannels entry. (DNA is owned by the slot's wasm — JS only sees
+  //    snapshots; nothing to save here per-switch.)
   const old = sessionState.activeChannel;
-  if (old && sessionState.cmykChannels[old]) {
-    const buf = sessionState.snapshotBuffer;
-    if (buf && buf.length > 0) {
-      sessionState.cmykChannels[old].dna = arrayBufferToBase64(buf);
-      console.log(`[CMYK-mode] saved DNA of channel ${old} ` +
-                  `(${sessionState.cmykChannels[old].dna.length} chars b64)`);
-    }
+  if (old && old !== ch && sessionState.cmykChannels[old]) {
     sessionState.cmykChannels[old].brightness = sessionState.brightness;
     sessionState.cmykChannels[old].contrast   = sessionState.contrast;
   }
 
-  // 2) Switch active channel, restore its DNA, and restore its b/c.
+  // 2) Ensure the target channel has a live wasm slot. First switch to a
+  //    channel spawns its worker + does the Firebase auth round-trip.
+  //    Subsequent switches are instant (slot already exists).
+  const cmykPanel = document.getElementById('cmykActiveChannelLabel');
+  if (cmykPanel) cmykPanel.textContent = `Loading ${ch}…`;
+  try {
+    await ensureSlotExists(ch);
+  } catch (e) {
+    console.error(`[CMYK-mode] ensureSlotExists(${ch}) failed:`, e);
+    if (cmykPanel) cmykPanel.textContent = `Error loading ${ch}`;
+    return;
+  }
+  if (cmykPanel) cmykPanel.textContent = `Active: ${ch}`;
+
+  // 3) Update activeChannel + active slot. setActiveSlotId mirrors the
+  //    new slot's auth/snapshot state into sessionState and emits a
+  //    stateChange so the Play button icon refreshes for this slot.
   sessionState.activeChannel = ch;
-  sessionState.snapshotB64 = sessionState.cmykChannels[ch].dna || '';
-  sessionState.snapshotBuffer = sessionState.snapshotB64
-    ? new Int8Array(base64ToArrayBuffer(sessionState.snapshotB64))
-    : null;
-  // Pull per-channel brightness/contrast back into the global slots and
-  // sync the UI sliders so the user sees the active channel's values.
-  if (sessionState.cmykChannels[ch].brightness !== undefined) {
-    sessionState.brightness = sessionState.cmykChannels[ch].brightness;
+  setActiveSlotId(ch);
+
+  // 4) Sync UI sliders to this channel's B/C.
+  const chData = sessionState.cmykChannels[ch];
+  if (chData.brightness !== undefined) {
+    sessionState.brightness = chData.brightness;
     const br  = document.getElementById('brightnessRange');
     const brT = document.getElementById('brightnessRangeText');
     if (br)  br.value  = sessionState.brightness;
     if (brT) brT.value = sessionState.brightness;
   }
-  if (sessionState.cmykChannels[ch].contrast !== undefined) {
-    sessionState.contrast = sessionState.cmykChannels[ch].contrast;
+  if (chData.contrast !== undefined) {
+    sessionState.contrast = chData.contrast;
     const co  = document.getElementById('contrastRange');
     const coT = document.getElementById('contrastRangeText');
     if (co)  co.value  = sessionState.contrast;
     if (coT) coT.value = sessionState.contrast;
   }
-  console.log(`[CMYK-mode] activating channel ${ch} ` +
-              `(dna ${sessionState.snapshotB64.length} b64, ` +
-              `b=${sessionState.brightness}, c=${sessionState.contrast})`);
 
-  // 3) Highlight the active channel button.
+  // 5) Highlight the active channel button.
   document.querySelectorAll('#cmykChannelToggles button').forEach(b => {
     if (b.dataset.ch === ch) {
       b.style.boxShadow = '0 0 0 3px gold inset';
@@ -3379,44 +3697,18 @@ async function setActiveChannel(ch) {
       b.style.boxShadow = '';
     }
   });
-  const labelDiv = document.getElementById('cmykActiveChannelLabel');
-  if (labelDiv) labelDiv.textContent = `Active: ${ch}`;
 
-  // 4) Load the new channel's grayscale into originalImg. The existing
-  //    onload chain (handleNewServerImg → updateThumbnails) re-derives
-  //    thumbnailMainRaw from this new image automatically.
-  await new Promise((resolve) => {
-    const handler = () => {
-      originalImg.removeEventListener('load', handler);
-      // Give the onload chain a tick to run handleNewServerImg etc.
-      setTimeout(resolve, 300);
-    };
-    originalImg.addEventListener('load', handler);
-    originalImg.src = sessionState.cmykChannels[ch].src;
-  });
+  // 6) Swap displayed image to the channel's grayscale (display only —
+  //    each slot's wasm already has its own srcBuff so we don't need
+  //    to push thumbnail bytes via the worker on every switch).
+  originalImg.src = chData.src;
 
-  // 5) Restart the wasm session so it picks up the new srcBuff (channel
-  //    grayscale) and the new DNA (snapshotB64 → serverSnapshot in init).
-  try { startSession(); } catch (e) {
-    console.error('[CMYK-mode] startSession() threw:', e);
-  }
-
-  // 6) If the user was playing when they hit the channel button, resume
-  //    play on the new channel once Firebase has handed back the fresh
-  //    sessionKey (gated by runTimeState.keyConfirmed). Poll briefly,
-  //    bail after 10s so we never wedge here on a network hiccup.
-  if (wasPlaying) {
-    const deadline = Date.now() + 10000;
-    const t = setInterval(() => {
-      if (runTimeState.keyConfirmed) {
-        clearInterval(t);
-        console.log('[CMYK-mode] resuming play on channel', ch);
-        Play();
-      } else if (Date.now() > deadline) {
-        clearInterval(t);
-        console.warn('[CMYK-mode] gave up waiting for keyConfirmed; user must press play');
-      }
-    }, 100);
+  // 7) Auto-refresh CMYK preview if it's open.
+  const previewBlock = document.getElementById('cmykPreviewBlock');
+  if (previewBlock && previewBlock.style.display !== 'none') {
+    console.log('[CMYK-mode] preview is open — auto-refreshing for new active channel');
+    try { cmykShowPreview(); }
+    catch (e) { console.error('[CMYK-mode] cmykShowPreview auto-refresh failed:', e); }
   }
 }
 

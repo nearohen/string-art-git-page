@@ -234,6 +234,11 @@
             oninput="updateBrightness(this.value,false);" onchange="updateBrightness(this.value,true);">
         <input type="text" id="brightnessRangeText" value="50" size="1"><br>
 
+        <label for="vividRange">Vivid</label>
+        <input type="range" id="vividRange" value="0" min='0' max='100' step='1'
+            oninput="updateVivid(this.value,false);" onchange="updateVivid(this.value,true);">
+        <input type="text" id="vividRangeText" value="0" size="1"><br>
+
         <label for="stringPixelRatio">Thickness</label>
         <input type="range" id="stringPixelRatio" value="" min='2' max='48' step='1'
             oninput="updateStringPixelRatio(this.value,false);" onchange="updateStringPixelRatio(this.value,true);">

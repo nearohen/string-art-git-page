@@ -100,59 +100,122 @@ function handleUser(userE){
 
 
 
-let unsubscribeAssemblyKey = null;
-function updateDB(userId, sessionLock, cb) {
-    const user = auth.currentUser;
-    if (!user) {
-        console.error("No user logged in");
-        return;
-    }
+// SERIALIZED auth requests.
+//
+// All slots share ONE Firebase path:
+//   users/{uid}/assemblyLock  ← we write here
+//   users/{uid}/assemblyKey   ← cloud function writes here, all subscribers listen
+//
+// If two slots auth in parallel:
+//   A writes lockA → fn hashes → writes hashA
+//   B writes lockB → fn hashes → writes hashB
+//   Both A's and B's listeners fire with hashB → A gets B's key → wrong!
+//
+// Fix: chain auths on a global promise queue. Each updateDB call waits for
+// the previous one to fully complete (key delivered → cb fired → listener
+// unsubscribed) before writing its own lock. One slot's auth round-trip is
+// done before the next starts.
+//
+// Listener is one-shot: subscribe → wait for the correct fire → cb → unsub
+// → resolve the queue. This is acceptable because re-auth (e.g. on
+// SESSION_KEY_REJECTED) is handled by wasmGlue.keyRejected which calls
+// updateDB again — a brand new queued auth.
 
-    const newData = {
-        assemblyLock: sessionLock,
-        userEmail: user.email,  // Add user's email
-        lastUpdated: Date.now() // Optional: add timestamp
-    };
+let _authQueue = Promise.resolve();
 
-    const db = getDatabase(app);
-    const dbRef = ref(db, `users/${userId}`);
+function updateDB(userId, sessionLock, cb, slotId) {
+    const slotKey = slotId || 'main';
+    const queuedAt = Date.now();
 
-    if (unsubscribeAssemblyKey) {
-        unsubscribeAssemblyKey();
-        unsubscribeAssemblyKey = null;
-    }
-    // Always accept whatever value is in assemblyKey, including the first
-    // fire. Reasoning: the wasm RNG is deterministic in the browser, so the
-    // SAME lock is generated each session — meaning the cloud function sees
-    // no change and never writes a fresh assemblyKey. The only listener
-    // event is the initial one carrying the previously-stored value. If we
-    // skip it as "stale" we wait forever for a re-write that never comes.
-    //
-    // Accepting it is safe: the wasm validates the key on every SA_Improve
-    // call. If the stored value doesn't match this session's expected hash,
-    // wasm returns SESSION_KEY_REJECTED, wasmGlue.keyRejected re-auths, and
-    // the cloud function writes a new value → next listener fire → we
-    // accept that one too. Self-correcting.
-    let firstFire = true;
-    const onKey = ref(db, `users/${userId}/assemblyKey`);
-    unsubscribeAssemblyKey = onValue(onKey, (snapshot) => {
-        const updatedData = snapshot.val();
-        if (firstFire) {
-            firstFire = false;
-            console.log("assemblyKey initial fire (accepted):", updatedData);
-        } else {
-            console.log("assemblyKey changed:", updatedData);
+    _authQueue = _authQueue.then(() => new Promise((resolve) => {
+        const startedAt = Date.now();
+        console.log(`[slot ${slotKey}] auth queue: starting (waited ${startedAt - queuedAt}ms)`);
+
+        const user = auth.currentUser;
+        if (!user) {
+            console.error(`[slot ${slotKey}] No user logged in — aborting auth`);
+            resolve();
+            return;
         }
-        cb(updatedData);
-    });
 
-    update(dbRef, newData)
-        .then(() => {
-            console.log("Data updated successfully");
-        })
-        .catch((error) => {
-            console.error("Error updating data:", error);
+        const newData = {
+            assemblyLock: sessionLock,
+            userEmail: user.email,
+            lastUpdated: Date.now()
+        };
+        const db = getDatabase(app);
+        const dbRef = ref(db, `users/${userId}`);
+
+        // The flow:
+        //
+        // 1. Subscribe — the FIRST onValue fire is the current assemblyKey
+        //    BEFORE our write. Capture as initialValue, don't accept yet.
+        // 2. Write our lock. Cloud function (`onSignIn` in functions/index.ts)
+        //    is `onValueWritten` so it fires on every write — it hashes
+        //    our lock and writes the result to assemblyKey.
+        // 3. If our lock hashes to a DIFFERENT value than initialValue,
+        //    Firebase fires a CHANGE event on the listener → use that.
+        // 4. If our lock hashes to the SAME value as initialValue, Firebase
+        //    does NOT fire a change event (same-value write). After a short
+        //    timeout we conclude this case happened and use initialValue.
+        // 5. Hard timeout at 8s in case the cloud function is down.
+
+        let initialFired = false;
+        let initialValue = null;
+        let resolved     = false;
+        let unsub        = null;
+
+        const finish = (value, reason) => {
+            if (resolved) return;
+            resolved = true;
+            if (typeof unsub === 'function') {
+                try { unsub(); } catch(e) {}
+            }
+            console.log(`[slot ${slotKey}] auth done in ${Date.now() - startedAt}ms (${reason}) → key=${value}`);
+            try { cb(value); } catch(e) { console.error(`[slot ${slotKey}] cb threw:`, e); }
+            resolve();
+        };
+
+        const onKey = ref(db, `users/${userId}/assemblyKey`);
+        unsub = onValue(onKey, (snapshot) => {
+            if (resolved) return;
+            const v = snapshot.val();
+            if (!initialFired) {
+                initialFired = true;
+                initialValue = v;
+                console.log(`[slot ${slotKey}] initial value captured: ${v}`);
+                return;
+            }
+            console.log(`[slot ${slotKey}] change event: ${v}`);
+            finish(v, "change event");
         });
+
+        update(dbRef, newData)
+            .then(() => console.log(`[slot ${slotKey}] lock write OK`))
+            .catch((error) => {
+                console.error(`[slot ${slotKey}] lock write ERROR:`, error);
+                finish(null, "write error");
+            });
+
+        // No-change timeout: lock probably hashed to the same value as
+        // initialValue, so no change event will ever fire. Accept initial.
+        // 1500ms is enough for the cloud function round-trip in normal
+        // conditions (write→trigger→hash→write) — observed ~300-700ms.
+        const noChangeTimer = setTimeout(() => {
+            if (resolved) return;
+            if (initialFired) {
+                finish(initialValue, "no-change timeout (lock matches existing)");
+            }
+        }, 1500);
+
+        // Hard timeout — give up entirely so the auth queue isn't wedged.
+        const hardTimer = setTimeout(() => {
+            if (resolved) return;
+            console.warn(`[slot ${slotKey}] auth HARD TIMEOUT 8s`);
+            finish(null, "hard timeout");
+        }, 8000);
+    }));
+    return _authQueue;
 }
 window.updateDB = updateDB ;
 
