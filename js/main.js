@@ -1938,7 +1938,15 @@ function loader() {
 
     
 
-    let changed = sessionState.originalImgSrc != originalImg.src;
+    // `changed` is the "did the user upload a genuinely new image?" signal
+    // that downstream code uses to decide whether to reset the crop rect.
+    // In CMYK mode, originalImg.src is set to the active channel's
+    // grayscale (see handlePointsChange) while originalImgSrc is preserved
+    // as the color source — so they ALWAYS differ on channel switches and
+    // on Load, even though no new image was uploaded. Treat that as
+    // "not changed" so the saved recOffX/Y/Width/Height survive the load.
+    let changed = !sessionState.cmykMode &&
+                  sessionState.originalImgSrc != originalImg.src;
     // In CMYK mode, originalImgSrc MUST stay as the full color image so
     // re-splits and channel switches always derive from it. Without this
     // guard, the first setActiveChannel() would copy the K-grayscale data
@@ -3312,6 +3320,17 @@ async function setActiveChannel(ch) {
     return;
   }
 
+  // 0) If we're mid-play, stop cleanly BEFORE swapping. Otherwise the
+  //    in-flight setInterval keeps calling SA_Improve with the old
+  //    sessionKey while startSession() below builds a brand-new wasm
+  //    session with a different hash — the key-rejection recovery fires
+  //    and play silently dies. We capture intent here and resume below.
+  const wasPlaying = (runTimeState.state === States.PL);
+  if (wasPlaying) {
+    console.log('[CMYK-mode] channel switch while playing — stopping first');
+    Stop();
+  }
+
   // 1) Save in-flight snapshot AND current brightness/contrast to the OLD
   //    channel before swapping out — each channel tracks its own b/c.
   const old = sessionState.activeChannel;
@@ -3380,6 +3399,24 @@ async function setActiveChannel(ch) {
   //    grayscale) and the new DNA (snapshotB64 → serverSnapshot in init).
   try { startSession(); } catch (e) {
     console.error('[CMYK-mode] startSession() threw:', e);
+  }
+
+  // 6) If the user was playing when they hit the channel button, resume
+  //    play on the new channel once Firebase has handed back the fresh
+  //    sessionKey (gated by runTimeState.keyConfirmed). Poll briefly,
+  //    bail after 10s so we never wedge here on a network hiccup.
+  if (wasPlaying) {
+    const deadline = Date.now() + 10000;
+    const t = setInterval(() => {
+      if (runTimeState.keyConfirmed) {
+        clearInterval(t);
+        console.log('[CMYK-mode] resuming play on channel', ch);
+        Play();
+      } else if (Date.now() > deadline) {
+        clearInterval(t);
+        console.warn('[CMYK-mode] gave up waiting for keyConfirmed; user must press play');
+      }
+    }, 100);
   }
 }
 
