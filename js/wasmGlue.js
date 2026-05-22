@@ -74,6 +74,11 @@ improveWorker.onmessage = function({data: {type, args}}) {
         console.warn("worker reports key rejected, re-authorizing");
         sessionState.sessionKey = "" ;
         runTimeState.keyConfirmed = false ;
+        // Bump a counter so CMYK auto-mode can detect "rejection happened
+        // during this channel" and re-invoke Play() after the next key
+        // arrives. Without this, the worker's improve-interval stays dead
+        // even though sessionKey gets replaced — channel produces no DNA.
+        runTimeState.keyRejectedCount = (runTimeState.keyRejectedCount || 0) + 1;
         let ke = document.getElementById('key');
         if(ke) ke.textContent = "re-auth..." ;
         emitStateChange(States.ST) ;

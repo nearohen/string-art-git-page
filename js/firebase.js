@@ -121,17 +121,29 @@ function updateDB(userId, sessionLock, cb) {
         unsubscribeAssemblyKey();
         unsubscribeAssemblyKey = null;
     }
+    // Always accept whatever value is in assemblyKey, including the first
+    // fire. Reasoning: the wasm RNG is deterministic in the browser, so the
+    // SAME lock is generated each session — meaning the cloud function sees
+    // no change and never writes a fresh assemblyKey. The only listener
+    // event is the initial one carrying the previously-stored value. If we
+    // skip it as "stale" we wait forever for a re-write that never comes.
+    //
+    // Accepting it is safe: the wasm validates the key on every SA_Improve
+    // call. If the stored value doesn't match this session's expected hash,
+    // wasm returns SESSION_KEY_REJECTED, wasmGlue.keyRejected re-auths, and
+    // the cloud function writes a new value → next listener fire → we
+    // accept that one too. Self-correcting.
     let firstFire = true;
     const onKey = ref(db, `users/${userId}/assemblyKey`);
     unsubscribeAssemblyKey = onValue(onKey, (snapshot) => {
         const updatedData = snapshot.val();
         if (firstFire) {
             firstFire = false;
-            console.log("Data changed (initial, skipping stale):", updatedData);
-            return;
+            console.log("assemblyKey initial fire (accepted):", updatedData);
+        } else {
+            console.log("assemblyKey changed:", updatedData);
         }
         cb(updatedData);
-        console.log("Data changed:", updatedData);
     });
 
     update(dbRef, newData)

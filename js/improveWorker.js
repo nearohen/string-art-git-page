@@ -1,6 +1,27 @@
 console.log("hello from worker");
 importScripts('./stringArtWasm.js');
 
+// Wait-for-wasm-runtime gate. Module.cwrap registers lazy wrappers
+// synchronously, but actually CALLING them (like SAInit) requires the wasm
+// runtime to be fully initialized. Chrome does that asynchronously, and
+// without HTTP caching it takes long enough that the page's first "init"
+// message can arrive before the runtime is ready — manifests as
+// "_emscripten_stack_get_current is not a function". Queue any early
+// messages and replay them once the runtime fires.
+var _wasmReady = false;
+var _pendingMsgs = [];
+Module.onRuntimeInitialized = function() {
+    console.log("[worker] wasm runtime initialized");
+    _wasmReady = true;
+    if (_pendingMsgs.length) {
+        console.log("[worker] flushing", _pendingMsgs.length, "queued message(s)");
+        const msgs = _pendingMsgs.splice(0);
+        for (const m of msgs) {
+            try { onmessage(m); } catch (e) { console.error("[worker] queued msg error", e); }
+        }
+    }
+};
+
 var SAImprove = Module.cwrap(
     "SA_Improve",
     "number",
@@ -104,6 +125,21 @@ function typedArrayToBuffer(array) {
 }
 
 onmessage = function (msg){
+
+    // If the runtime isn't ready yet, queue any wasm-touching command
+    // until onRuntimeInitialized fires. We don't gate stopImprove or
+    // initWorkerState because they're cheap pure-JS bookkeeping.
+    const cmd0 = msg && msg.data && msg.data.cmd;
+    const needsWasm = cmd0 === 'init' || cmd0 === 'startImprove' ||
+                      cmd0 === 'updateThumbnailMainRaw' ||
+                      cmd0 === 'updateThumbnailFocusRaw' ||
+                      cmd0 === 'setRelevantMask' ||
+                      cmd0 === 'updateParam';
+    if (needsWasm && !_wasmReady) {
+        console.log("[worker] queueing", cmd0, "until wasm ready");
+        _pendingMsgs.push(msg);
+        return;
+    }
 
     const {data : {cmd ,args}} = msg ;
     if(cmd === "stopImprove")

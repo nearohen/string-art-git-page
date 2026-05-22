@@ -32,6 +32,9 @@
   <script src="./js/wasmGlue.js"></script>
   <script src="./js/gcode.js"></script>
   <script src="./js/animation.js"></script>
+  <!-- runtime-config.js is gitignored; written by string-art.py before launch.
+       onerror removes the tag silently when the file is absent (public site). -->
+  <script src="./js/runtime-config.js" onerror="this.remove()"></script>
   <script src="./js/main.js"></script>
   <script>
     runTimeState.onPublicDefaults = true;
@@ -130,7 +133,11 @@
 
         </div>
           
-        <button id="startSession" type="button" onclick="startSession()">Create Project</button>
+        <label style="display: flex; align-items: center; gap: 6px; margin: 8px 0; font-size: 13px;">
+          <input type="checkbox" id="cmykModeToggle">
+          CMYK (4-channel color project)
+        </label>
+        <button id="startSession" type="button" onclick="createProject()">Create Project</button>
 
 
        </div>
@@ -240,6 +247,82 @@
 
       
       <canvas id="originalSmall"></canvas>
+
+      <!-- CMYK 4-channel sequential runner -->
+      <div id="cmykPanel" style="margin: 8px 0; padding: 8px; border: 1px solid #444; border-radius: 4px;">
+        <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px;"
+             title="Industry-style GCR (Gray Component Replacement).
+0   → no K, pure CMY
+50  → industry medium: K only in dark shadows, ramps in gently
+100 → aggressive K: replaces neutral fast">
+          <label for="cmykGCR" style="font-size: 12px;">K curve</label>
+          <input type="range" id="cmykGCR" value="50" min="0" max="100" step="1"
+                 oninput="document.getElementById('cmykGCRText').value = this.value; scheduleCMYKResplit();">
+          <input type="text" id="cmykGCRText" value="50" size="2" readonly
+                 style="width: 28px; text-align: center;">
+        </div>
+        <!-- Render the 4-channel + composite preview from whatever DNAs
+             the user has accumulated in cmykChannels (manual mode). -->
+        <button id="cmykPreviewBtn" type="button" onclick="cmykShowPreview()" disabled
+                style="width: 100%; padding: 6px; margin-top: 4px; background: #468; color: white; border: 0; border-radius: 4px; cursor: pointer;"
+                title="Render the composite + per-channel previews from the current CMYK channels">
+          🎨 Show CMYK Preview
+        </button>
+
+        <!-- ─── CMYK per-channel switcher (visible only AFTER a CMYK
+             project is created via the "CMYK" checkbox in Select Shape).
+             Each click captures the running channel's DNA into
+             cmykChannels[old].dna, loads the new channel's grayscale into
+             originalImg, restores its saved dna, and restarts the session. -->
+        <div id="cmykChannelPanel" style="display: none; margin-top: 8px; padding-top: 6px; border-top: 1px dashed #555;">
+          <div style="font-size: 11px; color: #ccc; margin-bottom: 4px;">Active channel:</div>
+          <div id="cmykChannelToggles" style="display: grid; gap: 4px; grid-template-columns: 1fr 1fr 1fr 1fr;">
+            <button type="button" data-ch="K" onclick="setActiveChannel('K')"
+                    style="padding: 6px; background: #000; color: #fff; border: 2px solid #444; border-radius: 4px; cursor: pointer; font-weight: bold;">K</button>
+            <button type="button" data-ch="Y" onclick="setActiveChannel('Y')"
+                    style="padding: 6px; background: #ee0; color: #000; border: 2px solid #444; border-radius: 4px; cursor: pointer; font-weight: bold;">Y</button>
+            <button type="button" data-ch="M" onclick="setActiveChannel('M')"
+                    style="padding: 6px; background: #e0e; color: #fff; border: 2px solid #444; border-radius: 4px; cursor: pointer; font-weight: bold;">M</button>
+            <button type="button" data-ch="C" onclick="setActiveChannel('C')"
+                    style="padding: 6px; background: #0ee; color: #000; border: 2px solid #444; border-radius: 4px; cursor: pointer; font-weight: bold;">C</button>
+          </div>
+          <div id="cmykActiveChannelLabel" style="font-size: 10px; color: #ccc; margin-top: 3px; min-height: 12px;"></div>
+          <button type="button" id="cmykResplitBtn" onclick="resplitCMYK()"
+                  style="display: none; width: 100%; padding: 4px; margin-top: 4px; background: #555; color: white; border: 0; border-radius: 4px; cursor: pointer; font-size: 11px;"
+                  title="Re-compute the 4 channel grayscales with the current K curve value. Per-channel DNAs are preserved.">
+            ↻ Re-split with current K curve
+          </button>
+        </div>
+        <div id="cmykStatus" style="font-size: 11px; color: #ccc; margin-top: 4px; min-height: 14px;"></div>
+
+        <!-- Composite preview FIRST (the main thing the user cares about),
+             then the 4 per-channel thumbnails below for inspection. -->
+        <div id="cmykPreviewBlock" style="display: none; margin-top: 6px;">
+          <div style="text-align: center;">
+            <div style="font-size: 10px; color: #ccc;">CMYK composite (multiply blend)</div>
+            <canvas id="thumbMix" style="width: 100%; background: #fff; border: 1px solid #444;"></canvas>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-top: 6px;">
+            <div style="text-align: center;">
+              <div style="font-size: 10px; color: #ccc;">K</div>
+              <canvas id="thumbK" style="width: 100%; background: #fff; border: 1px solid #444;"></canvas>
+            </div>
+            <div style="text-align: center;">
+              <div style="font-size: 10px; color: #ccc;">Y</div>
+              <canvas id="thumbY" style="width: 100%; background: #fff; border: 1px solid #444;"></canvas>
+            </div>
+            <div style="text-align: center;">
+              <div style="font-size: 10px; color: #ccc;">M</div>
+              <canvas id="thumbM" style="width: 100%; background: #fff; border: 1px solid #444;"></canvas>
+            </div>
+            <div style="text-align: center;">
+              <div style="font-size: 10px; color: #ccc;">C</div>
+              <canvas id="thumbC" style="width: 100%; background: #fff; border: 1px solid #444;"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div id="stop" class="stop">
         <div class="stop-section">
           <button id="saveSession" type="button" onclick="saveSession()">
