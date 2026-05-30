@@ -1333,10 +1333,12 @@ onStateChange((newState)=>{
   }
   
   if( runTimeState.state==States.ES && sessionState.pointsType=="P"){
-    showEditPoints(); 
+    showEditPoints();
   } else{
     hideEditPoints();
   }
+
+  updateGeometryInfo();
 
 
   if(stateChanged && newState==States.PL){
@@ -1620,6 +1622,17 @@ function initDots() {
     initRelevantPixels()
   }
 
+  updateGeometryInfo()
+}
+
+function updateGeometryInfo() {
+  const el = document.getElementById("geometryInfo");
+  if (!el) return;
+  if (sessionState.pointsType == "R") {
+    el.textContent = sessionState.pointsW + " × " + sessionState.pointsH;
+  } else {
+    el.textContent = (sessionState.dots ? sessionState.dots.length : 0) + " dots";
+  }
 }
 function getLineIndex(aI, bI) {
   let ret = aI < bI ? runTimeState.dotsToLine[aI + "_" + bI] : runTimeState.dotsToLine[bI + "_" + aI];
@@ -3107,7 +3120,10 @@ function renderCMYKPreview(dnaMap) {
   // existing thumbnail does.
   const stringPxRatio = parseInt(sessionState.stringPixelRation, 10) || 32;
   const lineThickMult = parseFloat(sessionState.lineThicknessMulltiply) || 1;
-  const stringPx = lineThickMult / stringPxRatio;
+  // Preview-only thickness multiplier (0.5×–2×). Lets the user eyeball how the
+  // piece looks if the real string ends up thinner/thicker than the guessed
+  // stringPixelRatio. Does NOT affect DNA, line data, or the calculation.
+  const stringPx = (lineThickMult / stringPxRatio) * _cmykPreviewThicknessMult;
 
   console.log('[CMYK preview] stringPx=', stringPx.toFixed(3),
               ' canvas=', renderW, 'x', renderH,
@@ -3155,39 +3171,86 @@ function renderCMYKPreview(dnaMap) {
   }
 
   // -- Composite via multiply blend ----------------------------------------
-  // Important: don't re-rasterize the lines into the mix canvas. When two
-  // channels' anti-aliased lines land on slightly different sub-pixel
-  // positions, multiplying those AA edges directly produces noise/speckle
-  // in the composite. Instead, multiply the four ALREADY-DRAWN per-channel
-  // canvases via drawImage — each one is clean by itself, and drawImage
-  // with multiply blend gives a deterministic per-pixel result.
-  const mix = document.getElementById('thumbMix');
-  if (mix) {
-    mix.width  = renderW;
-    mix.height = renderH;
-    mix.style.height = 'auto';
-    const ctx = mix.getContext('2d', CTX_OPTS);
-
-    // White paper.
-    ctx.globalCompositeOperation = 'source-over';
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, renderW, renderH);
-
-    // Multiply each finished channel canvas onto the white. Same math as
-    // re-rasterizing but operates on solid pixel values, not on per-line
-    // AA gradients — no edge speckle.
-    ctx.globalCompositeOperation = 'multiply';
-    ctx.imageSmoothingEnabled = false;
-    for (const ch of ['K', 'Y', 'M', 'C']) {
-      const chCanvas = document.getElementById('thumb' + ch);
-      if (chCanvas && dnaMap[ch]) {
-        ctx.drawImage(chCanvas, 0, 0);
-      }
-    }
-    ctx.globalCompositeOperation = 'source-over';
-  }
+  // Remember the channel DNAs and the render size so the composite can be
+  // re-drawn cheaply when the user toggles a channel checkbox — without
+  // re-running anything. Then draw the initial composite.
+  _lastCmykDnaMap = dnaMap;
+  _lastCmykRenderW = renderW;
+  _lastCmykRenderH = renderH;
+  wireCmykToggles();
+  renderCMYKComposite();
 
   block.style.display = 'block';
+}
+
+// --- Channel-visibility composite (display only) ---------------------------
+// The composite preview is just the four per-channel canvases multiplied
+// together. Unchecking a channel only omits it from THIS preview — it does
+// not touch any DNA, line data, or session state. Purely cosmetic.
+let _lastCmykDnaMap = null;
+let _lastCmykRenderW = 0;
+let _lastCmykRenderH = 0;
+let _cmykTogglesWired = false;
+// Preview-only string-thickness multiplier (0.5×–2×). Display only.
+let _cmykPreviewThicknessMult = 1;
+
+function wireCmykToggles() {
+  if (_cmykTogglesWired) return;
+  const boxes = document.querySelectorAll('.cmyk-toggle');
+  const slider = document.getElementById('cmykPreviewThickness');
+  if (!boxes.length && !slider) return;
+  boxes.forEach((cb) => cb.addEventListener('change', renderCMYKComposite));
+
+  if (slider) {
+    const valLabel = document.getElementById('cmykPreviewThicknessVal');
+    slider.addEventListener('input', () => {
+      _cmykPreviewThicknessMult = parseFloat(slider.value) || 1;
+      if (valLabel) valLabel.textContent = '×' + _cmykPreviewThicknessMult.toFixed(2);
+      // Thickness changes the per-channel line rasterization, so we must
+      // re-render the whole preview (channels + composite), not just the mix.
+      if (_lastCmykDnaMap) renderCMYKPreview(_lastCmykDnaMap);
+    });
+  }
+  _cmykTogglesWired = true;
+}
+
+function renderCMYKComposite() {
+  const dnaMap = _lastCmykDnaMap;
+  if (!dnaMap) return;
+  const mix = document.getElementById('thumbMix');
+  if (!mix) return;
+
+  const renderW = _lastCmykRenderW || sessionState.sourceWidth;
+  const renderH = _lastCmykRenderH || sessionState.sourceHeight;
+
+  // Which channels are currently checked? Default to visible if no checkbox.
+  const visible = {};
+  document.querySelectorAll('.cmyk-toggle').forEach((cb) => {
+    visible[cb.dataset.ch] = cb.checked;
+  });
+
+  mix.width  = renderW;
+  mix.height = renderH;
+  mix.style.height = 'auto';
+  const ctx = mix.getContext('2d', { willReadFrequently: true });
+
+  // White paper.
+  ctx.globalCompositeOperation = 'source-over';
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, renderW, renderH);
+
+  // Multiply each finished + visible channel canvas onto the white. Same math
+  // as re-rasterizing but operates on solid pixel values, not on per-line AA
+  // gradients — no edge speckle.
+  ctx.globalCompositeOperation = 'multiply';
+  ctx.imageSmoothingEnabled = false;
+  for (const ch of ['K', 'Y', 'M', 'C']) {
+    const chCanvas = document.getElementById('thumb' + ch);
+    if (chCanvas && dnaMap[ch] && visible[ch] !== false) {
+      ctx.drawImage(chCanvas, 0, 0);
+    }
+  }
+  ctx.globalCompositeOperation = 'source-over';
 }
 
 // Entry point — wired to the "Split & Run CMYK" button in index.html.

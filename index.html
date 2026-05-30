@@ -201,6 +201,7 @@
         <button type="button" class="icon-button" onclick="toggleView()"><span class="material-icons">timeline</span></button>
         <button type="button" class="icon-button" onclick="OnSelect()"><span class="material-icons">edit</span></button>
         <button type="button" class="icon-button" onclick="OnZoomMove()"><span class="material-icons">open_with</span></button>
+        <span id="geometryInfo" class="geometry-info"></span>
       </div>
 
       <div class="canvas-container">
@@ -305,6 +306,18 @@
         <div id="cmykPreviewBlock" style="display: none; margin-top: 6px;">
           <div style="text-align: center;">
             <div style="font-size: 10px; color: #ccc;">CMYK composite (multiply blend)</div>
+            <div id="cmykChannelToggles" style="display: flex; justify-content: center; gap: 10px; font-size: 11px; color: #ddd; margin: 4px 0;">
+              <label style="cursor: pointer;"><input type="checkbox" class="cmyk-toggle" data-ch="K" checked> K</label>
+              <label style="cursor: pointer;"><input type="checkbox" class="cmyk-toggle" data-ch="Y" checked> Y</label>
+              <label style="cursor: pointer;"><input type="checkbox" class="cmyk-toggle" data-ch="M" checked> M</label>
+              <label style="cursor: pointer;"><input type="checkbox" class="cmyk-toggle" data-ch="C" checked> C</label>
+            </div>
+            <div id="cmykThicknessControl" style="display: flex; justify-content: center; align-items: center; gap: 6px; font-size: 11px; color: #ddd; margin: 4px 0;">
+              <span>thin</span>
+              <input type="range" id="cmykPreviewThickness" min="0.5" max="2" step="0.05" value="1" style="width: 120px;">
+              <span>thick</span>
+              <span id="cmykPreviewThicknessVal" style="min-width: 30px; text-align: left;">×1.00</span>
+            </div>
             <canvas id="thumbMix" style="width: 100%; background: #fff; border: 1px solid #444;"></canvas>
           </div>
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-top: 6px;">
