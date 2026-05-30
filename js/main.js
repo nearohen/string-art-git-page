@@ -2292,16 +2292,74 @@ function updateBrightness(val, bDone) {
 // more separated, so the per-channel string art looks punchier.
 // In non-CMYK mode there's no color image to saturate — slider no-ops
 // for now (single-channel tone-curve would be a separate feature).
+// Vivid is per-channel in CMYK mode. The slider value lives on the
+// active channel's cmykChannels[ch].vivid (mirrored into the global
+// sessionState.vivid for the UI binding). When the slider moves:
+//   • non-CMYK: just store the value (no resplit possible without color
+//     source); single-channel mode is a placeholder for now
+//   • CMYK: recompute ONLY the active channel's grayscale from the
+//     untouched color original with this channel's vivid, then push
+//     the new bytes to that channel's wasm slot. Other channels are
+//     untouched.
 function updateVivid(val, bDone) {
 
   document.getElementById("vividRangeText").value = val;
   sessionState.vivid = val;
-  if (sessionState.cmykMode) {
-    // Debounce re-split via the existing K-curve scheduler — same 250ms
-    // window keeps drag-interactions smooth without re-splitting 60x/sec.
-    scheduleCMYKResplit();
+
+  if (sessionState.cmykMode && sessionState.activeChannel &&
+      sessionState.cmykChannels[sessionState.activeChannel]) {
+    // Persist per-channel
+    sessionState.cmykChannels[sessionState.activeChannel].vivid = val;
+    // Debounced single-channel re-split. Same 250ms window as the
+    // K-curve slider so dragging is smooth.
+    scheduleActiveChannelResplit();
   }
 
+}
+
+// Debounced single-channel re-split: recompute ONLY the active channel's
+// grayscale from the color original (using THIS channel's vivid and the
+// global GCR), then push fresh bytes to that channel's wasm slot. Other
+// channels are not touched — Vivid is per-channel.
+let _activeChannelResplitTimer = null;
+function scheduleActiveChannelResplit() {
+  if (!sessionState.cmykMode) return;
+  if (_activeChannelResplitTimer) clearTimeout(_activeChannelResplitTimer);
+  _activeChannelResplitTimer = setTimeout(() => {
+    _activeChannelResplitTimer = null;
+    try { resplitActiveChannel(); }
+    catch (e) { console.error('[CMYK-mode] active-channel resplit failed:', e); }
+  }, 250);
+}
+
+async function resplitActiveChannel() {
+  const ch = sessionState.activeChannel;
+  if (!ch) { console.warn('[CMYK-mode] resplitActiveChannel: no active channel'); return; }
+  if (!sessionState.cmykChannels[ch]) { console.warn(`[CMYK-mode] resplitActiveChannel: ${ch} not in cmykChannels`); return; }
+  if (!sessionState.originalImgSrc || sessionState.originalImgSrc.length < 16) {
+    console.warn('[CMYK-mode] resplitActiveChannel: no color original to split from');
+    return;
+  }
+
+  const colorImg = await loadImageFromDataUrl(sessionState.originalImgSrc);
+  const gcr = (parseInt(document.getElementById('cmykGCR').value, 10) || 0) / 100;
+  const chVivid = sessionState.cmykChannels[ch].vivid || 0;
+  const newSrc = computeChannelDataUrl(colorImg, ch, gcr, chVivid);
+  sessionState.cmykChannels[ch].src = newSrc;
+  console.log(`[CMYK-mode] resplit channel ${ch} only (vivid=${chVivid}, gcr=${gcr.toFixed(2)}) → src len=${newSrc.length}`);
+
+  // Push the new bytes to this channel's wasm slot.
+  if (typeof getSlot === 'function' && getSlot(ch)) {
+    try {
+      const bytes = await extractThumbnailBytesForChannelSrc(newSrc);
+      postToSlot(ch, { cmd: 'updateThumbnailMainRaw', args: { thumbnailMainRaw: bytes } });
+    } catch (e) {
+      console.error(`[CMYK-mode] resplitActiveChannel: failed to push to slot ${ch}:`, e);
+    }
+  }
+
+  // Refresh the displayed image to the new grayscale.
+  originalImg.src = newSrc;
 }
 
 function updateNormalize(val, bDone) {
@@ -3425,17 +3483,21 @@ async function initCMYKProject() {
     if (labelDiv) labelDiv.textContent = 'Splitting color image into channels…';
     const colorImg = await loadImageFromDataUrl(sessionState.originalImgSrc);
     const gcr = (parseInt(document.getElementById('cmykGCR').value, 10) || 0) / 100;
-    // Snapshot the user's current brightness/contrast — each channel starts
-    // from this baseline and can be tuned independently later.
+    // Snapshot the user's current brightness/contrast/vivid — each
+    // channel starts from this baseline and can be tuned independently
+    // later. Vivid is per-channel: dragging it after split adjusts
+    // ONLY the active channel's grayscale.
     const seedB = parseFloat(sessionState.brightness) || 50;
     const seedC = parseFloat(sessionState.contrast)   || 50;
+    const seedV = parseFloat(sessionState.vivid)      || 0;
     sessionState.cmykChannels = {};
     for (const ch of ['K', 'Y', 'M', 'C']) {
       sessionState.cmykChannels[ch] = {
-        src:        computeChannelDataUrl(colorImg, ch, gcr, sessionState.vivid),
+        src:        computeChannelDataUrl(colorImg, ch, gcr, seedV),
         dna:        '',
         brightness: seedB,
         contrast:   seedC,
+        vivid:      seedV,
       };
     }
     console.log(`[CMYK-mode] split done — gcr=${gcr.toFixed(2)}, ` +
@@ -3494,14 +3556,16 @@ async function resplitCMYK() {
   const gcr = (parseInt(document.getElementById('cmykGCR').value, 10) || 0) / 100;
   for (const ch of ['K', 'Y', 'M', 'C']) {
     if (!sessionState.cmykChannels[ch]) {
-      sessionState.cmykChannels[ch] = { src: '', dna: '' };
+      sessionState.cmykChannels[ch] = { src: '', dna: '', vivid: 0 };
     }
     const oldLen = (sessionState.cmykChannels[ch].src || '').length;
+    // Each channel uses its OWN vivid (per-channel saturation boost).
     // Only the grayscale changes — preserve any saved dna.
-    sessionState.cmykChannels[ch].src = computeChannelDataUrl(colorImg, ch, gcr, sessionState.vivid);
-    console.log(`[RESPLIT]   channel ${ch}: src len ${oldLen} → ${sessionState.cmykChannels[ch].src.length}`);
+    const chVivid = sessionState.cmykChannels[ch].vivid || 0;
+    sessionState.cmykChannels[ch].src = computeChannelDataUrl(colorImg, ch, gcr, chVivid);
+    console.log(`[RESPLIT]   channel ${ch}: src len ${oldLen} → ${sessionState.cmykChannels[ch].src.length} (vivid=${chVivid})`);
   }
-  console.log(`[RESPLIT] all 4 channels rebuilt at gcr=${gcr.toFixed(2)}, vivid=${sessionState.vivid}`);
+  console.log(`[RESPLIT] all 4 channels rebuilt at gcr=${gcr.toFixed(2)} (per-channel vivid)`);
 
   // Push the new grayscale bytes into each EXISTING channel slot's
   // m_srcBuff via updateThumbnailMainRaw. The wasm session itself is
@@ -3643,13 +3707,14 @@ async function setActiveChannel(ch) {
 
   console.log(`[CMYK-mode] setActiveChannel → ${ch} (was ${sessionState.activeChannel})`);
 
-  // 1) Persist the OUTGOING channel's slider values back into its slot's
-  //    cmykChannels entry. (DNA is owned by the slot's wasm — JS only sees
-  //    snapshots; nothing to save here per-switch.)
+  // 1) Persist the OUTGOING channel's slider values back into its
+  //    cmykChannels entry. (DNA is owned by the slot's wasm — JS only
+  //    sees snapshots; nothing to save here per-switch.)
   const old = sessionState.activeChannel;
   if (old && old !== ch && sessionState.cmykChannels[old]) {
     sessionState.cmykChannels[old].brightness = sessionState.brightness;
     sessionState.cmykChannels[old].contrast   = sessionState.contrast;
+    sessionState.cmykChannels[old].vivid      = sessionState.vivid;
   }
 
   // 2) Ensure the target channel has a live wasm slot. First switch to a
@@ -3672,7 +3737,7 @@ async function setActiveChannel(ch) {
   sessionState.activeChannel = ch;
   setActiveSlotId(ch);
 
-  // 4) Sync UI sliders to this channel's B/C.
+  // 4) Sync UI sliders to this channel's B/C/Vivid.
   const chData = sessionState.cmykChannels[ch];
   if (chData.brightness !== undefined) {
     sessionState.brightness = chData.brightness;
@@ -3687,6 +3752,13 @@ async function setActiveChannel(ch) {
     const coT = document.getElementById('contrastRangeText');
     if (co)  co.value  = sessionState.contrast;
     if (coT) coT.value = sessionState.contrast;
+  }
+  if (chData.vivid !== undefined) {
+    sessionState.vivid = chData.vivid;
+    const vv  = document.getElementById('vividRange');
+    const vvT = document.getElementById('vividRangeText');
+    if (vv)  vv.value  = sessionState.vivid;
+    if (vvT) vvT.value = sessionState.vivid;
   }
 
   // 5) Highlight the active channel button.
