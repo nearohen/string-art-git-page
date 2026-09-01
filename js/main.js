@@ -2415,10 +2415,28 @@ function updateLineThickness(val, bDone) {
 function updateStringPixelRatio(val, bDone) {
 
   document.getElementById("stringPixelRatioText").value = val;
-  
+
   sessionState.stringPixelRation = val;
-  PostWorkerMessage({cmd : "updateParam" ,args : {type: "number",name : "stringPixelRatio", val : sessionState.stringPixelRation }});
-  
+
+  if (sessionState.cmykMode && sessionState.cmykChannels) {
+    // Per-channel thickness. K is always independent; C/M/Y move together
+    // when the "Link C/M/Y" flag is on (default), otherwise only the active
+    // channel changes.
+    const active = sessionState.activeChannel;
+    let targets;
+    if (active === 'K') targets = ['K'];
+    else if (sessionState.linkCMY !== false) targets = ['C', 'M', 'Y'];
+    else targets = [active];
+    for (const ch of targets) {
+      if (!ch || !sessionState.cmykChannels[ch]) continue;
+      sessionState.cmykChannels[ch].stringPixelRatio = val;
+      if (typeof getSlot === 'function' && getSlot(ch)) {
+        postToSlot(ch, { cmd: "updateParam", args: { type: "number", name: "stringPixelRatio", val: val } });
+      }
+    }
+  } else {
+    PostWorkerMessage({cmd : "updateParam" ,args : {type: "number",name : "stringPixelRatio", val : sessionState.stringPixelRation }});
+  }
 
 }
 
@@ -2671,6 +2689,12 @@ async function makeItCMYK() {
             console.warn('[makeItCMYK] capture failed:', e);
         }
     }
+    // Persist the active channel's current Thickness slider value so it ships
+    // with the correct per-channel thickness (others are already persisted on
+    // channel switch).
+    if (sessionState.activeChannel && sessionState.cmykChannels[sessionState.activeChannel]) {
+        sessionState.cmykChannels[sessionState.activeChannel].stringPixelRatio = sessionState.stringPixelRation;
+    }
 
     // 2) Warn-and-block if any channel has no DNA yet. Without this the
     //    user might think they got a complete CMYK set but missed a layer.
@@ -2722,6 +2746,8 @@ async function makeItCMYK() {
         // Shim a sessionState with this channel's DNA + a suffixed title.
         const stateForCh = Object.assign({}, sessionState, {
             snapshotB64: c.dna,
+            stringPixelRation: (c.stringPixelRatio !== undefined && c.stringPixelRatio !== null && c.stringPixelRatio !== '')
+                ? c.stringPixelRatio : sessionState.stringPixelRation,
             sessionFileName: `${baseName}_${ch}.png`,
         });
 
@@ -2848,7 +2874,7 @@ function _localKBlend(s, destR, destG, destB) {
 //   srcBuff_M = G + kDens
 //   srcBuff_Y = B + kDens
 // srcBuff convention: 0 = full ink, 255 = blank.
-function computeChannelDataUrl(colorImg, channel, gcr, vivid) {
+function computeChannelDataUrl(colorImg, channel, gcr, vivid, kGrayscale) {
   const w = colorImg.width;
   const h = colorImg.height;
   const cv = document.createElement('canvas');
@@ -2866,6 +2892,14 @@ function computeChannelDataUrl(colorImg, channel, gcr, vivid) {
   const doSat = satFactor !== 1;
   for (let i = 0; i < d.length; i += 4) {
     let r = d[i], g = d[i+1], b = d[i+2];
+    // K-as-grayscale: use the ORIGINAL image's plain luminance for the K
+    // channel (ignores GCR + vivid). Dark areas → low value → more black
+    // thread. C/M/Y are unaffected and still use the GCR split below.
+    if (channel === 'K' && kGrayscale) {
+      const v0 = Math.max(0, Math.min(255, Math.round(0.299*r + 0.587*g + 0.114*b)));
+      d[i] = v0; d[i+1] = v0; d[i+2] = v0;
+      continue;
+    }
     if (doSat) {
       const lum = 0.299*r + 0.587*g + 0.114*b;
       r = Math.max(0, Math.min(255, lum + (r - lum) * satFactor));
@@ -3166,7 +3200,12 @@ function renderCMYKPreview(dnaMap) {
     if (dna) {
       ctx.lineCap = 'butt';
       ctx.imageSmoothingEnabled = false;
-      drawDnaWithColor(ctx, canvas, dna, channelColors[ch], stringPx);
+      // Use this channel's own thickness so the preview reflects per-channel
+      // (e.g. thicker K) settings.
+      const chData = sessionState.cmykChannels && sessionState.cmykChannels[ch];
+      const chRatio = parseInt((chData && chData.stringPixelRatio) || stringPxRatio) || stringPxRatio;
+      const chStringPx = (lineThickMult / chRatio) * _cmykPreviewThicknessMult;
+      drawDnaWithColor(ctx, canvas, dna, channelColors[ch], chStringPx);
     }
   }
 
@@ -3525,7 +3564,15 @@ async function initCMYKProject() {
   }
 
   sessionState.cmykMode = true;
+  if (sessionState.linkCMY === undefined) sessionState.linkCMY = true;
   if (channelPanel) channelPanel.style.display = 'block';
+  // Reveal the CMYK-only thickness link + K-grayscale controls, sync their state.
+  const linkLbl = document.getElementById('cmykLinkThicknessLabel');
+  if (linkLbl) linkLbl.style.display = 'inline';
+  const linkCb = document.getElementById('cmykLinkThickness');
+  if (linkCb) linkCb.checked = sessionState.linkCMY !== false;
+  const kGray = document.getElementById('cmykKGrayscale');
+  if (kGray) kGray.checked = !!sessionState.kUseGrayscale;
   // Enable the manual preview button so the user can render any time.
   const previewBtn = document.getElementById('cmykPreviewBtn');
   if (previewBtn) previewBtn.disabled = false;
@@ -3553,14 +3600,16 @@ async function initCMYKProject() {
     const seedB = parseFloat(sessionState.brightness) || 50;
     const seedC = parseFloat(sessionState.contrast)   || 50;
     const seedV = parseFloat(sessionState.vivid)      || 0;
+    const seedT = parseInt(sessionState.stringPixelRation);
     sessionState.cmykChannels = {};
     for (const ch of ['K', 'Y', 'M', 'C']) {
       sessionState.cmykChannels[ch] = {
-        src:        computeChannelDataUrl(colorImg, ch, gcr, seedV),
+        src:        computeChannelDataUrl(colorImg, ch, gcr, seedV, ch === 'K' && sessionState.kUseGrayscale),
         dna:        '',
         brightness: seedB,
         contrast:   seedC,
         vivid:      seedV,
+        stringPixelRatio: seedT,   // per-channel thickness (K can differ from C/M/Y)
       };
     }
     console.log(`[CMYK-mode] split done — gcr=${gcr.toFixed(2)}, ` +
@@ -3625,7 +3674,7 @@ async function resplitCMYK() {
     // Each channel uses its OWN vivid (per-channel saturation boost).
     // Only the grayscale changes — preserve any saved dna.
     const chVivid = sessionState.cmykChannels[ch].vivid || 0;
-    sessionState.cmykChannels[ch].src = computeChannelDataUrl(colorImg, ch, gcr, chVivid);
+    sessionState.cmykChannels[ch].src = computeChannelDataUrl(colorImg, ch, gcr, chVivid, ch === 'K' && sessionState.kUseGrayscale);
     console.log(`[RESPLIT]   channel ${ch}: src len ${oldLen} → ${sessionState.cmykChannels[ch].src.length} (vivid=${chVivid})`);
   }
   console.log(`[RESPLIT] all 4 channels rebuilt at gcr=${gcr.toFixed(2)} (per-channel vivid)`);
@@ -3687,10 +3736,18 @@ async function extractThumbnailBytesForChannelSrc(channelSrc) {
 
 // Build the init JSON for a specific CMYK channel — mirrors startSession()'s
 // params shape, but uses per-channel B/C + DNA from cmykChannels[ch].
+// Per-channel string thickness (falls back to the global value). K can carry
+// a different thickness than C/M/Y.
+function channelThickness(ch) {
+  const c = sessionState.cmykChannels && sessionState.cmykChannels[ch];
+  const v = c && c.stringPixelRatio;
+  return parseInt((v !== undefined && v !== null && v !== '') ? v : sessionState.stringPixelRation);
+}
+
 function buildInitJsonForChannel(ch) {
   const chData = sessionState.cmykChannels[ch] || {};
   const params = {
-    stringPixelRatio: parseInt(sessionState.stringPixelRation),
+    stringPixelRatio: channelThickness(ch),
     normalize: parseFloat(sessionState.normalize),
     collision: parseFloat(sessionState.collision),
     width: sessionState.sourceWidth,
@@ -3778,6 +3835,7 @@ async function setActiveChannel(ch) {
     sessionState.cmykChannels[old].brightness = sessionState.brightness;
     sessionState.cmykChannels[old].contrast   = sessionState.contrast;
     sessionState.cmykChannels[old].vivid      = sessionState.vivid;
+    sessionState.cmykChannels[old].stringPixelRatio = sessionState.stringPixelRation;
   }
 
   // 2) Ensure the target channel has a live wasm slot. First switch to a
@@ -3823,6 +3881,17 @@ async function setActiveChannel(ch) {
     if (vv)  vv.value  = sessionState.vivid;
     if (vvT) vvT.value = sessionState.vivid;
   }
+  {
+    // Mirror this channel's thickness into the Thickness slider.
+    const chT = sessionState.cmykChannels[ch].stringPixelRatio;
+    if (chT !== undefined && chT !== null && chT !== '') {
+      sessionState.stringPixelRation = chT;
+      const sr  = document.getElementById('stringPixelRatio');
+      const srT = document.getElementById('stringPixelRatioText');
+      if (sr)  sr.value  = chT;
+      if (srT) srT.value = chT;
+    }
+  }
 
   // 5) Highlight the active channel button.
   document.querySelectorAll('#cmykChannelToggles button').forEach(b => {
@@ -3847,6 +3916,26 @@ async function setActiveChannel(ch) {
   }
 }
 
+// Toggle: use the original image's plain grayscale for the K channel instead
+// of the GCR-derived K. Re-splits so the change is visible immediately.
+function setKUseGrayscale(checked) {
+  sessionState.kUseGrayscale = !!checked;
+  console.log('[CMYK-mode] K grayscale =', sessionState.kUseGrayscale);
+  if (sessionState.cmykMode) {
+    try { resplitCMYK(); }
+    catch (e) { console.error('[CMYK-mode] K grayscale re-split failed:', e); }
+  }
+}
+window.setKUseGrayscale = setKUseGrayscale;
+
+// Toggle: when on (default), the Thickness slider changes C, M and Y together.
+// K always has its own thickness regardless.
+function setCmykLinkThickness(checked) {
+  sessionState.linkCMY = !!checked;
+  console.log('[CMYK-mode] link C/M/Y thickness =', sessionState.linkCMY);
+}
+window.setCmykLinkThickness = setCmykLinkThickness;
+
 // On page load, if a saved session is restored that already has cmykMode
 // on, mirror it into the UI: tick the checkbox in Select Shape, reveal
 // the channel-switcher panel, highlight the active channel.
@@ -3861,6 +3950,12 @@ function syncCMYKUIFromState() {
   if (channelPanel) channelPanel.style.display = sessionState.cmykMode ? 'block' : 'none';
   if (resplitBtn)   resplitBtn.style.display   = sessionState.cmykMode ? 'block' : 'none';
   if (sessionState.cmykMode && previewBtn) previewBtn.disabled = false;
+  const linkLbl = document.getElementById('cmykLinkThicknessLabel');
+  if (linkLbl) linkLbl.style.display = sessionState.cmykMode ? 'inline' : 'none';
+  const linkCb = document.getElementById('cmykLinkThickness');
+  if (linkCb) linkCb.checked = sessionState.linkCMY !== false;
+  const kGray = document.getElementById('cmykKGrayscale');
+  if (kGray) kGray.checked = !!sessionState.kUseGrayscale;
 
   if (sessionState.cmykMode && sessionState.activeChannel) {
     document.querySelectorAll('#cmykChannelToggles button').forEach(b => {

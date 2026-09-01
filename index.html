@@ -244,6 +244,12 @@
         <input type="range" id="stringPixelRatio" value="" min='2' max='48' step='1'
             oninput="updateStringPixelRatio(this.value,false);" onchange="updateStringPixelRatio(this.value,true);">
         <input type="text" id="stringPixelRatioText" value="" size="1">
+        <label id="cmykLinkThicknessLabel" for="cmykLinkThickness"
+               title="When on, the Thickness slider changes C, M and Y together. K always has its own thickness."
+               style="display:none; font-size:11px; color:#ccc; margin-left:6px;">
+          <input type="checkbox" id="cmykLinkThickness" checked
+                 onchange="setCmykLinkThickness(this.checked)"> link C/M/Y
+        </label>
 
         <label for="minLength">Min Length</label>
         <input type="range" id="minLength" value="1" min='1' max='100' step='1'
@@ -267,6 +273,12 @@
           <input type="text" id="cmykGCRText" value="50" size="2" readonly
                  style="width: 28px; text-align: center;">
         </div>
+        <label for="cmykKGrayscale"
+               title="Use the original image's plain grayscale for the K (black) channel instead of the GCR-derived K. Dark areas → more black thread. Re-splits K immediately."
+               style="display:flex; align-items:center; gap:6px; font-size:12px; margin-top:4px; cursor:pointer;">
+          <input type="checkbox" id="cmykKGrayscale" onchange="setKUseGrayscale(this.checked)">
+          K = original grayscale (no split)
+        </label>
         <!-- Render the 4-channel + composite preview from whatever DNAs
              the user has accumulated in cmykChannels (manual mode). -->
         <button id="cmykPreviewBtn" type="button" onclick="cmykShowPreview()" disabled
